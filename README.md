@@ -10,7 +10,7 @@
 
 ## 1. Identificación del Proyecto
 
-**XelajuNetwork** es un proyecto integral de infraestructura de red diseñado, implementado y probado por un equipo de cinco estudiantes sobre entornos reales Debian GNU/Linux en modo consola. El sistema simula una red corporativa moderna con múltiples zonas de seguridad, enrutamiento avanzado, servicios perimetrales, control de contenido y alta disponibilidad hacia Internet.
+**XelajuNetwork** es un proyecto integral de infraestructura de red desarrollado por un equipo de cinco estudiantes sobre Debian GNU/Linux en modo consola. Existen verificaciones de componentes individuales y enlaces entre nodos; la prueba integral simultánea de los cinco equipos y los tres flujos A, B y C permanece pendiente. El sistema simula una red corporativa moderna con múltiples zonas de seguridad, enrutamiento avanzado, servicios perimetrales, control de contenido y alta disponibilidad hacia Internet.
 
 ---
 
@@ -114,7 +114,7 @@ xelaju-network/
 │   └── README.md
 ├── E5 - Firewall/                 # Componente: Firewall Perimetral e IDS Suricata
 │   ├── README.md                  # Manual técnico detallado y estado de E5
-│   ├── config/                    # Reglas nftables, plantilla interfaces y Suricata
+│   ├── config/                    # Reglas versionadas; snapshots operativos de interfaces/Suricata pendientes
 │   ├── scripts/                   # Toolkit operativo (e5-status, e5-firewall, e5-ids, etc.)
 │   └── evidencias/                # Registros de Suricata, PCAPs y capturas
 └── integracion/                   # Metodología y reporte de pruebas de integración grupal
@@ -140,4 +140,4 @@ xelaju-network/
 
 ## 8. Localización de Archivos Técnicos
 
-Cada estudiante mantiene la implementación de su respectivo componente en su carpeta individual (`E1 - LAN/` a `E5 - Firewall/`). La configuración funcional y scripts de seguridad perimetral de **E5** se encuentran plenamente documentados e implementados en [`E5 - Firewall/config/`](./E5%20-%20Firewall/config/) y [`E5 - Firewall/scripts/`](./E5%20-%20Firewall/scripts/).
+Cada estudiante debe aportar su implementación real y evidencias en la carpeta correspondiente. En esta revisión, **E3** y **E4** aún tienen únicamente documentos introductorios en el repositorio académico; sus configuraciones y pruebas deben contrastarse con los equipos antes de trasladarlas desde coordinación. En **E5** faltan las copias verificadas de `/etc/suricata/suricata.yaml` y `/etc/network/interfaces`. La existencia de archivos en Git no demuestra que coincidan byte a byte con los desplegados.
