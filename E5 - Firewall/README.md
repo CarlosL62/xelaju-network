@@ -5,7 +5,7 @@
 **Entorno Operativo:** Debian GNU/Linux 13 (trixie) x86_64 — Kernel `6.12.107+deb13-amd64` (Modo Texto)  
 **Rol:** Núcleo de seguridad perimetral, filtrado de paquetes con estado (*stateful*), control de accesos interzonas e inspección profunda de intrusiones en tiempo real (*IDS*).
 
-Este directorio contiene los anexos técnicos oficiales del componente E5 para la entrega académica (configuraciones, scripts de administración y lote de evidencias validadas). El informe académico detallado, análisis y conclusiones se presentan en los documentos PDF de Classroom.
+Este directorio contiene configuraciones versionadas, scripts y evidencias documentadas. La correspondencia exacta con los archivos activos de Debian aún no se ha certificado para todas las configuraciones. El informe académico detallado, análisis y conclusiones se presentan en los documentos PDF de Classroom.
 
 ---
 
@@ -16,9 +16,7 @@ E5 - Firewall/
 ├── README.md                      # Este índice del componente
 ├── config/                        # Archivos de configuración de Debian
 │   ├── e5-firewall.nft            # Reglas nftables activas (tabla inet xelaju_e5, policy drop)
-│   ├── interfaces.example         # Configuración persistente /etc/network/interfaces
 │   ├── local.rules                # Regla local de detección Suricata (SID 1000001)
-│   ├── suricata.yaml.example      # Configuración de captura af-packet y HOME_NET
 │   └── sysctl-e5.conf             # Parámetro kernel net.ipv4.ip_forward = 1
 ├── scripts/                       # Toolkit de administración (/usr/local/sbin/)
 │   ├── e5-help                    # Guía rápida de referencia en consola
@@ -68,3 +66,9 @@ E5 - Firewall/
 
 El lote de 13 evidencias validadas (6 logs y 7 PCAPs con hashes SHA-256) se encuentra documentado en:
 [`evidencias/README.md`](./evidencias/README.md).
+
+---
+
+## Configuraciones reales pendientes de cotejo
+
+Las plantillas de interfaces y Suricata no demuestran la configuración instalada. Se retiran de esta rama de auditoría hasta recibir las copias verificadas **del equipo E5** de `/etc/network/interfaces`, fragmentos activos de `/etc/network/interfaces.d/` y `/etc/suricata/suricata.yaml`. Las reglas `e5-firewall.nft`, `local.rules` y `sysctl-e5.conf` también requieren comparación con sus rutas efectivas. No reconstruir configuraciones a partir de este README. Validar la sintaxis activa mediante `sudo suricata -T -c /etc/suricata/suricata.yaml`; eso no reemplaza una prueba funcional.
