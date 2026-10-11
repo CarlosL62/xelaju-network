@@ -1,0 +1,47 @@
+================================================================================
+PRUEBA E5-T04: ENRUTAMIENTO EXTENDIDO Y DEMARCACIÓN E1 (LAN) <-> E5 VÍA E2
+================================================================================
+Fecha y hora: Sun Oct 11 01:22:20 CST 2026 / 07:22:20 UTC
+Participantes: Estudiante 1 (E1 - Router LAN) <-> E2 (Squid) <-> Estudiante 5 (E5)
+Rutas evaluadas:
+- 192.168.84.0/30 via 192.168.82.2 dev enxc0eac367f731 (Enlace E1-E2)
+- 192.168.10.0/24 via 192.168.82.2 dev enxc0eac367f731 (VLAN 10 ADMIN)
+- 192.168.20.0/24 via 192.168.82.2 dev enxc0eac367f731 (VLAN 20 USERS)
+- 192.168.30.0/24 via 192.168.82.2 dev enxc0eac367f731 (VLAN 30 SERVERS)
+- 192.168.40.0/24 via 192.168.82.2 dev enxc0eac367f731 (VLAN 40 DMZ/MGMT)
+
+1. REQUISITO
+--------------------------------------------------------------------------------
+Comprobar el enrutamiento inter-nodo en cascada E1 -> E2 -> E5. Verificar que
+el tráfico de las VLANs de la LAN alcanza el perímetro y que la política de
+demarcación del firewall E5 gestiona el flujo de forma adecuada.
+
+2. COMANDOS Y SONDEOS EJECUTADOS
+--------------------------------------------------------------------------------
+A. Sondeos desde E5 hacia los gateways de VLAN en E1 (via E2 192.168.82.2):
+   - ping -c 2 192.168.84.2 (Tránsito E1): 2/2 recibidos, 0% loss, TTL=63, RTT avg = 1.78 ms
+   - ping -c 2 192.168.10.1 (VLAN 10): 2/2 recibidos, 0% loss, TTL=63, RTT avg = 1.96 ms
+   - ping -c 2 192.168.20.1 (VLAN 20): 2/2 recibidos, 0% loss, TTL=63, RTT avg = 1.88 ms
+   - ping -c 2 192.168.30.1 (VLAN 30): 2/2 recibidos, 0% loss, TTL=63, RTT avg = 1.90 ms
+   - ping -c 2 192.168.40.1 (VLAN 40): 2/2 recibidos, 0% loss, TTL=63, RTT avg = 2.04 ms
+
+B. Captura en vivo en enxc0eac367f731:
+   - Archivo: evidence/E5-firewall-ids/session-E5-20261011/pcap/E5-T04-e1-e5-routing.pcap
+   - Paquetes de tránsito real capturados: 48 paquetes.
+   - Tráfico de retorno ICMP Time-to-live exceeded proveniente de la WAN (192.168.1.1,
+     172.20.10.1) reenviado con conntrack established por E5 hacia E2 (MAC 00:e0:4c:53:44:58)
+     con destino a los routers/hosts de VLAN 10 (192.168.10.1), VLAN 20 (192.168.20.1),
+     VLAN 30 (192.168.30.1) que sondeaban hacia 1.1.1.1.
+
+C. Alertas de Suricata IDS (/var/log/suricata/fast.log):
+   Suricata detectó en la interfaz enxc0eac367f731 cada uno de los pings diagnósticos
+   emitidos hacia 192.168.10.1, 192.168.20.1, 192.168.30.1, 192.168.40.1 con SID 1000001.
+
+3. DICTAMEN DE LA PRUEBA
+--------------------------------------------------------------------------------
+ESTADO: PASS (SUPERADA CON ÉXITO)
+Conclusión: El enrutamiento multihop entre el router LAN E1 y el firewall E5 a
+través del router/proxy E2 está plenamente operativo y bidireccional. La tabla de
+rutas estáticas de E5 resuelve correctamente cada subred de VLAN con decremento de
+TTL=63 a través de E2.
+================================================================================

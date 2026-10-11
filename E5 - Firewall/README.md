@@ -20,7 +20,7 @@ El nodo **E5** tiene a su cargo la seguridad en el perímetro de la red corporat
 
 ## 2. Entorno Debian y Dependencias
 
-- **Sistema Operativo:** Debian GNU/Linux 12 (Bookworm) ejecutado en modo texto / terminal.
+- **Sistema Operativo:** Debian GNU/Linux 13 (trixie) ejecutado en modo texto / terminal.
 - **Paquetes y Herramientas del Sistema:**
   - `nftables`: Motor de filtrado de paquetes del kernel.
   - `suricata` (versión 7.0.10): Motor de detección de intrusiones (IDS).

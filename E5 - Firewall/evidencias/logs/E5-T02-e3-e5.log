@@ -1,0 +1,49 @@
+================================================================================
+PRUEBA E5-T02: CONECTIVIDAD BIDIRECCIONAL E3 <-> E5 E INSPECCIÓN IDS
+================================================================================
+Fecha y hora: Sun Oct 11 01:18:45 CST 2026 / 07:18:45 UTC
+Participantes: Estudiante 3 (E3 - Multi-WAN) <-> Estudiante 5 (E5 - Firewall/IDS)
+Enlace: 192.168.81.0/30
+- Interfaz E5: eno2 (IP: 192.168.81.2/30, MAC: a0:36:bc:2e:40:f4)
+- Interfaz E3: (IP: 192.168.81.1/30, MAC: e0:73:e7:de:27:15)
+
+1. REQUISITO
+--------------------------------------------------------------------------------
+Validación de conectividad punto a punto L2/L3 entre el router de borde Multi-WAN
+(E3) y el Firewall Perimetral (E5). Intercambio ICMP Echo Request/Reply bajo
+política de nftables y detección por el sensor Suricata IDS en eno2 (Cluster 99).
+
+2. COMANDOS EJECUTADOS
+--------------------------------------------------------------------------------
+- En E5: Captura tshark sobre eno2 hacia:
+  evidence/E5-firewall-ids/session-E5-20261011/pcap/E5-T02-e3-e5-connectivity.pcap
+- En E3: ping -c 4 192.168.81.2
+- En E5 (salida previa): ping -c 4 192.168.81.1 (0% pérdida, RTT avg = 0.586 ms)
+
+3. RESULTADOS OBSERVADOS EN E5
+--------------------------------------------------------------------------------
+A. Ráfaga ICMP recibida desde E3 (TShark PCAP):
+   - Paquete 17: 192.168.81.1 -> 192.168.81.2 ICMP Echo request (seq=1, id=0x0d85)
+   - Paquete 18: 192.168.81.2 -> 192.168.81.1 ICMP Echo reply   (seq=1, id=0x0d85)
+   - Paquete 19: 192.168.81.1 -> 192.168.81.2 ICMP Echo request (seq=2, id=0x0d85)
+   - Paquete 20: 192.168.81.2 -> 192.168.81.1 ICMP Echo reply   (seq=2, id=0x0d85)
+   - Paquete 24: 192.168.81.1 -> 192.168.81.2 ICMP Echo request (seq=3, id=0x0d85)
+   - Paquete 25: 192.168.81.2 -> 192.168.81.1 ICMP Echo reply   (seq=3, id=0x0d85)
+   - Paquete 28: 192.168.81.1 -> 192.168.81.2 ICMP Echo request (seq=4, id=0x0d85)
+   - Paquete 29: 192.168.81.2 -> 192.168.81.1 ICMP Echo reply   (seq=4, id=0x0d85)
+   - Paquetes transmitidos/recibidos: 4/4 (0% pérdida)
+   - Tiempo de respuesta en E5: ~0.1 ms
+
+B. Alertas de Suricata IDS (/var/log/suricata/fast.log):
+   10/11/2026-01:17:35.512076 [**] [1:1000001:1] ICMP Echo Request detectado [**] [Priority: 3] {ICMP} 192.168.81.1:8 -> 192.168.81.2:0
+   10/11/2026-01:17:36.520592 [**] [1:1000001:1] ICMP Echo Request detectado [**] [Priority: 3] {ICMP} 192.168.81.1:8 -> 192.168.81.2:0
+   10/11/2026-01:17:37.544580 [**] [1:1000001:1] ICMP Echo Request detectado [**] [Priority: 3] {ICMP} 192.168.81.1:8 -> 192.168.81.2:0
+   10/11/2026-01:17:38.568578 [**] [1:1000001:1] ICMP Echo Request detectado [**] [Priority: 3] {ICMP} 192.168.81.1:8 -> 192.168.81.2:0
+
+4. DICTAMEN DE LA PRUEBA
+--------------------------------------------------------------------------------
+ESTADO: PASS (SUPERADA CON ÉXITO)
+Conclusión: El enlace perimetral E3 <-> E5 está plenamente operativo y verificado
+en L2 y L3. Las políticas de nftables permiten el tráfico ICMP de diagnóstico y
+Suricata registra fielmente las alertas en la interfaz WAN interna (eno2).
+================================================================================

@@ -1,0 +1,67 @@
+================================================================================
+XELAJUNETWORK - E5 FIREWALL & IDS BASELINE STATE (E5-T00)
+================================================================================
+Fecha y hora de verificación: Sun Oct 11 01:10:30 CST 2026 / 07:10:30 UTC
+Host: Debian GNU/Linux 13 (trixie/sid) x86_64
+Kernel: Linux 6.12.107+deb13-amd64
+Responsable: Estudiante 5 (E5)
+
+1. ESTADO DE INTERFACES DE RED (ip -br addr && ip -br link)
+--------------------------------------------------------------------------------
+lo               UNKNOWN        127.0.0.1/8 ::1/128
+eno2             UP             192.168.81.2/30 (MAC a0:36:bc:2e:40:f4) [Hacia E3 Multi-WAN]
+enxc0eac367f731  UP             192.168.82.1/30 (MAC c0:ea:c3:67:f7:31) [Hacia E2 Squid Proxy]
+enxf8e43ba69459  UP             192.168.83.1/30 (MAC f8:e4:3b:a6:94:59) [Hacia E4 VPN / DMZ]
+wlo1             UP             192.168.1.176/24 (MAC f0:b6:1e:49:3e:91) [Gestión fuera de banda]
+
+2. TABLA DE ENRUTAMIENTO ESTÁTICO (ip route)
+--------------------------------------------------------------------------------
+default via 192.168.81.1 dev eno2
+10.200.10.0/24 via 192.168.83.2 dev enxf8e43ba69459
+10.200.20.0/24 via 192.168.83.2 dev enxf8e43ba69459
+172.16.10.0/24 via 192.168.83.2 dev enxf8e43ba69459
+192.168.1.0/24 dev wlo1 proto kernel scope link src 192.168.1.176 metric 600
+192.168.10.0/24 via 192.168.82.2 dev enxc0eac367f731
+192.168.20.0/24 via 192.168.82.2 dev enxc0eac367f731
+192.168.30.0/24 via 192.168.82.2 dev enxc0eac367f731
+192.168.40.0/24 via 192.168.82.2 dev enxc0eac367f731
+192.168.81.0/30 dev eno2 proto kernel scope link src 192.168.81.2
+192.168.82.0/30 dev enxc0eac367f731 proto kernel scope link src 192.168.82.1
+192.168.83.0/30 dev enxf8e43ba69459 proto kernel scope link src 192.168.83.1
+192.168.84.0/30 via 192.168.82.2 dev enxc0eac367f731
+
+3. REENVÍO IP EN EL KERNEL (/proc/sys/net/ipv4/ip_forward)
+--------------------------------------------------------------------------------
+net.ipv4.ip_forward = 1 (ACTIVO / HABILITADO)
+
+4. ESTADO DE SERVICIOS DEL SISTEMA (systemctl)
+--------------------------------------------------------------------------------
+nftables.service: ACTIVE (exited, loaded via /etc/nftables.conf)
+suricata.service: ACTIVE (running, PID 1409, modo af-packet multi-interfaz)
+
+5. TABLA DE VECINOS ARP (ip neigh show)
+--------------------------------------------------------------------------------
+192.168.81.1 dev eno2 lladdr e0:73:e7:de:27:15 REACHABLE (E3 Multi-WAN)
+192.168.82.2 dev enxc0eac367f731 lladdr 00:e0:4c:53:44:58 REACHABLE (E2 Squid Proxy)
+192.168.83.2 dev enxf8e43ba69459 lladdr 98:e7:43:3d:89:2d REACHABLE (E4 VPN/DMZ)
+
+6. ALCANCE INICIAL DE PEERS DIRECTOS (ping ICMP)
+--------------------------------------------------------------------------------
+E3 (192.168.81.1): 2/2 recibidos, 0% loss, rtt avg = 0.322 ms (ALCANZABLE)
+E2 (192.168.82.2): 3/3 recibidos, 0% loss, rtt avg = 1.179 ms (ALCANZABLE)
+E4 (192.168.83.2): 2/2 recibidos, 0% loss, rtt avg = 1.888 ms (ALCANZABLE)
+E1 (192.168.84.2 via E2): 2/2 recibidos, 0% loss, rtt avg = 1.782 ms, ttl=63 (ALCANZABLE)
+
+7. CONFIGURACIÓN DEL FIREWALL PERIMETRAL (/etc/nftables.d/e5-firewall.nft)
+--------------------------------------------------------------------------------
+Tabla: inet xelaju_e5
+- Chain input: policy drop (conntrack, lo accept, SSH wlo1 accept, ICMP limitado peers)
+- Chain forward: policy drop (conntrack, WireGuard pasada 1 y 2, Zabbix 10051, DMZ/ngrok, Squid/LAN salida, logging explícito en bloqueos)
+- Chain output: policy accept
+
+8. MOTOR DE DETECCIÓN SURICATA IDS (/etc/suricata/)
+--------------------------------------------------------------------------------
+- Interfaces af-packet: eno2 (Cluster 99), enxc0eac367f731 (Cluster 98), enxf8e43ba69459 (Cluster 97)
+- Regla local: SID 1000001 (msg:"ICMP Echo Request detectado")
+- Archivos de log activos: /var/log/suricata/fast.log, /var/log/suricata/eve.json
+================================================================================

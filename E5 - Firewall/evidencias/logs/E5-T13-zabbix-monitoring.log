@@ -1,0 +1,39 @@
+================================================================================
+PRUEBA E5-T13: MONITOREO ZABBIX — TRÁNSITO DE AGENTES PERIMETRALES (TCP 10051)
+================================================================================
+Fecha y hora: Sun Oct 11 01:44:55 CST 2026 / 07:44:55 UTC
+Participantes: Estudiante 3 (E3 - Router-MultiWAN-E3) -> E5 (Firewall) -> E1 (Zabbix Server)
+Ruta: eno2 (E3 192.168.81.1) -> enxc0eac367f731 (E2/E1) -> Servidor 192.168.30.10:10051
+
+1. REQUISITO DEL CONTRATO (SEC-E1-MONITORING)
+--------------------------------------------------------------------------------
+Permitir el tránsito continuo y seguro de métricas de telemetría y comprobaciones
+activas desde los agentes Zabbix de los nodos perimetrales hacia el servidor central
+Zabbix alojado en la VLAN 30 de E1 (192.168.30.10, puerto TCP 10051). Regla evaluada:
+  iifname "eno2" oifname "enxc0eac367f731" ip saddr 192.168.81.1 ip daddr 192.168.30.10 tcp dport 10051 accept
+
+2. RESULTADOS OBSERVADOS EN E5 (TShark PCAP)
+--------------------------------------------------------------------------------
+A. Captura en tiempo real (evidence/E5-firewall-ids/session-E5-20261011/pcap/E5-T13-zabbix-monitoring.pcap):
+   - Total de paquetes capturados en ventana de 60s: 378 paquetes.
+   - Handshake TCP de 3 vías:
+     * Paquete 1: 192.168.81.1:58892 -> 192.168.30.10:10051 [SYN]
+     * Paquete 3: 192.168.30.10:10051 -> 192.168.81.1:58892 [SYN, ACK] (RTT = 4.3 ms)
+     * Paquete 5: 192.168.81.1:58892 -> 192.168.30.10:10051 [ACK]
+   - Carga útil del protocolo Zabbix:
+     * Paquete 7:  192.168.81.1 -> 192.168.30.10 Zabbix Agent request for active checks for "Router-MultiWAN-E3" (Len=151)
+     * Paquete 11: 192.168.30.10 -> 192.168.81.1 Zabbix Server response for active checks (success) (Len=22)
+   - Cierre de conexión ordenado [FIN, ACK] con simetría total.
+
+B. Registro en Suricata IDS (eve.json):
+   - 2,983+ flujos individuales de telemetría Zabbix TCP 10051 registrados en tiempo real
+     entre 192.168.81.1 y 192.168.30.10.
+
+3. DICTAMEN DE LA PRUEBA
+--------------------------------------------------------------------------------
+ESTADO: PASS (SUPERADA CON ÉXITO)
+Conclusión: El contrato SEC-E1-MONITORING está plenamente verificado y en producción.
+El firewall perimetral E5 permite el cruce transparente y bidireccional del agente
+de telemetría de E3 hacia el servidor Zabbix de E1 con intercambio exitoso de datos
+y confirmación de active checks.
+================================================================================

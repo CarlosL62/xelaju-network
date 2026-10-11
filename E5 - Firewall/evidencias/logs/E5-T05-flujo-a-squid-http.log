@@ -1,0 +1,41 @@
+================================================================================
+PRUEBA E5-T05: FLUJO A — SALIDA WEB SQUID (E2) HACIA INTERNET VÍA E5 Y E3
+================================================================================
+Fecha y hora: Sun Oct 11 01:35:10 CST 2026 / 07:35:10 UTC
+Participantes: Estudiante 2 (E2 - Squid Proxy) -> E5 (Firewall) -> E3 (Multi-WAN) -> Internet
+Ruta de tránsito: enxc0eac367f731 (E2) -> eno2 (E3) -> WAN ISPs
+
+1. REQUISITO DEL ENUNCIADO (FLUJO A)
+--------------------------------------------------------------------------------
+Demostrar el egreso de tráfico HTTP del Proxy Squid (E2, IP 192.168.82.2) cruzando
+el Firewall Perimetral E5 hacia el router Multi-WAN (E3). Regla nftables evaluada:
+  iifname "enxc0eac367f731" oifname "eno2" ip saddr 192.168.82.2 tcp dport 80 accept
+y el retorno del tráfico con estado (conntrack established,related).
+
+2. COMANDOS Y PRUEBAS EJECUTADAS
+--------------------------------------------------------------------------------
+A. Intento HTTPS directo desde host E2 (Prueba de demarcación de política):
+   - Comando: curl -I -v https://neverssl.com (puerto 443)
+   - Resultado en E5: Captura tshark registró paquetes TCP SYN de 192.168.82.2:53920 hacia
+     34.149.117.202:443. E5 descartó (DROP) el tráfico porque la política restringe a E2
+     estrictamente a TCP 80 y DNS (el puerto 443 solo está permitido como bypass directo
+     para clientes LAN). El cliente retransmitió el SYN 10 veces demostrando la
+     efectividad del filtrado perimetral por defecto.
+
+B. Egreso HTTP puerto 80 hacia Internet:
+   - Comando en E2: curl -v -m 5 http://1.1.1.1:80/
+   - Resultado en E2: Código HTTP 200 OK con entrega completa del documento HTML
+     de Cloudflare a través de la cadena E2 -> E5 -> E3 -> WAN -> E3 -> E5 -> E2.
+
+C. Registro en Suricata IDS (eve.json):
+   - Flujos DNS concurrentes de tránsito de E1 hacia 1.1.1.1 UDP 53 registrados en tiempo
+     real en la interfaz enxc0eac367f731.
+
+3. DICTAMEN DE LA PRUEBA
+--------------------------------------------------------------------------------
+ESTADO: PASS (SUPERADA CON ÉXITO)
+Conclusión: Flujo A validado en el núcleo perimetral E5. El tráfico HTTP (puerto 80)
+egresa correctamente a través de la cadena E2 -> E5 -> E3 hacia Internet recibiendo
+HTTP 200 OK. La política de filtrado perimetral bloquea puertos no autorizados (TCP 443
+directo desde el host de E2) demostrando contención de seguridad perimetral.
+================================================================================

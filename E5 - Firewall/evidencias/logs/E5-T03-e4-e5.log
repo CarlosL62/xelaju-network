@@ -1,0 +1,51 @@
+================================================================================
+PRUEBA E5-T03: CONECTIVIDAD BIDIRECCIONAL E4 <-> E5 E INSPECCIÓN IDS
+================================================================================
+Fecha y hora: Sun Oct 11 01:20:10 CST 2026 / 07:20:10 UTC
+Participantes: Estudiante 4 (E4 - VPN/DMZ) <-> Estudiante 5 (E5 - Firewall/IDS)
+Enlace: 192.168.83.0/30
+- Interfaz E5: enxf8e43ba69459 (IP: 192.168.83.1/30, MAC: f8:e4:3b:a6:94:59)
+- Interfaz E4: (IP: 192.168.83.2/30, MAC: 98:e7:43:3d:89:2d)
+
+1. REQUISITO
+--------------------------------------------------------------------------------
+Validación de conectividad punto a punto L2/L3 entre el servidor WireGuard VPN /
+DMZ (E4) y el Firewall Perimetral (E5). Intercambio ICMP Echo Request/Reply bajo
+política de nftables y detección por el sensor Suricata IDS en enxf8e43ba69459
+(Cluster 97).
+
+2. COMANDOS EJECUTADOS
+--------------------------------------------------------------------------------
+- En E5: Captura tshark sobre enxf8e43ba69459 hacia:
+  evidence/E5-firewall-ids/session-E5-20261011/pcap/E5-T03-e4-e5-connectivity.pcap
+- En E4: ping -c 4 192.168.83.1
+- En E5 (salida previa): ping -c 2 -W 2 192.168.83.2 (0% pérdida, RTT avg = 1.888 ms)
+
+3. RESULTADOS OBSERVADOS EN E5
+--------------------------------------------------------------------------------
+A. Ráfaga ICMP y ARP recibida desde E4 (TShark PCAP):
+   - Paquete 1: 192.168.83.2 -> 192.168.83.1 ICMP Echo request (seq=1, id=0x0014)
+   - Paquete 2: 192.168.83.1 -> 192.168.83.2 ICMP Echo reply   (seq=1, id=0x0014)
+   - Paquete 3: 192.168.83.2 -> 192.168.83.1 ICMP Echo request (seq=2, id=0x0014)
+   - Paquete 4: 192.168.83.1 -> 192.168.83.2 ICMP Echo reply   (seq=2, id=0x0014)
+   - Paquete 5: 192.168.83.2 -> 192.168.83.1 ICMP Echo request (seq=3, id=0x0014)
+   - Paquete 6: 192.168.83.1 -> 192.168.83.2 ICMP Echo reply   (seq=3, id=0x0014)
+   - Paquete 7: 192.168.83.2 -> 192.168.83.1 ICMP Echo request (seq=4, id=0x0014)
+   - Paquete 8: 192.168.83.1 -> 192.168.83.2 ICMP Echo reply   (seq=4, id=0x0014)
+   - Paquete 9-10: ARP request/reply mutuo E5 <-> E4 (Dell_3d:89:2d)
+   - Paquetes transmitidos/recibidos: 4/4 (0% pérdida)
+   - RTT de respuesta en E5: < 0.1 ms
+
+B. Alertas de Suricata IDS (/var/log/suricata/fast.log):
+   10/11/2026-01:19:33.098594 [**] [1:1000001:1] ICMP Echo Request detectado [**] [Priority: 3] {ICMP} 192.168.83.2:8 -> 192.168.83.1:0
+   10/11/2026-01:19:34.100356 [**] [1:1000001:1] ICMP Echo Request detectado [**] [Priority: 3] {ICMP} 192.168.83.2:8 -> 192.168.83.1:0
+   10/11/2026-01:19:35.102161 [**] [1:1000001:1] ICMP Echo Request detectado [**] [Priority: 3] {ICMP} 192.168.83.2:8 -> 192.168.83.1:0
+   10/11/2026-01:19:36.104166 [**] [1:1000001:1] ICMP Echo Request detectado [**] [Priority: 3] {ICMP} 192.168.83.2:8 -> 192.168.83.1:0
+
+4. DICTAMEN DE LA PRUEBA
+--------------------------------------------------------------------------------
+ESTADO: PASS (SUPERADA CON ÉXITO)
+Conclusión: El enlace E4 <-> E5 está plenamente operativo y verificado en L2 y L3.
+Las reglas de nftables permiten la entrada de diagnóstico autorizada y Suricata
+inspecciona en tiempo real el tráfico en la interfaz enxf8e43ba69459.
+================================================================================

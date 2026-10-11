@@ -1,0 +1,53 @@
+================================================================================
+PRUEBA E5-T01: CONECTIVIDAD BIDIRECCIONAL E2 <-> E5 E INSPECCIÓN IDS
+================================================================================
+Fecha y hora: Sun Oct 11 01:14:50 CST 2026 / 07:14:50 UTC
+Participantes: Estudiante 2 (E2 - Squid Proxy) <-> Estudiante 5 (E5 - Firewall/IDS)
+Enlace: 192.168.82.0/30
+- Interfaz E5: enxc0eac367f731 (IP: 192.168.82.1/30, MAC: c0:ea:c3:67:f7:31)
+- Interfaz E2: (IP: 192.168.82.2/30, MAC: 00:e0:4c:53:44:58)
+
+1. REQUISITO
+--------------------------------------------------------------------------------
+Validación de conectividad punto a punto L2/L3 entre el Proxy Squid (E2) y el
+Firewall Perimetral (E5). Resolución ARP bidireccional, respuesta ICMP Echo
+Request/Reply y activación del sensor IDS Suricata (regla SID 1000001).
+
+2. COMANDOS EJECUTADOS
+--------------------------------------------------------------------------------
+- En E5: Captura tshark sobre enxc0eac367f731 hacia:
+  evidence/E5-firewall-ids/session-E5-20261011/pcap/E5-T01-e2-e5-connectivity.pcap
+- En E2: ping -c 4 192.168.82.1 (ejecutado dos ráfagas consecutivas)
+- En E5 (salida): ping -c 3 -W 2 192.168.82.2
+
+3. RESULTADOS OBSERVADOS EN E5
+--------------------------------------------------------------------------------
+A. Resolución ARP (TShark):
+   - RealtekSemic_53:44:58 -> Who has 192.168.82.1? Tell 192.168.82.2
+   - Worldpassind_7:f7:31 -> 192.168.82.1 is at c0:ea:c3:67:f7:31
+   - Estado de vecinos: 192.168.82.2 dev enxc0eac367f731 lladdr 00:e0:4c:53:44:58 REACHABLE
+
+B. Ráfaga ICMP recibida desde E2:
+   - Paquetes 11-20: 4 Echo Requests recibidos (seq=1..4), 4 Echo Replies emitidos.
+   - Paquetes 79-88: 4 Echo Requests recibidos (seq=1..4), 4 Echo Replies emitidos.
+   - Pérdida de paquetes: 0%
+   - RTT en E5: < 0.1 ms de tiempo de procesamiento interno
+
+C. Alertas de Suricata IDS (/var/log/suricata/fast.log):
+   10/11/2026-01:12:58.425859 [**] [1:1000001:1] ICMP Echo Request detectado [**] [Priority: 3] {ICMP} 192.168.82.2:8 -> 192.168.82.1:0
+   10/11/2026-01:12:59.427195 [**] [1:1000001:1] ICMP Echo Request detectado [**] [Priority: 3] {ICMP} 192.168.82.2:8 -> 192.168.82.1:0
+   10/11/2026-01:13:00.428695 [**] [1:1000001:1] ICMP Echo Request detectado [**] [Priority: 3] {ICMP} 192.168.82.2:8 -> 192.168.82.1:0
+   10/11/2026-01:13:01.430130 [**] [1:1000001:1] ICMP Echo Request detectado [**] [Priority: 3] {ICMP} 192.168.82.2:8 -> 192.168.82.1:0
+   10/11/2026-01:14:04.734688 [**] [1:1000001:1] ICMP Echo Request detectado [**] [Priority: 3] {ICMP} 192.168.82.2:8 -> 192.168.82.1:0
+   10/11/2026-01:14:05.736183 [**] [1:1000001:1] ICMP Echo Request detectado [**] [Priority: 3] {ICMP} 192.168.82.2:8 -> 192.168.82.1:0
+   10/11/2026-01:14:06.737845 [**] [1:1000001:1] ICMP Echo Request detectado [**] [Priority: 3] {ICMP} 192.168.82.2:8 -> 192.168.82.1:0
+   10/11/2026-01:14:07.739539 [**] [1:1000001:1] ICMP Echo Request detectado [**] [Priority: 3] {ICMP} 192.168.82.2:8 -> 192.168.82.1:0
+
+4. DICTAMEN DE LA PRUEBA
+--------------------------------------------------------------------------------
+ESTADO: PASS (SUPERADA CON ÉXITO)
+Conclusión: El enlace E2 <-> E5 está plenamente operativo y verificado en capa L1,
+L2 (ARP) y L3 (ICMP). La hipótesis de cruce de cables / puerto queda resuelta y
+confirmada con éxito. El motor Suricata IDS inspecciona activamente el enlace
+en la interfaz enxc0eac367f731.
+================================================================================
