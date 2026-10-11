@@ -1,0 +1,111 @@
+Integracion grupal, tercera ronda - failover real del Multi-WAN (E3) visto desde la LAN   (2026-10-04 23:05:29)
+
+##### 1. Cambios de estado que registro grupal/isp-activo.sh mientras E3 desconectaba y reconectaba cada ISP
+# (registro completo, una linea por ciclo: evidencias/consola/isp-activo-20261004.log)
+2026-10-04 22:38:30 INICIO intervalo=10s clases=8 ref_isp1='192.168.10.1 tcp 443' ref_isp2='192.168.30.1 tcp 443'
+2026-10-04 22:40:57 EVENTO estado NORMAL -> SOLO-ISP2 (lo que debia salir por ISP1 sale por ISP2: ISP1 caido (failover de E3))
+2026-10-04 22:42:15 EVENTO estado SOLO-ISP2 -> SIN-SALIDA (E3 contesta que no tiene ruta hacia Internet)
+2026-10-04 22:42:41 EVENTO estado SIN-SALIDA -> NORMAL (los dos ISP activos)
+2026-10-04 22:42:49 EVENTO estado NORMAL -> SOLO-ISP2 (lo que debia salir por ISP1 sale por ISP2: ISP1 caido (failover de E3))
+2026-10-04 22:43:25 EVENTO estado SOLO-ISP2 -> NORMAL (los dos ISP activos)
+2026-10-04 22:46:49 EVENTO estado NORMAL -> SOLO-ISP1 (lo que debia salir por ISP2 sale por ISP1: ISP2 caido (failover de E3))
+2026-10-04 22:47:07 EVENTO estado SOLO-ISP1 -> PARCIAL (una de las dos referencias no obtuvo respuesta)
+2026-10-04 22:47:22 EVENTO estado PARCIAL -> SIN-SALIDA (E3 contesta que no tiene ruta hacia Internet)
+2026-10-04 22:47:32 EVENTO estado SIN-SALIDA -> NORMAL (los dos ISP activos)
+2026-10-04 22:47:40 EVENTO estado NORMAL -> SOLO-ISP1 (lo que debia salir por ISP2 sale por ISP1: ISP2 caido (failover de E3))
+2026-10-04 22:48:02 EVENTO estado SOLO-ISP1 -> NORMAL (los dos ISP activos)
+2026-10-04 22:48:08 EVENTO estado NORMAL -> SOLO-ISP2 (lo que debia salir por ISP1 sale por ISP2: ISP1 caido (failover de E3))
+2026-10-04 22:48:27 EVENTO estado SOLO-ISP2 -> NORMAL (los dos ISP activos)
+2026-10-04 22:49:30 EVENTO estado NORMAL -> SOLO-ISP1 (lo que debia salir por ISP2 sale por ISP1: ISP2 caido (failover de E3))
+2026-10-04 22:50:09 EVENTO estado SOLO-ISP1 -> NORMAL (los dos ISP activos)
+2026-10-04 22:50:16 EVENTO estado NORMAL -> SOLO-ISP2 (lo que debia salir por ISP1 sale por ISP2: ISP1 caido (failover de E3))
+2026-10-04 23:01:45 FIN
+2026-10-04 23:02:15 INICIO intervalo=10s clases=8 ref_isp1='192.168.10.1 tcp 443' ref_isp2='192.168.30.1 tcp 443'
+
+# Ciclos en cada estado desde las 22:38:
+     44 NORMAL
+      1 PARCIAL
+      3 SIN-SALIDA
+      7 SOLO-ISP1
+    102 SOLO-ISP2
+# Conexiones reales (EXTREMO) por estado desde las 22:38:   estado  OK  FALLA
+#   NORMAL       339   13
+#   PARCIAL        0    8
+#   SIN-SALIDA     0   24
+#   SOLO-ISP1     56    0
+#   SOLO-ISP2    815    1
+
+##### 2. Ahora, con el ISP1 desconectado (estado SOLO-ISP2): todo sale por el celular
+traza TCP 443 desde 192.168.10.1  -> 192.168.84.1  192.168.82.1  192.168.81.1  10.234.88.51  
+traza TCP 443 desde 192.168.20.1  -> 192.168.84.1  192.168.82.1  192.168.81.1  *  
+traza TCP 443 desde 192.168.30.1  -> 192.168.84.1  192.168.82.1  192.168.81.1  10.234.88.51  
+traza TCP 443 desde 192.168.40.1  -> 192.168.84.1  192.168.82.1  192.168.81.1  10.234.88.51  
+pc-user01: HTTPS 1.1.1.1 301 | DNS UDP 8.8.8.8 104.20.23.154 | HTTP por Squid 200
+zbx-srv01: HTTPS 1.1.1.1 301 | DNS UDP 8.8.8.8 104.20.23.154 | HTTP por Squid 200
+
+##### 3. Matriz de pruebas con el ISP1 desconectado
+Resumen 'admin': 12 casos, 12 PASS, 0 FAIL, 0 omitidas
+Resumen 'users': 15 casos, 15 PASS, 0 FAIL, 0 omitidas
+Resumen 'users2': 4 casos, 4 PASS, 0 FAIL, 0 omitidas
+Resumen 'intruso': 11 casos, 11 PASS, 0 FAIL, 0 omitidas
+Resumen 'mgmt': 10 casos, 10 PASS, 0 FAIL, 0 omitidas
+Resumen 'zbx': 11 casos, 11 PASS, 0 FAIL, 0 omitidas
+# perfiles g-* (matriz grupal):
+GL1   PASS  OK             OK             ping 192.168.84.1 - [R1] ADMIN -> vecino Squid
+GL2   FAIL  200            RECHAZADO      http://172.16.10.10:8081/ - [R1][E5] ADMIN -> WEB01 de la DMZ por E2
+GL5   PASS  BLOQUEADO      BLOQUEADO      http://172.16.10.10:8081/ - [R1] GESTION solo sale a web y DNS (80, 
+GL3   FAIL  200            RECHAZADO      http://172.16.10.10:8081/ - [R1][E5] USUARIOS -> WEB01 de la DMZ
+GL4   PASS  BLOQUEADO      BLOQUEADO      tcp 172.16.10.10:22 - [E5] LAN -> DMZ: solo el puerto de WEB01
+GL6   FAIL  200            RECHAZADO      http://172.16.10.10:8081/ - [R1][E5] SERVIDORES -> WEB01 de la DMZ
+
+##### 4. Squid (E2) desde ADMIN y USUARIOS
+## pc-admin01 (192.168.10.50/24)
+HTTPS directo https://1.1.1.1            : 301   (esperado 301)
+HTTP permitido http://example.com         : 200   via='1.1 debian (squid/6.13)'
+HTTP http://www.facebook.com (lista admin+users) : 403
+HTTP http://www.youtube.com  (solo lista users)  : 301
+HTTP http://www.ilovepdf.com (solo lista admin)  : 403
+HTTPS https://www.facebook.com (no pasa por Squid): 200
+Puertos de E2 192.168.84.1: 3128 abierto | 3129 abierto | 8080 abierto
+Proxy explicito 3128 -> http://example.com : 200
+Portal de logs http://192.168.84.1:8080/   : 200
+
+## pc-user01 (192.168.20.10/24)
+HTTPS directo https://1.1.1.1            : 301   (esperado 301)
+HTTP permitido http://example.com         : 200   via='1.1 debian (squid/6.13)'
+HTTP http://www.facebook.com (lista admin+users) : 403
+HTTP http://www.youtube.com  (solo lista users)  : 403
+HTTP http://www.ilovepdf.com (solo lista admin)  : 301
+HTTPS https://www.facebook.com (no pasa por Squid): 200
+Puertos de E2 192.168.84.1: 3128 abierto | 3129 abierto | 8080 abierto
+Proxy explicito 3128 -> http://example.com : 200
+Portal de logs http://192.168.84.1:8080/   : 403
+
+##### 5. LAN -> WEB01 de la DMZ (172.16.10.10:8081), con origen 192.168.10.1, capturado en up-squid de R1
+curl: (7) Failed to connect to 172.16.10.10 port 8081 after 3081 ms: Could not connect to server
+23:05:39.996886 IP 192.168.10.1.32882 > 172.16.10.10.8081: Flags [S], seq 3182533270, win 64240, options [mss 
+23:05:41.013113 IP 192.168.10.1.32882 > 172.16.10.10.8081: Flags [S], seq 3182533270, win 64240, options [mss 
+23:05:42.037121 IP 192.168.10.1.32882 > 172.16.10.10.8081: Flags [S], seq 3182533270, win 64240, options [mss 
+23:05:43.061150 IP 192.168.10.1.32882 > 172.16.10.10.8081: Flags [S], seq 3182533270, win 64240, options [mss 
+23:05:43.077757 IP 192.168.82.1 > 192.168.10.1: ICMP host 172.16.10.10 unreachable, length 68
+23:05:43.077814 IP 192.168.82.1 > 192.168.10.1: ICMP host 172.16.10.10 unreachable, length 68
+
+##### 6. Zabbix: datos del Multi-WAN y paquetes llegados a R1 desde los enlaces de transito hacia el 10051
+Router-MultiWAN-E3: muestras recibidas = 0
+counter packets 1 bytes 60
+
+##### 7. Mas tarde (23:24:53): LAN -> WEB01 ya responde
+pc-admin01  -> http://172.16.10.10:8081/ : 200 (curl rc=0)
+pc-user01   -> http://172.16.10.10:8081/ : 200 (curl rc=0)
+zbx-srv01   -> http://172.16.10.10:8081/ : 200 (curl rc=0)
+pc-mgmt01   -> http://172.16.10.10:8081/ : 000 (curl rc=28)
+# PC-MGMT01 no llega porque R1 solo deja salir a GESTION por 53, 80 y 443 (caso GL5). En R1:
+2026-10-04T23:24:59.724439-06:00 r1-lan kernel: ACL-DENY MGMT->? IN=trunk0.40 OUT=up-squid MAC=52:54:00:01:00:00:52:54:00:40:00:10:08:00 SRC=192.168.4
+# Lo que sirve WEB01 y el camino (traceroute TCP 8081 desde la VLAN 10):
+HTTP/1.1 200 OK
+Server: Apache/2.4.68 (Debian)
+<title>WEB01 - XelajuNetwork DMZ</title>
+ 1  192.168.84.1  0.800 ms
+ 2  192.168.82.1  1.807 ms
+ 3  172.16.10.10  3.546 ms
+# Perfiles g-* de la matriz grupal a las 23:24: GL1 a GL6 PASS (evidencias/pruebas/g-*-20261004-232*.txt)

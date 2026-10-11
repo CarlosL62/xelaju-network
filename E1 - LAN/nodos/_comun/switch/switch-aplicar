@@ -1,0 +1,120 @@
+#!/bin/bash
+# =============================================================================
+# switch-aplicar - convierte esta VM Debian en un switch 802.1Q
+#
+# Lee /etc/xelaju/switch.conf (nombre, VLAN, IP de gestion) y
+# /etc/xelaju/puertos.conf (un puerto por linea) y configura un bridge Linux
+# con filtrado de VLAN. Lo ejecuta xelaju-switch.service en cada arranque y se
+# puede repetir a mano: siempre parte de cero y deja lo que dicen los archivos.
+#
+# Equivalencias con Cisco IOS:
+#   bridge vlan add dev pN vid V pvid untagged   switchport mode access / switchport access vlan V
+#   bridge vlan add dev pN vid V                 switchport trunk allowed vlan add V
+#   vlan_default_pvid 0                          no existe la VLAN 1 por omision
+#   br0.<gestion> con IP                         interface vlan <gestion> + ip address
+# =============================================================================
+set -euo pipefail
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+ETC="${XJ_ETC:-/etc/xelaju}"
+BR=br0
+AQUI="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+morir() { echo "switch-aplicar: ERROR: $*" >&2; exit 1; }
+
+if [ "$(id -u)" -ne 0 ]; then morir "hay que ejecutarlo como root"; fi
+[ -r "$ETC/switch.conf" ]  || morir "falta $ETC/switch.conf"
+[ -r "$ETC/puertos.conf" ] || morir "falta $ETC/puertos.conf"
+# shellcheck source=/dev/null
+. "$ETC/switch.conf"        # NOMBRE, VLANS, VLAN_GESTION, IP_GESTION, GW_GESTION
+
+# vlan_definida <id>: la VLAN debe estar declarada en VLANS ("10:ADMIN 20:USUARIOS ...")
+vlan_definida() {
+    case " $VLANS " in
+        *" $1:"*) return 0 ;;
+        *)        return 1 ;;
+    esac
+}
+
+# ---- 1. El bridge ------------------------------------------------------------
+# vlan_filtering 1     el bridge mira la etiqueta 802.1Q y separa las VLAN
+# vlan_default_pvid 0  un puerto nuevo NO entra en ninguna VLAN (sin VLAN 1)
+# stp_state 0          sin Spanning Tree: la topologia no tiene lazos
+if [ ! -d "/sys/class/net/$BR" ]; then ip link add name "$BR" type bridge; fi
+ip link set dev "$BR" type bridge vlan_filtering 1 vlan_default_pvid 0 stp_state 0
+
+# ---- 2. Los puertos ------------------------------------------------------------
+ESPEJOS=()
+PRIMERO=""
+while read -r puerto modo vlans _; do
+    # udev puede tardar un instante en dar su nombre a la tarjeta al arrancar
+    for _ in $(seq 1 20); do
+        if [ -d "/sys/class/net/$puerto" ]; then break; fi
+        sleep 0.5
+    done
+    if [ ! -d "/sys/class/net/$puerto" ]; then
+        echo "switch-aplicar: AVISO: no existe el puerto $puerto" >&2
+        continue
+    fi
+    if [ -z "$PRIMERO" ]; then PRIMERO="$puerto"; fi
+
+    # Punto de partida limpio: sacarlo del bridge borra todas sus VLAN
+    ip link set dev "$puerto" nomaster
+    tc qdisc del dev "$puerto" clsact 2>/dev/null || true
+    ip addr flush dev "$puerto"
+
+    case "$modo" in
+        access)
+            vlan_definida "$vlans" || morir "$puerto: la VLAN $vlans no esta declarada en switch.conf"
+            ip link set dev "$puerto" master "$BR"
+            # pvid: lo que entra sin etiqueta pertenece a esta VLAN
+            # untagged: lo que sale por aqui va sin etiqueta
+            bridge vlan add dev "$puerto" vid "$vlans" pvid untagged
+            ;;
+        trunk)
+            ip link set dev "$puerto" master "$BR"
+            for v in ${vlans//,/ }; do
+                vlan_definida "$v" || morir "$puerto: la VLAN $v no esta declarada en switch.conf"
+                bridge vlan add dev "$puerto" vid "$v"       # etiquetada en los dos sentidos
+            done
+            ;;
+        span)
+            ESPEJOS+=("$vlans:$puerto")      # origen:destino; se activa al final
+            ;;
+        apagado)
+            ip link set dev "$puerto" down
+            continue
+            ;;
+        *)
+            morir "$puerto: modo desconocido '$modo' (access, trunk, span o apagado)"
+            ;;
+    esac
+    ip link set dev "$puerto" up
+done < <(sed -e 's/#.*//' "$ETC/puertos.conf" | awk 'NF >= 2')
+
+# MAC del switch fija (la del primer puerto): si no, el bridge toma la menor
+# de sus puertos y podria cambiar al conectar o quitar uno.
+if [ -n "$PRIMERO" ]; then
+    ip link set dev "$BR" address "$(cat "/sys/class/net/$PRIMERO/address")"
+fi
+ip link set dev "$BR" up
+
+# ---- 3. Gestion del switch ----------------------------------------------------
+# El propio switch es un equipo mas de la VLAN de gestion: el bridge recibe
+# esa VLAN ("self") y la IP vive en la subinterfaz br0.<vlan>.
+GEST="$BR.$VLAN_GESTION"
+bridge vlan add dev "$BR" vid "$VLAN_GESTION" self
+if [ ! -d "/sys/class/net/$GEST" ]; then
+    ip link add link "$BR" name "$GEST" type vlan id "$VLAN_GESTION"
+fi
+ip addr flush dev "$GEST"
+ip addr add "$IP_GESTION" dev "$GEST"
+ip link set dev "$GEST" up
+ip route replace default via "$GW_GESTION"
+
+# ---- 4. Puertos espejo (SPAN) --------------------------------------------------
+for e in "${ESPEJOS[@]}"; do
+    "$AQUI/switch-span" activar "${e%%:*}" "${e##*:}"
+done
+
+echo "switch-aplicar: $NOMBRE configurado (gestion $IP_GESTION en $GEST)"

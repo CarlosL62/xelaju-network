@@ -1,0 +1,8 @@
+# /etc/network/interfaces - switches (SW-CORE01 y SW-ACC01)
+#
+# ifupdown solo gestiona la interfaz de bucle local. Los puertos p0..pN, el
+# bridge br0 y la IP de gestion (br0.40) los configura switch-aplicar a partir
+# de /etc/xelaju/switch.conf y /etc/xelaju/puertos.conf (xelaju-switch.service).
+
+auto lo
+iface lo inet loopback

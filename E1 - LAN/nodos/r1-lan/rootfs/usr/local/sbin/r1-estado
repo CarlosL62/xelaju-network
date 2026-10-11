@@ -1,0 +1,63 @@
+#!/bin/bash
+# =============================================================================
+# r1-estado - resumen de R1-LAN en una pantalla (pensado para las capturas)
+# Reune lo que en Cisco serian: show ip interface brief, show ip route,
+# show vlans, show access-lists y show ip dhcp binding.
+# =============================================================================
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+if [ "$(id -u)" -ne 0 ]; then echo "ERROR: ejecutar como root: sudo r1-estado" >&2; exit 1; fi
+
+titulo() { printf '\n\033[1;34m--- %s ---\033[0m\n' "$*"; }
+
+echo "R1-LAN | $(date '+%F %T') | modo: $(r1-modo nombre 2>/dev/null || echo '?')"
+
+titulo "Interfaces y direcciones (ip -br addr)"
+ip -br addr show | grep -v '^lo '
+
+titulo "VLAN de cada subinterfaz (802.1Q)"
+for i in /sys/class/net/trunk0.*; do
+    [ -e "$i" ] || continue
+    i="$(basename "$i")"
+    printf '    %-10s %s\n' "$i" "$(ip -d link show dev "$i" | grep -o 'vlan protocol 802.1Q id [0-9]*')"
+done
+
+titulo "Tabla de rutas (ip route)"
+ip route show
+
+titulo "Reenvio y filtro de camino inverso"
+sysctl net.ipv4.ip_forward net.ipv4.conf.all.rp_filter
+
+titulo "ACL: paquetes contados por cadena (nft list table inet xelaju)"
+nft list table inet xelaju 2>/dev/null | awk '
+    $1 == "chain" { c = $2 }
+    /counter packets/ {
+        for (i = 1; i <= NF; i++) if ($i == "packets") n = $(i + 1)
+        if (!(c in visto)) { visto[c] = 1; orden[++k] = c }
+        reglas[c]++
+        if ($NF == "drop") bloq[c] += n; else perm[c] += n
+    }
+    END {
+        if (k == 0) { print "    (la tabla inet xelaju no esta cargada)"; exit }
+        printf "    %-16s %7s %12s %12s\n", "CADENA", "REGLAS", "PERMITIDOS", "BLOQUEADOS"
+        for (j = 1; j <= k; j++) {
+            c = orden[j]
+            printf "    %-16s %7d %12d %12d\n", c, reglas[c], perm[c], bloq[c]
+        }
+    }'
+
+titulo "DHCP restringido de la VLAN 20"
+printf '    servicio isc-dhcp-server: %s\n' "$(systemctl is-active isc-dhcp-server 2>/dev/null)"
+printf '    escucha en: %s\n' "$(grep '^INTERFACESv4' /etc/default/isc-dhcp-server 2>/dev/null)"
+xelaju-dhcp listar 2>/dev/null | sed 's/^/    /'
+
+titulo "Ultimos eventos DHCP (/var/log/xelaju/dhcpd.log)"
+tail -n 6 /var/log/xelaju/dhcpd.log 2>/dev/null | cut -c1-150 || true
+
+titulo "Ultimos bloqueos de las ACL (/var/log/xelaju/acl-lan.log)"
+grep 'ACL-DENY' /var/log/xelaju/acl-lan.log 2>/dev/null | tail -n 6 | cut -c1-170
+
+titulo "Servicios"
+for s in nftables isc-dhcp-server rsyslog ssh zabbix-agent2; do
+    printf '    %-18s %s\n' "$s" "$(systemctl is-active "$s" 2>/dev/null)"
+done

@@ -1,0 +1,29 @@
+
+[1;34m==> Base comun del nodo sw-acc01[0m
+    [ OK ] machine-id y llaves SSH propias de sw-acc01
+    [ OK ] nombre de equipo: sw-acc01
+    [ OK ] interfaz enp0s5 -> p0 (52:54:00:03:00:00)
+    [ OK ] interfaz enp0s6 -> p1 (52:54:00:03:00:01)
+    [ OK ] interfaz enp0s7 -> p2 (52:54:00:03:00:02)
+    [ OK ] interfaz enp0s8 -> p3 (52:54:00:03:00:03)
+    [ OK ] interfaz enp0s9 -> p4 (52:54:00:03:00:04)
+    [ OK ] archivos .link escritos; actualizando initramfs (tarda unos segundos)
+
+[1;34m==> Switch: tabla de puertos y VLAN[0m
+switch-aplicar: SW-ACC01 configurado (gestion 192.168.40.3/24 en br0.40)
+    [ OK ] xelaju-switch.service activo (se aplica en cada arranque)
+SW-ACC01# show vlan brief
+VLAN  NOMBRE       ESTADO   PUERTOS DE ACCESO
+10    ADMIN        activa   p1
+20    USUARIOS     activa   p2, p3, p4
+40    GESTION      activa   -
+(no existe VLAN 1 por omision: vlan_default_pvid 0)
+SW-ACC01# show interfaces trunk
+PUERTO   MODO      ENCAPSULADO  VLAN NATIVA  VLAN PERMITIDAS
+p0       troncal   802.1Q       ninguna      10,20,40
+
+[1;34m==> Agente de Zabbix (modo activo, autorregistro 'xelaju-lan')[0m
+    [ OK ] zabbix-agent2 activo: Hostname=SW-ACC01 HostMetadata=xelaju-lan ServerActive=192.168.30.10
+
+[1;34m==> Listo: SW-ACC01. Ver estado: switch-mostrar vlan|trunk|mac|puertos|config[0m
+    Para repetir o restaurar este nodo, vuelve a ejecutar este mismo script.

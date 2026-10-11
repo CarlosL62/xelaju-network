@@ -1,0 +1,14 @@
+# /etc/network/interfaces - PC-INTRUSO (conectado a la VLAN 20, MAC NO registrada)
+# Conectado a SW-ACC01 p4. La interfaz se levanta SIN direccion: las pruebas
+# le piden IP por DHCP (no la obtiene) o le ponen una a mano (queda bloqueado).
+#
+#   sudo dhclient -v lan0                                  # DHCPDISCOVER sin respuesta
+#   sudo ip addr add 192.168.20.99/24 dev lan0             # IP puesta a mano
+#   sudo ip route add default via 192.168.20.1
+
+auto lo
+iface lo inet loopback
+
+allow-hotplug lan0
+iface lan0 inet manual
+    up ip link set dev $IFACE up

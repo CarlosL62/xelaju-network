@@ -1,0 +1,23 @@
+# ---- XelajuNetwork: equipos de la LAN (nodos/_comun/hosts.xelaju) ----
+# Puertas de enlace de R1-LAN (una por VLAN)
+192.168.10.1    gw-admin
+192.168.20.1    gw-usuarios
+192.168.30.1    gw-servidores
+192.168.40.1    gw-gestion r1-lan
+
+# VLAN 10 ADMIN
+192.168.10.50   pc-admin01
+
+# VLAN 20 USUARIOS (IP fija por reserva DHCP)
+192.168.20.10   pc-user01
+192.168.20.11   pc-user02
+192.168.20.12   pc-user03
+
+# VLAN 30 SERVIDORES
+192.168.30.10   zbx-srv01 zabbix
+192.168.30.20   srv-intra01 intranet intranet.xelajunetwork.lan
+
+# VLAN 40 GESTION
+192.168.40.2    sw-core01
+192.168.40.3    sw-acc01
+192.168.40.10   pc-mgmt01

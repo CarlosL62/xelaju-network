@@ -1,0 +1,123 @@
+<mxfile host="app.diagrams.net" agent="XelajuNetwork Estudiante 1" version="24.7.17">
+  <diagram id="xelaju-lan-est1" name="LAN - Estudiante 1">
+    <mxGraphModel dx="1422" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="titulo" value="&lt;b&gt;XelajuNetwork — LAN del Estudiante 1&lt;/b&gt;&lt;br&gt;VLAN, troncales 802.1Q, router inter-VLAN, ACL, DHCP restringido y Zabbix" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=11;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="30" y="15" width="760" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="squid" value="&lt;b&gt;Squid&lt;/b&gt; (E2)&lt;br&gt;192.168.84.1/30&lt;br&gt;&lt;i&gt;modo grupal: único enlace con el grupo&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="250" y="80" width="200" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="nat" value="&lt;b&gt;NAT de QEMU&lt;/b&gt; 10.0.2.2&lt;br&gt;salida temporal a Internet&lt;br&gt;&lt;i&gt;modo individual&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="490" y="80" width="220" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="grupo" value="&lt;b&gt;Resto del grupo&lt;/b&gt; (detrás de Squid)&lt;br&gt;E5 Firewall + IDS → E3 Multi-WAN → Internet&lt;br&gt;E5 → E4 VPN (WireGuard) y DMZ" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="750" y="80" width="300" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="r1" value="&lt;b&gt;R1-LAN&lt;/b&gt; — router inter-VLAN&lt;br&gt;trunk0.10 = 192.168.10.1 · trunk0.20 = 192.168.20.1&lt;br&gt;trunk0.30 = 192.168.30.1 · trunk0.40 = 192.168.40.1&lt;br&gt;ACL (nftables) · DHCP solo en VLAN 20&lt;br&gt;up-squid 192.168.84.2 (grupal) · tmp-nat 10.0.2.15 (individual)" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="440" y="200" width="320" height="115" as="geometry"/>
+        </mxCell>
+        <mxCell id="core" value="&lt;b&gt;SW-CORE01&lt;/b&gt; — switch de núcleo&lt;br&gt;gestión br0.40 = 192.168.40.2&lt;br&gt;p0 p1 troncales · p2 p3 VLAN 30 · p4 VLAN 40 · p5 SPAN" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="440" y="385" width="320" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="acc" value="&lt;b&gt;SW-ACC01&lt;/b&gt; — switch de acceso&lt;br&gt;gestión br0.40 = 192.168.40.3&lt;br&gt;p0 troncal · p1 VLAN 10 · p2 p3 p4 VLAN 20" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="60" y="520" width="300" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="zbx" value="&lt;b&gt;ZBX-SRV01&lt;/b&gt;&lt;br&gt;192.168.30.10&lt;br&gt;Zabbix 7.0 LTS&lt;br&gt;web solo desde ADMIN" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="430" y="540" width="150" height="75" as="geometry"/>
+        </mxCell>
+        <mxCell id="intra" value="&lt;b&gt;SRV-INTRA01&lt;/b&gt;&lt;br&gt;192.168.30.20&lt;br&gt;Intranet&lt;br&gt;HTTP 80 / HTTPS 443" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="600" y="540" width="150" height="75" as="geometry"/>
+        </mxCell>
+        <mxCell id="mgmt" value="&lt;b&gt;PC-MGMT01&lt;/b&gt;&lt;br&gt;192.168.40.10&lt;br&gt;estación de gestión" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="770" y="540" width="150" height="75" as="geometry"/>
+        </mxCell>
+        <mxCell id="span" value="&lt;b&gt;Captura&lt;/b&gt; (Wireshark)&lt;br&gt;recibe copia de p0" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="940" y="400" width="170" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="admin" value="&lt;b&gt;PC-ADMIN01&lt;/b&gt;&lt;br&gt;192.168.10.50&lt;br&gt;IP manual&lt;br&gt;con escritorio" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="20" y="680" width="150" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="user1" value="&lt;b&gt;PC-USER01&lt;/b&gt;&lt;br&gt;192.168.20.10 (DHCP)&lt;br&gt;aa:bb:cc:dd:ee:01&lt;br&gt;con escritorio" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="185" y="680" width="150" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="user2" value="&lt;b&gt;PC-USER02&lt;/b&gt;&lt;br&gt;192.168.20.11 (DHCP)&lt;br&gt;aa:bb:cc:dd:ee:02" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="350" y="680" width="150" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="intruso" value="&lt;b&gt;PC-INTRUSO&lt;/b&gt;&lt;br&gt;sin dirección&lt;br&gt;aa:bb:cc:dd:ee:99&lt;br&gt;MAC no registrada" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#f8cecc;strokeColor=#b85450;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="515" y="680" width="160" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-squid" value="up-squid · 192.168.84.0/30" style="endArrow=none;html=1;fontSize=10;labelBackgroundColor=#ffffff;strokeWidth=2;strokeColor=#999999;dashed=1;" edge="1" parent="1" source="r1" target="squid">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-nat" value="tmp-nat · 10.0.2.0/24" style="endArrow=none;html=1;fontSize=10;labelBackgroundColor=#ffffff;strokeWidth=2;strokeColor=#999999;dashed=1;" edge="1" parent="1" source="r1" target="nat">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-grupo" value="E2 ↔ E5 · 192.168.82.0/30" style="endArrow=none;html=1;fontSize=10;labelBackgroundColor=#ffffff;strokeWidth=2;strokeColor=#999999;dashed=1;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=0;entryX=0.5;entryY=0;" edge="1" parent="1" source="squid" target="grupo">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="350" y="60"/>
+              <mxPoint x="900" y="60"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-c01" value="c01 · troncal 802.1Q · VLAN 10, 20, 30, 40&lt;br&gt;trunk0 ↔ p0" style="endArrow=none;html=1;fontSize=10;labelBackgroundColor=#ffffff;strokeWidth=4;strokeColor=#6c8ebf;" edge="1" parent="1" source="r1" target="core">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-c02" value="c02 · troncal 802.1Q · VLAN 10, 20, 40&lt;br&gt;(VLAN 30 podada) · p1 ↔ p0" style="endArrow=none;html=1;fontSize=10;labelBackgroundColor=#ffffff;strokeWidth=4;strokeColor=#6c8ebf;" edge="1" parent="1" source="core" target="acc">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-c03" value="p2 · VLAN 30" style="endArrow=none;html=1;fontSize=10;labelBackgroundColor=#ffffff;strokeWidth=2;strokeColor=#555555;" edge="1" parent="1" source="core" target="zbx">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-c04" value="p3 · VLAN 30" style="endArrow=none;html=1;fontSize=10;labelBackgroundColor=#ffffff;strokeWidth=2;strokeColor=#555555;" edge="1" parent="1" source="core" target="intra">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-c05" value="p4 · VLAN 40" style="endArrow=none;html=1;fontSize=10;labelBackgroundColor=#ffffff;strokeWidth=2;strokeColor=#555555;" edge="1" parent="1" source="core" target="mgmt">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-span" value="p5 · SPAN" style="endArrow=none;html=1;fontSize=10;labelBackgroundColor=#ffffff;strokeWidth=2;strokeColor=#999999;dashed=1;" edge="1" parent="1" source="core" target="span">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-c06" value="p1 · VLAN 10" style="endArrow=none;html=1;fontSize=10;labelBackgroundColor=#ffffff;strokeWidth=2;strokeColor=#555555;" edge="1" parent="1" source="acc" target="admin">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-c07" value="p2 · VLAN 20" style="endArrow=none;html=1;fontSize=10;labelBackgroundColor=#ffffff;strokeWidth=2;strokeColor=#555555;" edge="1" parent="1" source="acc" target="user1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-c08" value="p3 · VLAN 20" style="endArrow=none;html=1;fontSize=10;labelBackgroundColor=#ffffff;strokeWidth=2;strokeColor=#555555;" edge="1" parent="1" source="acc" target="user2">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-c09" value="p4 · VLAN 20" style="endArrow=none;html=1;fontSize=10;labelBackgroundColor=#ffffff;strokeWidth=2;strokeColor=#555555;" edge="1" parent="1" source="acc" target="intruso">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="ley-t" value="&lt;b&gt;Leyenda&lt;/b&gt;" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=11;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="940" y="170" width="200" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="ley-az" value="Infraestructura del Estudiante 1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="940" y="195" width="200" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="ley-10" value="VLAN 10 ADMIN · 192.168.10.0/24" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="940" y="226" width="200" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="ley-20" value="VLAN 20 USUARIOS · 192.168.20.0/24" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="940" y="257" width="200" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="ley-30" value="VLAN 30 SERVIDORES · 192.168.30.0/24" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="940" y="288" width="200" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="ley-40" value="VLAN 40 GESTIÓN · 192.168.40.0/24" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="940" y="319" width="200" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="ley-ex" value="Otros estudiantes / externo" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="940" y="350" width="200" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="notas" value="&lt;b&gt;Notas&lt;/b&gt;&lt;br&gt;• Línea gruesa azul: troncal 802.1Q (tramas etiquetadas). Línea fina: puerto de acceso (sin etiqueta).&lt;br&gt;• Todo el tráfico entre VLAN pasa por R1-LAN, donde se aplican las ACL.&lt;br&gt;• DHCP solo en la VLAN 20 y solo para MAC registradas en usuarios.csv.&lt;br&gt;• En modo grupal R1 no hace NAT (el único NAT es el de E3) y solo se une al grupo por Squid: VPN y DMZ llegan por E5 → E2 (ADR-0001).&lt;br&gt;• Direcciones compartidas: core/ADDRESSING.yaml.&lt;br&gt;• No existe VLAN 1 ni VLAN nativa." style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="720" y="640" width="420" height="160" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

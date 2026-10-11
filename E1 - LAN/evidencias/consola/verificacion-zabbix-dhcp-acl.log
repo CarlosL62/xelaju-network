@@ -1,0 +1,39 @@
+##### Web de Zabbix: solo la VLAN ADMIN
+pc-admin01  -> 200
+pc-user01   -> sin respuesta (tiempo agotado)
+pc-mgmt01   -> sin respuesta (tiempo agotado)
+zbx-srv01   -> 403
+
+##### xelaju-dhcp verificar (R1)
+Verificacion del DHCP restringido
+  [ OK ] CSV valido
+  [ OK ] reservas de dhcpd al dia (3)
+  [ OK ] archivo del conjunto nftables al dia
+  [ OK ] ACL en memoria: 3 par(es) MAC.IP
+  [ OK ] isc-dhcp-server activo
+  [ OK ] dhcpd escucha solo en trunk0.20 (VLAN 20)
+  [ OK ] sin 'range': no hay direcciones dinamicas
+
+##### DHCP: registro de R1 (concesiones y rechazo al intruso)
+dhcpd[3902]: DHCPDISCOVER from aa:bb:cc:dd:ee:01 via trunk0.20
+dhcpd[3902]: DHCPOFFER on 192.168.20.10 to aa:bb:cc:dd:ee:01 via trunk0.20
+dhcpd[3902]: DHCPREQUEST for 192.168.20.10 (192.168.20.1) from aa:bb:cc:dd:ee:01 via trunk0.20
+dhcpd[3902]: DHCPACK on 192.168.20.10 to aa:bb:cc:dd:ee:01 via trunk0.20
+dhcpd[3902]: DHCPDISCOVER from aa:bb:cc:dd:ee:02 via trunk0.20
+dhcpd[3902]: DHCPOFFER on 192.168.20.11 to aa:bb:cc:dd:ee:02 via trunk0.20
+dhcpd[3902]: DHCPREQUEST for 192.168.20.11 (192.168.20.1) from aa:bb:cc:dd:ee:02 via trunk0.20
+dhcpd[3902]: DHCPACK on 192.168.20.11 to aa:bb:cc:dd:ee:02 via trunk0.20
+dhcpd[3902]: DHCPDISCOVER from aa:bb:cc:dd:ee:99 via trunk0.20: network 192.168.20.0/24: no free leases
+
+##### ACL: ultimos bloqueos registrados
+2026-10-03T18:24:41.146138-06:00 r1-lan kernel: ACL-DENY MGMT->ZBXWEB IN=trunk0.40 OUT=trunk0.30 MAC=52:54:00:01:00:00:52:54:00:40:00:10:08:00 SRC=192.168.40.10 DST=192.168.30.10 LEN=60 TOS=0x00 PREC=0x00 TTL=6
+2026-10-03T18:24:42.168150-06:00 r1-lan kernel: ACL-DENY MGMT->ZBXWEB IN=trunk0.40 OUT=trunk0.30 MAC=52:54:00:01:00:00:52:54:00:40:00:10:08:00 SRC=192.168.40.10 DST=192.168.30.10 LEN=60 TOS=0x00 PREC=0x00 TTL=6
+2026-10-03T18:24:43.192355-06:00 r1-lan kernel: ACL-DENY MGMT->ZBXWEB IN=trunk0.40 OUT=trunk0.30 MAC=52:54:00:01:00:00:52:54:00:40:00:10:08:00 SRC=192.168.40.10 DST=192.168.30.10 LEN=60 TOS=0x00 PREC=0x00 TTL=6
+2026-10-03T18:24:44.216326-06:00 r1-lan kernel: ACL-DENY MGMT->ZBXWEB IN=trunk0.40 OUT=trunk0.30 MAC=52:54:00:01:00:00:52:54:00:40:00:10:08:00 SRC=192.168.40.10 DST=192.168.30.10 LEN=60 TOS=0x00 PREC=0x00 TTL=6
+2026-10-03T18:24:45.240444-06:00 r1-lan kernel: ACL-DENY MGMT->ZBXWEB IN=trunk0.40 OUT=trunk0.30 MAC=52:54:00:01:00:00:52:54:00:40:00:10:08:00 SRC=192.168.40.10 DST=192.168.30.10 LEN=60 TOS=0x00 PREC=0x00 TTL=6
+2026-10-03T18:24:46.264388-06:00 r1-lan kernel: ACL-DENY MGMT->ZBXWEB IN=trunk0.40 OUT=trunk0.30 MAC=52:54:00:01:00:00:52:54:00:40:00:10:08:00 SRC=192.168.40.10 DST=192.168.30.10 LEN=60 TOS=0x00 PREC=0x00 TTL=6
+
+total 36
+-rw-r----- 1 root adm  28547 Oct  3 18:24 acl-lan.log
+-rw-r----- 1 root adm   3486 Oct  3 18:22 dhcpd.log
+-rw-r--r-- 1 root root    52 Oct  3 18:16 registro-dhcp.log

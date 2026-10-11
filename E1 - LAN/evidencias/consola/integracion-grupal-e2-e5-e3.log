@@ -1,0 +1,89 @@
+Integracion grupal - enlace real E1 <-> E2 <-> E5 <-> E3   (2026-10-04 01:13:57)
+
+##### Host: puente entre la tarjeta fisica y la VM de R1 (uplinks-host.sh estado)
+Enlace grupal creado (modo fisico)
+  br-xj-squid: enp7s0 tap-r1-squid 
+  tap-r1-squid: up (en uso por la VM solo si figura 'up')
+  Tarjetas retiradas de NetworkManager: enp7s0
+  Regla de cortafuegos agregada en la cadena: FORWARD
+
+##### R1-LAN: modo, enlace y rutas
+Modo actual de R1-LAN: grupal
+Enlaces de salida:
+    up-squid         UP             192.168.84.2/30 
+Ruta por defecto:
+    default via 192.168.84.1 dev up-squid onlink 
+NAT en R1: no (las IP de las VLAN salen sin traducir; el NAT lo hace el Multi-WAN)
+--- ip route:
+default via 192.168.84.1 dev up-squid onlink 
+192.168.10.0/24 dev trunk0.10 proto kernel scope link src 192.168.10.1 
+192.168.20.0/24 dev trunk0.20 proto kernel scope link src 192.168.20.1 
+192.168.30.0/24 dev trunk0.30 proto kernel scope link src 192.168.30.1 
+192.168.40.0/24 dev trunk0.40 proto kernel scope link src 192.168.40.1 
+192.168.84.0/30 dev up-squid proto kernel scope link src 192.168.84.2 
+--- cadenas nat: 0
+
+##### Pruebas pedidas por E3, ejecutadas dentro de R1
+# 1. ip route show default
+default via 192.168.84.1 dev up-squid onlink 
+# 2. ping -c 2 192.168.84.1 (E2) y 192.168.82.2 (E2, lado de E5)
+2 packets transmitted, 2 received, 0% packet loss, time 1009ms
+2 packets transmitted, 2 received, 0% packet loss, time 1001ms
+# 3. curl --interface 192.168.20.1 https://1.1.1.1  (esperado 301)
+301
+# 4. traceroute -T -p 443 -s 192.168.20.1 1.1.1.1
+traceroute to 1.1.1.1 (1.1.1.1), 6 hops max, 60 byte packets
+ 1  192.168.84.1  0.766 ms
+ 2  192.168.82.1  1.812 ms
+ 3  192.168.81.1  2.451 ms
+ 4  192.168.1.1  4.807 ms
+ 5  10.93.192.1  6.293 ms
+ 6  *
+# 5. DNS con origen 192.168.20.1
+   UDP a 8.8.8.8: 142.251.215.110
+   UDP a 1.1.1.1: 142.250.176.78
+   TCP a 1.1.1.1: 142.250.176.78
+
+##### Desde clientes reales de la LAN
+pc-admin01  192.168.10.50   ping E2: OK | HTTPS 1.1.1.1: 301 | HTTP :80: 000
+pc-user01   192.168.20.10   ping E2: OK | HTTPS 1.1.1.1: 301 | HTTP :80: 000
+zbx-srv01   192.168.30.10   ping E2: OK | HTTPS 1.1.1.1: 301 | HTTP :80: 000
+puerto 3128 de E2 (192.168.84.1), visto desde PC-USER01: abierto
+puerto 3129 de E2 (192.168.84.1), visto desde PC-USER01: cerrado
+puerto 8080 de E2 (192.168.84.1), visto desde PC-USER01: cerrado
+
+##### R1: lo que entro y salio por el enlace (contadores)
+		ip saddr { 192.168.10.0/24, 192.168.20.0/24, 192.168.30.0/24, 192.168.40.0/24 } log prefix "ACL-SPOOF PERIMETRO " counter packets 0 bytes 0 drop
+		ip daddr 192.168.30.10 tcp dport { 80, 443 } log prefix "ACL-DENY PERIMETRO->ZBXWEB " counter packets 0 bytes 0 drop
+		iifname "up-squid" ip saddr { 10.200.10.0/24, 10.200.20.0/24 } oifname { "trunk0.10", "trunk0.20", "trunk0.30", "trunk0.40" } log prefix "ACL-ALLOW VPN->LAN " counter packets 0 bytes 0 accept
+		iifname "up-squid" ip saddr { 192.168.81.0/30, 192.168.82.0/30, 192.168.83.0/30, 192.168.84.0/30 } ip daddr 192.168.30.10 tcp dport 10051 counter packets 0 bytes 0 accept
+		log prefix "ACL-DENY PERIMETRO->LAN " counter packets 0 bytes 0 drop
+--- salida de cada VLAN por up-squid:
+desde_admin    counter packets 1058
+desde_users    counter packets 939
+desde_servers  counter packets 232
+desde_mgmt     counter packets 0 counter packets 372
+
+##### Perfiles de la LAN de grupal/matriz-grupal.conf (probar.sh dentro de cada equipo)
+=== Pruebas del perfil 'g-admin' en pc-admin01 - 2026-10-04 01:14:21 ===
+CASO  RES.  ESPERADO       OBTENIDO       PRUEBA
+GL1   PASS  OK             OK             ping 192.168.84.1 - [R1] ADMIN -> vecino Squid
+GL2   FAIL  200            RECHAZADO      http://172.16.10.10:8081/ - [R1][E5] ADMIN -> WEB01 de la DMZ por E2 -> E5 -> E4
+Resumen 'g-admin': 2 casos, 1 PASS, 1 FAIL, 0 omitidas
+=== Pruebas del perfil 'g-users' en pc-user01 - 2026-10-04 01:14:25 ===
+CASO  RES.  ESPERADO       OBTENIDO       PRUEBA
+GL3   FAIL  200            RECHAZADO      http://172.16.10.10:8081/ - [R1][E5] USUARIOS -> WEB01 de la DMZ
+GL4   PASS  BLOQUEADO      BLOQUEADO      tcp 172.16.10.10:22 - [E5] LAN -> DMZ: solo el puerto de WEB01
+Resumen 'g-users': 2 casos, 1 PASS, 1 FAIL, 0 omitidas
+=== Pruebas del perfil 'g-mgmt' en pc-mgmt01 - 2026-10-04 01:14:33 ===
+CASO  RES.  ESPERADO       OBTENIDO       PRUEBA
+GL5   PASS  BLOQUEADO      BLOQUEADO      http://172.16.10.10:8081/ - [R1] GESTION solo sale a web y DNS (80, 443, 53)
+Resumen 'g-mgmt': 1 casos, 1 PASS, 0 FAIL, 0 omitidas
+=== Pruebas del perfil 'g-zbx' en zbx-srv01 - 2026-10-04 01:14:39 ===
+CASO  RES.  ESPERADO       OBTENIDO       PRUEBA
+GL6   FAIL  200            RECHAZADO      http://172.16.10.10:8081/ - [R1][E5] SERVIDORES -> WEB01 de la DMZ
+Resumen 'g-zbx': 1 casos, 0 PASS, 1 FAIL, 0 omitidas
+
+##### Zabbix: llega el agente del Multi-WAN? (ZBX-SRV01)
+		ip saddr { 192.168.30.0/24, 192.168.40.0/24, 192.168.81.0/30, 192.168.82.0/30, 192.168.83.0/30, 192.168.84.0/30 } tcp dport 10051 counter packets 39924 bytes 2395440 accept
+menciones de Router-MultiWAN-E3 en el registro del servidor: 0

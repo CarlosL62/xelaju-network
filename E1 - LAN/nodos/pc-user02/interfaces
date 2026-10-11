@@ -1,0 +1,11 @@
+# /etc/network/interfaces - PC-USER02 (VLAN 20 USUARIOS)
+# Conectado a SW-ACC01 p3. Es el UNICO tipo de equipo que usa DHCP: el
+# servidor de R1-LAN le entrega siempre 192.168.20.11 porque su MAC esta registrada
+# en /etc/xelaju/usuarios.csv.
+# allow-hotplug: si el servidor DHCP no responde, el arranque no se queda esperando.
+
+auto lo
+iface lo inet loopback
+
+allow-hotplug lan0
+iface lan0 inet dhcp

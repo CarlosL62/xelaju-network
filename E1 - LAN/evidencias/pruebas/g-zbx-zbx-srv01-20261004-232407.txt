@@ -1,0 +1,4 @@
+=== Pruebas del perfil 'g-zbx' en zbx-srv01 - 2026-10-04 23:24:07 ===
+CASO  RES.  ESPERADO       OBTENIDO       PRUEBA
+GL6   PASS  200            200            http://172.16.10.10:8081/ - [R1][E5] SERVIDORES -> WEB01 de la DMZ
+Resumen 'g-zbx': 1 casos, 1 PASS, 0 FAIL, 0 omitidas

@@ -1,0 +1,39 @@
+== r1-lan
+trunk0           UP             
+up-squid         DOWN           
+tmp-nat          UP             10.0.2.15/24 
+trunk0.10@trunk0 UP             192.168.10.1/24 
+trunk0.20@trunk0 UP             192.168.20.1/24 
+trunk0.30@trunk0 UP             192.168.30.1/24 
+trunk0.40@trunk0 UP             192.168.40.1/24 
+== sw-core01
+p0               UP             
+p1               UP             
+p2               UP             
+p3               UP             
+p4               UP             
+p5               UP             
+br0              UP             
+br0.40@br0       UP             192.168.40.2/24 
+== sw-acc01
+p0               UP             
+p1               UP             
+p2               UP             
+p3               UP             
+p4               UP             
+br0              UP             
+br0.40@br0       UP             192.168.40.3/24 
+== zbx-srv01
+lan0             UP             192.168.30.10/24 
+== srv-intra01
+lan0             UP             192.168.30.20/24 
+== pc-mgmt01
+lan0             UP             192.168.40.10/24 
+== pc-admin01
+lan0             UP             192.168.10.50/24 
+== pc-user01
+lan0             UP             192.168.20.10/24 
+== pc-user02
+lan0             UP             192.168.20.11/24 
+== pc-intruso
+lan0             UP             

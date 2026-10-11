@@ -1,0 +1,116 @@
+#!/bin/bash
+# =============================================================================
+# switch-mostrar - ordenes "show" del switch, al estilo Cisco
+#
+#   switch-mostrar vlan      show vlan brief            VLAN y sus puertos de acceso
+#   switch-mostrar trunk     show interfaces trunk      troncales y VLAN permitidas
+#   switch-mostrar mac       show mac address-table     MAC aprendidas por puerto y VLAN
+#   switch-mostrar puertos   show interfaces status     estado y contadores de cada puerto
+#   switch-mostrar config    show running-config        configuracion aplicada
+#
+# vlan, trunk y mac leen el ESTADO REAL del kernel (bridge vlan / bridge fdb),
+# no los archivos: es lo que el switch esta haciendo de verdad.
+# =============================================================================
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+ETC="${XJ_ETC:-/etc/xelaju}"
+BR=br0
+# shellcheck source=/dev/null
+. "$ETC/switch.conf" 2>/dev/null || { echo "switch-mostrar: falta $ETC/switch.conf" >&2; exit 1; }
+
+# vlans_kernel: "puerto vlan marcas" por cada VLAN de cada puerto.
+# La salida de "bridge vlan show" trae el nombre del puerto solo en su primera linea.
+vlans_kernel() {
+    bridge vlan show | awk '
+        NR == 1 || NF == 0 { next }
+        /^[^ \t]/ { puerto = $1; vid = $2; ini = 3 }       # primera linea del puerto: nombre + VLAN
+        /^[ \t]/  { vid = $1; ini = 2 }                    # siguientes: solo la VLAN
+        { marcas = ""; for (i = ini; i <= NF; i++) marcas = marcas $i; print puerto, vid, (marcas == "" ? "-" : marcas) }'
+}
+
+descripcion() {    # descripcion <puerto>: texto de puertos.conf
+    sed -e 's/#.*//' "$ETC/puertos.conf" | awk -v p="$1" '$1 == p { $1 = $2 = $3 = ""; sub(/^ +/, ""); print }'
+}
+
+mostrar_vlan() {
+    local par id nombre
+    echo "$NOMBRE# show vlan brief"
+    printf '%-5s %-12s %-8s %s\n' VLAN NOMBRE ESTADO "PUERTOS DE ACCESO"
+    for par in $VLANS; do
+        id="${par%%:*}"; nombre="${par##*:}"
+        printf '%-5s %-12s %-8s %s\n' "$id" "$nombre" activa \
+            "$(vlans_kernel | awk -v v="$id" -v br="$BR" '
+                $2 == v && $1 != br && $3 ~ /PVID/ && $3 ~ /Untagged/ { s = s (s ? ", " : "") $1 }
+                END { print (s ? s : "-") }')"
+    done
+    echo "(no existe VLAN 1 por omision: vlan_default_pvid 0)"
+}
+
+mostrar_trunk() {
+    echo "$NOMBRE# show interfaces trunk"
+    printf '%-8s %-9s %-12s %-12s %s\n' PUERTO MODO ENCAPSULADO "VLAN NATIVA" "VLAN PERMITIDAS"
+    vlans_kernel | awk -v br="$BR" '
+        $1 == br { next }
+        $3 !~ /PVID/ { perm[$1] = perm[$1] (perm[$1] ? "," : "") $2; if (!($1 in visto)) { visto[$1] = 1; orden[++n] = $1 } }
+        END {
+            for (i = 1; i <= n; i++) printf "%-8s %-9s %-12s %-12s %s\n", orden[i], "troncal", "802.1Q", "ninguna", perm[orden[i]]
+            if (n == 0) print "(sin puertos troncales)"
+        }'
+}
+
+mostrar_mac() {
+    local tabla
+    echo "$NOMBRE# show mac address-table"
+    printf '%-6s %-19s %-10s %s\n' VLAN "DIRECCION MAC" TIPO PUERTO
+    # Solo las entradas aprendidas: se omiten las propias del switch (permanent/self)
+    tabla="$(bridge fdb show br "$BR" | awk '
+        /permanent/ || / self/ { next }
+        {
+            puerto = "-"; vlan = "-"
+            for (i = 2; i < NF; i++) { if ($i == "dev") puerto = $(i + 1); if ($i == "vlan") vlan = $(i + 1) }
+            printf "%-6s %-19s %-10s %s\n", vlan, $1, "dinamica", puerto
+        }' | sort -k1,1n -k4,4)"
+    if [ -n "$tabla" ]; then echo "$tabla"; fi
+    echo "Total de direcciones aprendidas: $(printf '%s' "$tabla" | grep -c . || true)"
+}
+
+mostrar_puertos() {
+    local puerto modo vlans estado
+    echo "$NOMBRE# show interfaces status"
+    printf '%-7s %-9s %-8s %-12s %-10s %-10s %s\n' PUERTO ESTADO MODO VLAN "RX paq." "TX paq." DESCRIPCION
+    while read -r puerto modo vlans _; do
+        if [ -d "/sys/class/net/$puerto" ]; then
+            if [ "$(cat "/sys/class/net/$puerto/carrier" 2>/dev/null)" = 1 ]; then estado=conectado; else estado=sin-enlace; fi
+            printf '%-7s %-9s %-8s %-12s %-10s %-10s %s\n' "$puerto" "$estado" "$modo" "$vlans" \
+                "$(cat "/sys/class/net/$puerto/statistics/rx_packets")" \
+                "$(cat "/sys/class/net/$puerto/statistics/tx_packets")" "$(descripcion "$puerto")"
+        else
+            printf '%-7s %-9s %-8s %-12s %-10s %-10s %s\n' "$puerto" ausente "$modo" "$vlans" - - "$(descripcion "$puerto")"
+        fi
+    done < <(sed -e 's/#.*//' "$ETC/puertos.conf" | awk 'NF >= 2')
+}
+
+mostrar_config() {
+    echo "$NOMBRE# show running-config"
+    echo "! --- $ETC/switch.conf"
+    grep -v -E '^[[:space:]]*(#|$)' "$ETC/switch.conf"
+    echo "! --- $ETC/puertos.conf (puerto modo vlan descripcion)"
+    grep -v -E '^[[:space:]]*(#|$)' "$ETC/puertos.conf"
+    echo "! --- bridge"
+    ip -d link show dev "$BR" 2>/dev/null | grep -o -E 'vlan_filtering [01]|vlan_default_pvid [0-9]+|stp_state [01]' | tr '\n' ' '; echo
+    echo "! --- gestion"
+    ip -br addr show dev "$BR.$VLAN_GESTION" 2>/dev/null
+    ip route show default
+    echo "! --- puerto espejo"
+    switch-span estado 2>/dev/null || "$(dirname "$0")/switch-span" estado
+}
+
+case "${1:-}" in
+    vlan)    mostrar_vlan ;;
+    trunk)   mostrar_trunk ;;
+    mac)     mostrar_mac ;;
+    puertos) mostrar_puertos ;;
+    config)  mostrar_config ;;
+    todo)    mostrar_vlan; echo; mostrar_trunk; echo; mostrar_puertos; echo; mostrar_mac ;;
+    *)       sed -n '3,9p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
+esac

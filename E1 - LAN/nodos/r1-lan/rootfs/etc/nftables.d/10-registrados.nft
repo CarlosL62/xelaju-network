@@ -1,0 +1,14 @@
+# /etc/nftables.d/10-registrados.nft
+# Generado por xelaju-dhcp a partir de /etc/xelaju/usuarios.csv.
+# NO editar a mano: use 'xelaju-dhcp alta|baja', o edite el CSV y 'xelaju-dhcp aplicar'.
+#
+# Cada elemento es un par MAC . IP autorizado en la VLAN 20. Las ACL solo dejan
+# pasar trafico de usuarios cuyo par (MAC de origen, IP de origen) este aqui.
+table inet xelaju {
+    set registrados {
+        type ether_addr . ipv4_addr
+        elements = { aa:bb:cc:dd:ee:01 . 192.168.20.10,
+                     aa:bb:cc:dd:ee:02 . 192.168.20.11,
+                     aa:bb:cc:dd:ee:03 . 192.168.20.12 }
+    }
+}

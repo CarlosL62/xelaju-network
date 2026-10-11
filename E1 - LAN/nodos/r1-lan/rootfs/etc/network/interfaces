@@ -1,0 +1,37 @@
+# /etc/network/interfaces - R1-LAN, router inter-VLAN ("router-on-a-stick")
+# Equivalente Cisco: interface Gi0/0.N + encapsulation dot1Q N + ip address
+
+auto lo
+iface lo inet loopback
+
+# Troncal 802.1Q hacia SW-CORE01 p0. No lleva IP: solo transporta las 4 VLAN.
+auto trunk0
+iface trunk0 inet manual
+    up   ip link set dev $IFACE up
+
+# Subinterfaces: ifupdown crea la VLAN N al ver el nombre trunk0.N
+# La .1 de cada red es la puerta de enlace de esa VLAN.
+
+# VLAN 10 - ADMIN
+auto trunk0.10
+iface trunk0.10 inet static
+    address 192.168.10.1/24
+
+# VLAN 20 - USUARIOS (aqui escucha el DHCP restringido)
+auto trunk0.20
+iface trunk0.20 inet static
+    address 192.168.20.1/24
+
+# VLAN 30 - SERVIDORES
+auto trunk0.30
+iface trunk0.30 inet static
+    address 192.168.30.1/24
+
+# VLAN 40 - GESTION
+auto trunk0.40
+iface trunk0.40 inet static
+    address 192.168.40.1/24
+
+# Enlaces de salida segun el modo. El archivo "uplinks" es un enlace simbolico
+# a /etc/network/modos/individual o /etc/network/modos/grupal (lo cambia r1-modo).
+source /etc/network/interfaces.d/*

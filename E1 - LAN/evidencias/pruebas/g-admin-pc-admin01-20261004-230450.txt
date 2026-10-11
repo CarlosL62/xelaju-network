@@ -1,0 +1,5 @@
+=== Pruebas del perfil 'g-admin' en pc-admin01 - 2026-10-04 23:04:46 ===
+CASO  RES.  ESPERADO       OBTENIDO       PRUEBA
+GL1   PASS  OK             OK             ping 192.168.84.1 - [R1] ADMIN -> vecino Squid
+GL2   FAIL  200            RECHAZADO      http://172.16.10.10:8081/ - [R1][E5] ADMIN -> WEB01 de la DMZ por E2 -> E5 -> E4
+Resumen 'g-admin': 2 casos, 1 PASS, 1 FAIL, 0 omitidas

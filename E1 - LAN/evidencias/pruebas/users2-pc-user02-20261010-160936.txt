@@ -1,0 +1,7 @@
+=== Pruebas del perfil 'users2' en pc-user02 - 2026-10-10 16:09:23 ===
+CASO  RES.  ESPERADO       OBTENIDO       PRUEBA
+V01   PASS  192.168.20.11  192.168.20.11  ip de lan0 - DHCP: recibio la IP reservada para su MAC
+V02   PASS  BLOQUEADO      BLOQUEADO      ping 192.168.10.50 - USUARIOS -> ADMIN denegado
+V03   PASS  200            200            http://192.168.30.20/ - Intranet por HTTP: permitido
+V04   FAIL  OK             BLOQUEADO      internet - USUARIOS registrados -> Internet
+Resumen 'users2': 4 casos, 3 PASS, 1 FAIL, 0 omitidas

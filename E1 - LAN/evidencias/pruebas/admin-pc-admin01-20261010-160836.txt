@@ -1,0 +1,15 @@
+=== Pruebas del perfil 'admin' en pc-admin01 - 2026-10-10 16:08:20 ===
+CASO  RES.  ESPERADO       OBTENIDO       PRUEBA
+A01   PASS  192.168.10.50  192.168.10.50  ip de lan0 - IP manual de la VLAN 10
+A02   PASS  OK             OK             ping 192.168.10.1 - Puerta de enlace de su VLAN
+A03   PASS  OK             OK             ping 192.168.40.1 - ADMIN puede hacer ping a cualquier interfaz de R1
+A04   PASS  OK             OK             tcp 192.168.10.1:22 - SSH a R1-LAN
+A05   PASS  OK             OK             ping 192.168.20.10 - ADMIN -> USUARIOS (PC-USER01)
+A06   PASS  OK             OK             ping 192.168.30.10 - ADMIN -> SERVIDORES (ZBX-SRV01)
+A07   PASS  200            200            http://192.168.30.10/zabbix/ - Web de Zabbix: solo ADMIN la abre
+A08   PASS  OK             OK             tcp 192.168.30.20:22 - SSH a SRV-INTRA01
+A09   PASS  OK             OK             ping 192.168.40.2 - ADMIN -> GESTION (SW-CORE01)
+A10   PASS  OK             OK             tcp 192.168.40.2:22 - SSH a SW-CORE01
+A11   PASS  OK             OK             tcp 192.168.40.3:22 - SSH a SW-ACC01
+A12   FAIL  OK             BLOQUEADO      internet - ADMIN -> Internet
+Resumen 'admin': 12 casos, 11 PASS, 1 FAIL, 0 omitidas

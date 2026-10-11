@@ -1,0 +1,36 @@
+2026-10-03T18:16:37.866756-06:00 r1-lan dhcpd[3886]: Internet Systems Consortium DHCP Server 4.4.3-P1
+2026-10-03T18:16:37.867670-06:00 r1-lan dhcpd[3886]: Copyright 2004-2022 Internet Systems Consortium.
+2026-10-03T18:16:37.867750-06:00 r1-lan dhcpd[3886]: All rights reserved.
+2026-10-03T18:16:37.867809-06:00 r1-lan dhcpd[3886]: For info, please visit https://www.isc.org/software/dhcp/
+2026-10-03T18:16:37.936834-06:00 r1-lan dhcpd[3899]: Internet Systems Consortium DHCP Server 4.4.3-P1
+2026-10-03T18:16:37.937130-06:00 r1-lan dhcpd[3899]: Copyright 2004-2022 Internet Systems Consortium.
+2026-10-03T18:16:37.937162-06:00 r1-lan dhcpd[3899]: All rights reserved.
+2026-10-03T18:16:37.937191-06:00 r1-lan dhcpd[3899]: For info, please visit https://www.isc.org/software/dhcp/
+2026-10-03T18:16:37.940865-06:00 r1-lan dhcpd[3902]: Internet Systems Consortium DHCP Server 4.4.3-P1
+2026-10-03T18:16:37.941186-06:00 r1-lan dhcpd[3902]: Copyright 2004-2022 Internet Systems Consortium.
+2026-10-03T18:16:37.941596-06:00 r1-lan dhcpd[3902]: All rights reserved.
+2026-10-03T18:16:37.941687-06:00 r1-lan dhcpd[3902]: For info, please visit https://www.isc.org/software/dhcp/
+2026-10-03T18:16:37.941739-06:00 r1-lan dhcpd[3902]: Wrote 0 deleted host decls to leases file.
+2026-10-03T18:16:37.941794-06:00 r1-lan dhcpd[3902]: Wrote 0 new dynamic host decls to leases file.
+2026-10-03T18:16:37.941888-06:00 r1-lan dhcpd[3902]: Wrote 0 leases to leases file.
+2026-10-03T18:16:37.961626-06:00 r1-lan dhcpd[3902]: Server starting service.
+2026-10-03T18:20:13.260410-06:00 r1-lan dhcpd[3902]: DHCPDISCOVER from aa:bb:cc:dd:ee:01 via trunk0.20
+2026-10-03T18:20:13.260630-06:00 r1-lan dhcpd[3902]: DHCPOFFER on 192.168.20.10 to aa:bb:cc:dd:ee:01 via trunk0.20
+2026-10-03T18:20:13.262042-06:00 r1-lan dhcpd[3902]: DHCPREQUEST for 192.168.20.10 (192.168.20.1) from aa:bb:cc:dd:ee:01 via trunk0.20
+2026-10-03T18:20:13.262181-06:00 r1-lan dhcpd[3902]: DHCPACK on 192.168.20.10 to aa:bb:cc:dd:ee:01 via trunk0.20
+2026-10-03T18:20:32.076834-06:00 r1-lan dhcpd[3902]: DHCPDISCOVER from aa:bb:cc:dd:ee:02 via trunk0.20
+2026-10-03T18:20:32.077018-06:00 r1-lan dhcpd[3902]: DHCPOFFER on 192.168.20.11 to aa:bb:cc:dd:ee:02 via trunk0.20
+2026-10-03T18:20:32.078741-06:00 r1-lan dhcpd[3902]: DHCPREQUEST for 192.168.20.11 (192.168.20.1) from aa:bb:cc:dd:ee:02 via trunk0.20
+2026-10-03T18:20:32.078875-06:00 r1-lan dhcpd[3902]: DHCPACK on 192.168.20.11 to aa:bb:cc:dd:ee:02 via trunk0.20
+2026-10-03T18:21:58.397822-06:00 r1-lan dhcpd[3902]: DHCPRELEASE of 192.168.20.10 from aa:bb:cc:dd:ee:01 via trunk0.20 (not found)
+2026-10-03T18:21:58.473228-06:00 r1-lan dhcpd[3902]: DHCPDISCOVER from aa:bb:cc:dd:ee:01 via trunk0.20
+2026-10-03T18:21:58.473393-06:00 r1-lan dhcpd[3902]: DHCPOFFER on 192.168.20.10 to aa:bb:cc:dd:ee:01 via trunk0.20
+2026-10-03T18:21:58.474449-06:00 r1-lan dhcpd[3902]: DHCPREQUEST for 192.168.20.10 (192.168.20.1) from aa:bb:cc:dd:ee:01 via trunk0.20
+2026-10-03T18:21:58.474554-06:00 r1-lan dhcpd[3902]: DHCPACK on 192.168.20.10 to aa:bb:cc:dd:ee:01 via trunk0.20
+2026-10-03T18:22:37.658663-06:00 r1-lan dhcpd[3902]: DHCPDISCOVER from aa:bb:cc:dd:ee:99 via trunk0.20: network 192.168.20.0/24: no free leases
+2026-10-03T18:22:40.423682-06:00 r1-lan dhcpd[3902]: DHCPDISCOVER from aa:bb:cc:dd:ee:99 via trunk0.20: network 192.168.20.0/24: no free leases
+2026-10-03T18:22:46.647722-06:00 r1-lan dhcpd[3902]: DHCPDISCOVER from aa:bb:cc:dd:ee:99 via trunk0.20: network 192.168.20.0/24: no free leases
+2026-10-03T18:24:49.813217-06:00 r1-lan dhcpd[3902]: DHCPREQUEST for 192.168.20.11 from aa:bb:cc:dd:ee:02 via trunk0.20
+2026-10-03T18:24:49.813431-06:00 r1-lan dhcpd[3902]: DHCPACK on 192.168.20.11 to aa:bb:cc:dd:ee:02 via trunk0.20
+2026-10-03T18:26:36.218952-06:00 r1-lan dhcpd[3902]: DHCPREQUEST for 192.168.20.10 from aa:bb:cc:dd:ee:01 via trunk0.20
+2026-10-03T18:26:36.219115-06:00 r1-lan dhcpd[3902]: DHCPACK on 192.168.20.10 to aa:bb:cc:dd:ee:01 via trunk0.20

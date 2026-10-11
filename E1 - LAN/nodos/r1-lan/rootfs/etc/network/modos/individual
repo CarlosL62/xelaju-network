@@ -1,0 +1,12 @@
+# /etc/network/modos/individual - salida de R1-LAN en MODO INDIVIDUAL
+#
+# Salida temporal del laboratorio: el NAT de QEMU en modo usuario (10.0.2.0/24,
+# puerta de enlace 10.0.2.2). La IP es ESTATICA porque el enunciado no permite
+# DHCP en los equipos de infraestructura.
+# En este modo R1 hace NAT (masquerade) de las VLAN por esta interfaz:
+# ver /etc/nftables.d/modos/individual.nft
+
+auto tmp-nat
+iface tmp-nat inet static
+    address 10.0.2.15/24
+    gateway 10.0.2.2

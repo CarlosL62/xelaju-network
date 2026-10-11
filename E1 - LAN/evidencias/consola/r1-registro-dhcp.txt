@@ -1,0 +1,25 @@
+EQUIPO           MAC                 IP_RESERVADA
+PC-USER01        aa:bb:cc:dd:ee:01   192.168.20.10
+PC-USER02        aa:bb:cc:dd:ee:02   192.168.20.11
+PC-USER03        aa:bb:cc:dd:ee:03   192.168.20.12
+Total: 3 equipo(s) registrados en /etc/xelaju/usuarios.csv
+
+--- Auditoria de altas y bajas (/var/log/xelaju/registro-dhcp.log) ---
+2026-10-03 18:16:39 usuario=root APLICAR reservas=3
+
+--- Ultimos eventos DHCP (/var/log/xelaju/dhcpd.log) ---
+2026-10-03T18:20:32.076834-06:00 r1-lan dhcpd[3902]: DHCPDISCOVER from aa:bb:cc:dd:ee:02 via trunk0.20
+2026-10-03T18:20:32.077018-06:00 r1-lan dhcpd[3902]: DHCPOFFER on 192.168.20.11 to aa:bb:cc:dd:ee:02 via trunk0.20
+2026-10-03T18:20:32.078741-06:00 r1-lan dhcpd[3902]: DHCPREQUEST for 192.168.20.11 (192.168.20.1) from aa:bb:cc:dd:ee:02 via trunk0.20
+2026-10-03T18:20:32.078875-06:00 r1-lan dhcpd[3902]: DHCPACK on 192.168.20.11 to aa:bb:cc:dd:ee:02 via trunk0.20
+2026-10-03T18:21:58.473228-06:00 r1-lan dhcpd[3902]: DHCPDISCOVER from aa:bb:cc:dd:ee:01 via trunk0.20
+2026-10-03T18:21:58.473393-06:00 r1-lan dhcpd[3902]: DHCPOFFER on 192.168.20.10 to aa:bb:cc:dd:ee:01 via trunk0.20
+2026-10-03T18:21:58.474449-06:00 r1-lan dhcpd[3902]: DHCPREQUEST for 192.168.20.10 (192.168.20.1) from aa:bb:cc:dd:ee:01 via trunk0.20
+2026-10-03T18:21:58.474554-06:00 r1-lan dhcpd[3902]: DHCPACK on 192.168.20.10 to aa:bb:cc:dd:ee:01 via trunk0.20
+2026-10-03T18:22:37.658663-06:00 r1-lan dhcpd[3902]: DHCPDISCOVER from aa:bb:cc:dd:ee:99 via trunk0.20: network 192.168.20.0/24: no free leases
+2026-10-03T18:22:40.423682-06:00 r1-lan dhcpd[3902]: DHCPDISCOVER from aa:bb:cc:dd:ee:99 via trunk0.20: network 192.168.20.0/24: no free leases
+2026-10-03T18:22:46.647722-06:00 r1-lan dhcpd[3902]: DHCPDISCOVER from aa:bb:cc:dd:ee:99 via trunk0.20: network 192.168.20.0/24: no free leases
+2026-10-03T18:24:49.813217-06:00 r1-lan dhcpd[3902]: DHCPREQUEST for 192.168.20.11 from aa:bb:cc:dd:ee:02 via trunk0.20
+2026-10-03T18:24:49.813431-06:00 r1-lan dhcpd[3902]: DHCPACK on 192.168.20.11 to aa:bb:cc:dd:ee:02 via trunk0.20
+2026-10-03T18:26:36.218952-06:00 r1-lan dhcpd[3902]: DHCPREQUEST for 192.168.20.10 from aa:bb:cc:dd:ee:01 via trunk0.20
+2026-10-03T18:26:36.219115-06:00 r1-lan dhcpd[3902]: DHCPACK on 192.168.20.10 to aa:bb:cc:dd:ee:01 via trunk0.20

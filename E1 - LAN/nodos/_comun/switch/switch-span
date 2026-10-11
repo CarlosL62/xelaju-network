@@ -1,0 +1,59 @@
+#!/bin/bash
+# =============================================================================
+# switch-span - puerto espejo (equivale a "monitor session" de Cisco)
+#
+#   switch-span activar <origen> <destino>   copia TODO lo que entra y sale por
+#                                            <origen> hacia el puerto <destino>
+#   switch-span desactivar <origen>          deja de copiar
+#   switch-span estado                       muestra los espejos activos
+#
+# Se hace con el control de trafico del kernel (tc): al puerto origen se le
+# pone la disciplina "clsact", que tiene un gancho de entrada (ingress) y otro
+# de salida (egress). En cada uno, un filtro "matchall" (todo coincide) con la
+# accion "mirred egress mirror" envia una copia por el puerto destino.
+# Las tramas se copian con su etiqueta 802.1Q.
+# =============================================================================
+set -euo pipefail
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+morir() { echo "switch-span: ERROR: $*" >&2; exit 1; }
+existe() { [ -d "/sys/class/net/$1" ] || morir "no existe el puerto $1"; }
+
+case "${1:-}" in
+    activar)
+        origen="${2:-}"; destino="${3:-}"
+        if [ -z "$origen" ] || [ -z "$destino" ]; then morir "uso: switch-span activar <origen> <destino>"; fi
+        existe "$origen"; existe "$destino"
+        # El puerto destino no conmuta: queda fuera del bridge y solo recibe la copia
+        ip link set dev "$destino" nomaster
+        ip link set dev "$destino" up
+        tc qdisc del dev "$origen" clsact 2>/dev/null || true
+        tc qdisc add dev "$origen" clsact
+        tc filter add dev "$origen" ingress matchall action mirred egress mirror dev "$destino"
+        tc filter add dev "$origen" egress  matchall action mirred egress mirror dev "$destino"
+        echo "switch-span: espejo activo $origen (entrada y salida) -> $destino"
+        ;;
+    desactivar)
+        origen="${2:-}"
+        if [ -z "$origen" ]; then morir "uso: switch-span desactivar <origen>"; fi
+        existe "$origen"
+        tc qdisc del dev "$origen" clsact 2>/dev/null || true
+        echo "switch-span: espejo de $origen desactivado"
+        ;;
+    estado)
+        n=0
+        for d in /sys/class/net/*; do
+            p="$(basename "$d")"
+            destino="$(tc filter show dev "$p" ingress 2>/dev/null | sed -n 's/.*Mirror to device \([^)]*\)).*/\1/p' | head -1)"
+            if [ -n "$destino" ]; then
+                printf 'Sesion %d: origen %s (ambos sentidos) -> destino %s\n' "$((n + 1))" "$p" "$destino"
+                n=$((n + 1))
+            fi
+        done
+        if [ "$n" -eq 0 ]; then echo "No hay puertos espejo activos"; fi
+        ;;
+    *)
+        sed -n '3,8p' "$0" | sed 's/^# \{0,1\}//'
+        exit 1
+        ;;
+esac

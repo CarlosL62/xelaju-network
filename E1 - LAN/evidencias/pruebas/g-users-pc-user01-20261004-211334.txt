@@ -1,0 +1,5 @@
+=== Pruebas del perfil 'g-users' en pc-user01 - 2026-10-04 21:13:27 ===
+CASO  RES.  ESPERADO       OBTENIDO       PRUEBA
+GL3   FAIL  200            RECHAZADO      http://172.16.10.10:8081/ - [R1][E5] USUARIOS -> WEB01 de la DMZ
+GL4   PASS  BLOQUEADO      BLOQUEADO      tcp 172.16.10.10:22 - [E5] LAN -> DMZ: solo el puerto de WEB01
+Resumen 'g-users': 2 casos, 1 PASS, 1 FAIL, 0 omitidas

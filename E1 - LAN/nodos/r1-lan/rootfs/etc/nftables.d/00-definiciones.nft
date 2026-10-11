@@ -1,0 +1,43 @@
+# /etc/nftables.d/00-definiciones.nft - nombres usados por las ACL de R1-LAN
+# Un cambio de direccionamiento se hace AQUI y en ningun otro archivo de reglas.
+#
+# Las redes de este archivo son datos compartidos del grupo: sus valores salen
+# de core/ADDRESSING.yaml (raiz del repositorio de coordinacion). Si el grupo
+# cambia una direccion alli, se cambia aqui y en lab/topologia.conf, y
+# pruebas/consistencia.py comprueba que los tres dicen lo mismo.
+
+# ---- Redes internas (una por VLAN) -------------------------------------------
+define RED_ADMIN   = 192.168.10.0/24
+define RED_USERS   = 192.168.20.0/24
+define RED_SERVERS = 192.168.30.0/24
+define RED_MGMT    = 192.168.40.0/24
+# Las cuatro juntas. Se listan una por una, sin resumirlas en un prefijo mas
+# corto (ADR-0002): las redes de los ISP tambien suelen ser 192.168.x.x.
+define REDES_LAN   = { $RED_ADMIN, $RED_USERS, $RED_SERVERS, $RED_MGMT }
+
+# ---- Puertas de enlace (direcciones del propio R1) ---------------------------
+define GW_USERS    = 192.168.20.1
+define GW_SERVERS  = 192.168.30.1
+define GW_MGMT     = 192.168.40.1
+
+# ---- Equipos con reglas propias -----------------------------------------------
+define ZBX         = 192.168.30.10       # ZBX-SRV01 (Zabbix)
+define INTRANET    = 192.168.30.20       # SRV-INTRA01 (unico servidor abierto a usuarios)
+
+# ---- Interfaces ----------------------------------------------------------------
+define IF_ADMIN    = "trunk0.10"
+define IF_USERS    = "trunk0.20"
+define IF_SERVERS  = "trunk0.30"
+define IF_MGMT     = "trunk0.40"
+define IFS_LAN     = { "trunk0.10", "trunk0.20", "trunk0.30", "trunk0.40" }
+define IFS_SALIDA  = { "tmp-nat", "up-squid" }   # hacia el perimetro (individual / grupal)
+
+# ---- Redes de los companeros (core/ADDRESSING.yaml) ----------------------------
+define RED_ENLACE_SQUID = 192.168.84.0/30    # link_e1_e2: Squid .1 <-> R1 .2
+define RED_VPN_ADMIN    = 10.200.10.0/24     # clientes VPN administradores
+define RED_VPN_USERS    = 10.200.20.0/24     # clientes VPN usuarios
+define REDES_VPN        = { $RED_VPN_ADMIN, $RED_VPN_USERS }
+# Enlaces /30 entre los equipos del grupo (link_e3_e5, link_e2_e5, link_e4_e5 y
+# link_e1_e2). Con una de estas direcciones salen los agentes de Zabbix de los
+# companeros hacia el servidor.
+define REDES_TRANSITO   = { 192.168.81.0/30, 192.168.82.0/30, 192.168.83.0/30, 192.168.84.0/30 }

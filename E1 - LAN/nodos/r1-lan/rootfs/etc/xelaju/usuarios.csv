@@ -1,0 +1,4 @@
+Equipo,Direccion_MAC,IP_reservada
+PC-USER01,aa:bb:cc:dd:ee:01,192.168.20.10
+PC-USER02,aa:bb:cc:dd:ee:02,192.168.20.11
+PC-USER03,aa:bb:cc:dd:ee:03,192.168.20.12
