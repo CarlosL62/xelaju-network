@@ -7,6 +7,8 @@
 
 Índice de ubicación de las evidencias técnicas del componente E5. Las explicaciones, análisis y conclusiones completas se presentan en los documentos PDF de entrega final.
 
+**Alcance:** los seis `.log` son informes formateados, no exportaciones íntegras de consola. Los siete `.pcap` son capturas aportadas que deben inspeccionarse con TShark/Wireshark y cotejar sus SHA-256 antes de certificar cada afirmación. Las pruebas documentan enlaces y flujos parciales, no una ejecución integral simultánea E1–E5. TLS de ngrok no demuestra por sí solo que un navegador externo abrió WEB01.
+
 ---
 
 ## 1. Estructura de Evidencias
