@@ -1,0 +1,86 @@
+# Validación del componente E2 - 2026-10-10
+
+## [1] test/check_config.sh
+[OK]   sintaxis status.sh
+
+VALIDACION OK
+
+## [2] scripts/status.sh
+============================================================
+ ESTADO DEL NODO E2 (Squid Proxy Transparente)
+============================================================
+[1] IPv4 Forwarding: ACTIVO (1) [OK]
+
+[2] Interfaces y Direcciones IP:
+virbr0           DOWN           192.168.122.1/24 
+enx00e04c534458  UP             192.168.82.2/30 fe80::23de:2255:5200:aaeb/64 
+enxc0eac367f16d  UP             192.168.84.1/30 fe80::7b98:849e:6a7d:89ad/64 
+  - Esperado hacia E1 (downstream): 192.168.84.1/30
+  - Esperado hacia E5 (upstream):   192.168.82.2/30
+
+[3] Rutas estáticas de retorno (LAN_VLANS via E1):
+  - 192.168.10.0/24 via 192.168.84.2 [OK]
+  - 192.168.20.0/24 via 192.168.84.2 [OK]
+  - 192.168.30.0/24 via 192.168.84.2 [OK]
+  - 192.168.40.0/24 via 192.168.84.2 [OK]
+[3b] Rutas por defecto activas:
+  - default via 192.168.82.1 dev enx00e04c534458 proto static metric 50
+
+[4] Servicio Squid:
+  - Estado systemd: ACTIVO (running) [OK]
+  - Puerto 3128 en escucha: [OK]
+  - Puerto 3129 en escucha: [OK]
+
+[5] Redirección transparente (nftables):
+  - Tabla ip squid_transparent: NO ENCONTRADA o no cargada [AVISO]
+
+[6] Portal Web de Logs (Flask):
+  - Puerto 8080 en escucha: ACTIVO [OK]
+
+[7] Listas de bloqueo externas:
+  - admins_blacklist: 4 dominios registrados [OK]
+  - users_blacklist: 6 dominios registrados [OK]
+
+============================================================
+
+## [3] Sintaxis squid.conf (squid -k parse)
+2026/10/10 19:55:29| Processing: refresh_pattern -i (/cgi-bin/|\?) 0     0%      0
+2026/10/10 19:55:29| Processing: refresh_pattern .               0       20%     4320
+
+## [4] Puertos en escucha
+LISTEN 0      128                             0.0.0.0:8080       0.0.0.0:*   
+LISTEN 0      256                                   *:3128             *:*   
+LISTEN 0      256                                   *:3129             *:*   
+
+## [5] Tabla nftables: ip squid_transparent
+table ip squid_transparent {
+	chain input {
+		type filter hook input priority filter; policy accept;
+		iif "lo" accept
+		tcp dport 8080 ip saddr != 192.168.10.0/24 drop
+	}
+
+	chain prerouting {
+		type nat hook prerouting priority dstnat; policy accept;
+		ip saddr { 10.200.10.0/24, 10.200.20.0/24 } tcp dport 80 accept
+		ip daddr 172.16.10.0/24 tcp dport 80 accept
+		ip daddr 10.200.10.0/24 tcp dport 80 accept
+		ip daddr 10.200.20.0/24 tcp dport 80 accept
+		tcp dport 80 redirect to :3129
+	}
+
+	chain output {
+		type nat hook output priority dstnat; policy accept;
+		ip daddr != 127.0.0.0/8 tcp dport 80 meta skuid 13 accept
+		ip saddr { 10.200.10.0/24, 10.200.20.0/24 } tcp dport 80 accept
+		ip daddr 172.16.10.0/24 tcp dport 80 accept
+		ip daddr 10.200.10.0/24 tcp dport 80 accept
+		ip daddr 10.200.20.0/24 tcp dport 80 accept
+		tcp dport 80 redirect to :3129
+	}
+}
+
+## [6] Portal (acceso restringido a VLAN ADMIN)
+  - 127.0.0.1         -> HTTP 200
+  - simulando VLAN ADMIN (192.168.10.50) -> HTTP 200
+  - origen NO autorizado (192.168.82.2) -> HTTP 403

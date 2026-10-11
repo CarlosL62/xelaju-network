@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+*.pyc
+
+# Archivos temporales
+*.tmp
+*.swp
+
+# Secretos (nunca subir)
+*.key
+*.pem
+.env.local

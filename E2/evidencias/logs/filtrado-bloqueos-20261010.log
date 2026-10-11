@@ -1,0 +1,16 @@
+# Evidencias de filtrado diferenciado - 2026-10-10
+# Generado con: sudo ./nodes/E2-squid/test/run_evidence.sh
+# El redirect transparente (nftables output chain) entrega HTTP a Squid 3129.
+# VLAN 20 USERS (users_blacklist) y VLAN 10 ADMIN (admins_blacklist) -> DENIED.
+# VLAN 30 SERVERS y VLAN 40 MGMT (sin lista) -> NO denegados (TCP_MISS_ABORTED
+# por ausencia de salida hacia E5 en el momento de la captura).
+
+=== access.log: eventos nuevos de las IPs simuladas ===
+1791683680.424     35 192.168.20.10 TCP_DENIED/403 3380 GET http://www.youtube.com/ - HIER_NONE/- text/html
+1791683680.468     26 192.168.20.10 TCP_DENIED/403 3382 GET http://www.facebook.com/ - HIER_NONE/- text/html
+1791683680.509     26 192.168.20.10 TCP_DENIED/403 3378 GET http://www.tiktok.com/ - HIER_NONE/- text/html
+1791683680.550     25 192.168.20.10 TCP_DENIED/403 3380 GET http://www.netflix.com/ - HIER_NONE/- text/html
+1791683680.564      0 192.168.10.50 TCP_DENIED/403 3382 GET http://www.facebook.com/ - HIER_NONE/- text/html
+1791683680.617     40 192.168.10.50 TCP_DENIED/403 3382 GET http://www.ilovepdf.com/ - HIER_NONE/- text/html
+1791683680.634   3002 192.168.30.10 TCP_MISS_ABORTED/000 0 GET http://www.youtube.com/ - HIER_NONE/- -
+1791683686.651   3002 192.168.40.10 TCP_MISS_ABORTED/000 0 GET http://www.facebook.com/ - HIER_NONE/- -

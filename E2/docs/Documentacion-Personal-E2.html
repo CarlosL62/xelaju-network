@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Documentación Individual Estudiante 2 — Proxy Squid</title>
+</head>
+<body style="font-family: 'DejaVu Sans', sans-serif; font-size: 11pt; color: #1a1a1a;">
+
+<!-- ==================== PORTADA ==================== -->
+<table width="100%" border="0" cellpadding="0">
+<tr><td align="center">
+<p style="font-size: 13pt; margin-top: 40pt;"><b>UNIVERSIDAD DE SAN CARLOS DE GUATEMALA</b></p>
+<p style="font-size: 13pt;"><b>CENTRO UNIVERSITARIO DE OCCIDENTE</b></p>
+<p style="font-size: 12pt;"><b>INGENIERÍA EN CIENCIAS Y SISTEMAS</b></p>
+<p style="font-size: 12pt;"><b>LABORATORIO DE REDES DE COMPUTADORAS 2</b></p>
+<p style="font-size: 11pt; margin-top: 30pt;">Ing. Juan Francisco Rojas<br>Aux. Yefri González</p>
+<p style="font-size: 18pt; margin-top: 36pt; color: #1f4e79;"><b>PROYECTO FINAL<br>XELAJUNETWORK</b></p>
+<p style="font-size: 14pt; margin-top: 30pt;"><b>Documentación Individual</b></p>
+<p style="font-size: 13pt;"><b>Estudiante 2 — Proxy Squid Transparente</b></p>
+<p style="font-size: 11pt; margin-top: 36pt;">Fecha de elaboración: 10 de octubre de 2026</p>
+<p style="font-size: 11pt;">Fecha de entrega: 13 de octubre de 2026, 3:20 pm (Classroom)</p>
+</td></tr>
+</table>
+
+<div style="page-break-before: always;"></div>
+
+<!-- ==================== INDICE ==================== -->
+<h2 style="color:#1f4e79;">Contenido</h2>
+<ol>
+<li>Introducción y rol del Estudiante 2</li>
+<li>Topología y flujo de tráfico</li>
+<li>Direccionamiento y enrutamiento del nodo</li>
+<li>Implementación de Squid (modo transparente)</li>
+<li>Listas externas de bloqueo</li>
+<li>Redirección transparente con nftables</li>
+<li>Tráfico no procesado por Squid</li>
+<li>Registro de solicitudes</li>
+<li>Portal de administración y consulta de logs</li>
+<li>Scripts de automatización entregados</li>
+<li>Persistencia y servicios</li>
+<li>Pruebas y evidencias</li>
+<li>Problemas encontrados y soluciones</li>
+<li>Dependencias y bloqueantes de integración</li>
+<li>Referencias</li>
+</ol>
+
+<div style="page-break-before: always;"></div>
+
+<!-- ==================== 1 ==================== -->
+<h2 style="color:#1f4e79;">1. Introducción y rol del Estudiante 2</h2>
+<p>El Estudiante 2 es responsable del <b>control y filtrado del tráfico Web (HTTP)</b> de la
+infraestructura <b>XelajuNetwork</b> mediante el proxy <b>Squid</b>, operando sobre Debian
+GNU/Linux en modo consola/texto.</p>
+<p>Responsabilidades implementadas, conforme a la sección 5 del enunciado:</p>
+<ul>
+<li><b>Squid</b> como proxy en modo <b>transparente</b>: no se configura proxy en los navegadores ni en los clientes.</li>
+<li>Intercepción del tráfico <b>HTTP</b> correspondiente (puerto 80).</li>
+<li><b>Filtrado de dominios</b> mediante archivos independientes (<code>admins_blacklist</code>, <code>users_blacklist</code>).</li>
+<li><b>Políticas diferenciadas</b> para VLAN ADMIN (<code>192.168.10.0/24</code>) y VLAN USERS (<code>192.168.20.0/24</code>).</li>
+<li><b>Registro de solicitudes</b> (auditoría de navegación) y <b>portal de administración</b> para su consulta.</li>
+<li>Función adicional de <b>routing de tránsito</b> entre E1 (LAN/VLANs) y E5 (Firewall), permitiendo que el tráfico no Web (HTTPS, DNS, DMZ, VPN) fluya sin ser interceptado.</li>
+</ul>
+
+<!-- ==================== 2 ==================== -->
+<h2 style="color:#1f4e79;">2. Topología y flujo de tráfico</h2>
+<p>E2 se ubica como nodo de <b>tránsito y filtrado</b> entre E1 (encargado de la segmentación
+LAN y las VLAN) y E5 (firewall perimetral e IDS):</p>
+<table border="1" cellpadding="4">
+<tr style="background:#d9e2f3;"><th>Enlace</th><th>Interfaz E2</th><th>Par (otro nodo)</th><th>Red /30</th></tr>
+<tr><td>E2 ↔ E1 (downstream, VLANs)</td><td><code>192.168.84.1/30</code></td><td>R1: <code>192.168.84.2</code></td><td><code>192.168.84.0/30</code></td></tr>
+<tr><td>E2 ↔ E5 (upstream, salida)</td><td><code>192.168.82.2/30</code></td><td>E5: <code>192.168.82.1</code></td><td><code>192.168.82.0/30</code></td></tr>
+</table>
+<p>Flujo del tráfico:</p>
+<ul>
+<li><b>HTTP de LAN → Internet:</b> VLAN → R1 (E1) → E2 (nftables redirige 80 → Squid 3129) → Squid procesa/registra → fetch → E2 → E5 → Internet.</li>
+<li><b>HTTPS (443), DNS (53), DMZ, VPN:</b> no se interceptan; transitan por E2 con la IP de origen intacta hacia E5 (enrutamiento normal).</li>
+</ul>
+
+<!-- ==================== 3 ==================== -->
+<h2 style="color:#1f4e79;">3. Direccionamiento y enrutamiento del nodo</h2>
+<h3>3.1 Interfaces del nodo</h3>
+<table border="1" cellpadding="4">
+<tr style="background:#d9e2f3;"><th>Dispositivo</th><th>Interfaz</th><th>IP</th><th>Máscara</th><th>Gateway</th><th>Red / Función</th></tr>
+<tr><td>E2</td><td><code>enxc0eac367f16d</code></td><td><code>192.168.84.1</code></td><td><code>255.255.255.252</code></td><td>—</td><td>Enlace hacia E1 (downstream)</td></tr>
+<tr><td>E2</td><td><code>enx00e04c534458</code></td><td><code>192.168.82.2</code></td><td><code>255.255.255.252</code></td><td><code>192.168.82.1</code></td><td>Enlace hacia E5 (upstream)</td></tr>
+</table>
+<h3>3.2 Tabla de rutas estáticas</h3>
+<table border="1" cellpadding="4">
+<tr style="background:#d9e2f3;"><th>Dispositivo</th><th>Red destino</th><th>Máscara</th><th>Next Hop</th><th>Interfaz</th></tr>
+<tr><td>E2</td><td><code>192.168.10.0</code></td><td><code>255.255.255.0</code></td><td><code>192.168.84.2</code></td><td><code>enxc0eac367f16d</code></td></tr>
+<tr><td>E2</td><td><code>192.168.20.0</code></td><td><code>255.255.255.0</code></td><td><code>192.168.84.2</code></td><td><code>enxc0eac367f16d</code></td></tr>
+<tr><td>E2</td><td><code>192.168.30.0</code></td><td><code>255.255.255.0</code></td><td><code>192.168.84.2</code></td><td><code>enxc0eac367f16d</code></td></tr>
+<tr><td>E2</td><td><code>192.168.40.0</code></td><td><code>255.255.255.0</code></td><td><code>192.168.84.2</code></td><td><code>enxc0eac367f16d</code></td></tr>
+<tr><td>E2</td><td><code>0.0.0.0</code> (default)</td><td><code>0.0.0.0</code></td><td><code>192.168.82.1</code></td><td><code>enx00e04c534458</code></td></tr>
+</table>
+<h3>3.3 IPv4 forwarding</h3>
+<p>E2 actúa como router de tránsito: <code>net.ipv4.ip_forward=1</code> activo y persistente
+en <code>/etc/sysctl.d/99-squid-transit.conf</code> (aplicado por <code>install.sh</code>).</p>
+
+<!-- ==================== 4 ==================== -->
+<h2 style="color:#1f4e79;">4. Implementación de Squid (modo transparente)</h2>
+<p>Archivo: <code>config/squid.conf</code> → <code>/etc/squid/squid.conf</code>.</p>
+<table border="1" cellpadding="4">
+<tr style="background:#d9e2f3;"><th>Directiva</th><th>Valor</th><th>Descripción</th></tr>
+<tr><td><code>http_port</code></td><td><code>3129 intercept</code></td><td>Puerto de intercepción transparente (nftables redirige 80).</td></tr>
+<tr><td><code>http_port</code></td><td><code>3128</code></td><td>Puerto explícito (administración/pruebas).</td></tr>
+<tr><td><code>acl</code> origen</td><td><code>admin_net 192.168.10.0/24</code>, <code>users_net 192.168.20.0/24</code>, <code>servers_net 192.168.30.0/24</code>, <code>mgmt_net 192.168.40.0/24</code></td><td>Redes de origen de clientes.</td></tr>
+<tr><td><code>acl</code> listas</td><td><code>admins_blacklist</code>, <code>users_blacklist</code> (dstdomain)</td><td>Archivos externos editables sin tocar reglas principales.</td></tr>
+<tr><td><code>http_access</code></td><td><code>deny admin_net admin_blacklist</code> / <code>deny users_net users_blacklist</code></td><td>Política diferenciada por VLAN.</td></tr>
+<tr><td><code>http_access</code></td><td><code>allow ... dmz_net</code> y <code>allow ... vpn_nets</code></td><td>Tráfico LAN→DMZ y LAN→VPN no filtrado (flujo interno).</td></tr>
+<tr><td><code>http_access</code></td><td><code>allow admin/users/servers/mgmt_net</code> + <code>deny all</code></td><td>Navegación permitida al resto; cierre estricto.</td></tr>
+<tr><td><code>access_log</code></td><td><code>/var/log/squid/access.log</code></td><td>Registro de solicitudes.</td></tr>
+</table>
+
+<!-- ==================== 5 ==================== -->
+<h2 style="color:#1f4e79;">5. Listas externas de bloqueo</h2>
+<table border="1" cellpadding="4">
+<tr style="background:#d9e2f3;"><th>Lista</th><th>Se aplica a</th><th>Dominios (una línea por dominio)</th></tr>
+<tr><td><code>admins_blacklist</code></td><td>VLAN 10 ADMIN</td><td>.ilovepdf.com, .facebook.com, .tiktok.com, .instagram.com</td></tr>
+<tr><td><code>users_blacklist</code></td><td>VLAN 20 USERS</td><td>.facebook.com, .youtube.com, .tiktok.com, .twitter.com, .x.com, .netflix.com</td></tr>
+</table>
+<p><b>Modificación en caliente</b> (sin reiniciar Squid, sin reescribir reglas principales):</p>
+<pre style="font-size:9pt;">echo ".nuevo-bloqueo.com" | sudo tee -a /etc/squid/lists/users_blacklist
+sudo squid -k reconfigure
+# o con helpers:
+sudo ./scripts/add_domain.sh users nuevo-bloqueo.com
+sudo ./scripts/remove_domain.sh users nuevo-bloqueo.com</pre>
+
+<!-- ==================== 6 ==================== -->
+<h2 style="color:#1f4e79;">6. Redirección transparente con nftables</h2>
+<p>Archivo: <code>config/squid-transparent.nft</code> → <code>/etc/nftables.d/</code>,
+cargado con <code>nft -f</code> y persistente vía <code>/etc/nftables.conf</code>
+(<code>include "/etc/nftables.d/squid-transparent.nft"</code>) + <code>systemctl enable nftables</code>.</p>
+<ul>
+<li><b>chain prerouting</b> (nat, dstnat): redirige <code>tcp dport 80 → :3129</code>.
+Excluye origen VPN (<code>10.200.10.0/24</code>, <code>10.200.20.0/24</code>) y destino DMZ/VPN
+(<code>172.16.10.0/24</code>, <code>10.200.10.0/24</code>, <code>10.200.20.0/24</code>).</li>
+<li><b>chain output</b> (nat, tráfico local): redirige también el HTTP generado en E2,
+evitando el bucle con la regla <code>meta skuid proxy</code> (uid 13, usuario de Squid en Debian).</li>
+<li><b>chain input</b> (filter): refuerza que el portal (8080) solo se acepte desde
+<code>192.168.10.0/24</code> o loopback: <code>tcp dport 8080 ip saddr != 192.168.10.0/24 drop</code>.</li>
+<li><b>Idempotencia:</b> el archivo declara la tabla sin cuerpo y luego <code>delete table</code>
+(sintaxis válida de nftables, sin operadores de shell), permitiendo reaplicación segura.</li>
+<li><b>Validación previa:</b> <code>install.sh</code> verifica con <code>nft -c -f</code> antes de
+aplicar y falla si la sintaxis o la carga no son correctas.</li>
+</ul>
+
+<!-- ==================== 7 ==================== -->
+<h2 style="color:#1f4e79;">7. Tráfico no procesado por Squid</h2>
+<p>El tráfico que no corresponde al Web procesado por Squid continúa mediante routing,
+firewall y Multi-WAN (sección 5 del enunciado):</p>
+<ul>
+<li><b>HTTPS (443) y DNS (53)</b> de las VLAN: atraviesan E2 sin interceptar (tránsito) hacia E5.</li>
+<li><b>LAN → DMZ (172.16.10.0/24)</b> y <b>LAN → VPN</b>: excluidos de la redirección tanto en nftables como en Squid.</li>
+<li><b>VPN (origen 10.200.x):</b> clientes VPN navegando no son interceptados (excepción por origen).</li>
+<li>Integración E2 ↔ E3 (Multi-WAN): resuelta en ADR-0003; el tráfico de salida conserva la IP del
+cliente para que E3 aplique sus políticas por IP origen.</li>
+</ul>
+
+<!-- ==================== 8 ==================== -->
+<h2 style="color:#1f4e79;">8. Registro de solicitudes</h2>
+<p>El registro (<code>access.log</code>) permite analizar, como mínimo, los campos que exige el enunciado:</p>
+<table border="1" cellpadding="4">
+<tr style="background:#d9e2f3;"><th>Campo requerido</th><th>Columna del log</th><th>Ejemplo</th></tr>
+<tr><td>IP de origen</td><td><code>client</code></td><td><code>192.168.20.10</code></td></tr>
+<tr><td>Fecha y hora</td><td><code>timestamp</code> (epoch → YYYY-MM-DD HH:MM:SS)</td><td><code>2026-10-10 12:34:56</code></td></tr>
+<tr><td>Dominio/destino</td><td><code>url</code></td><td><code>http://www.youtube.com/</code></td></tr>
+<tr><td>Método/protocolo</td><td><code>method</code> + resultado</td><td><code>GET</code> / <code>TCP_DENIED/403</code></td></tr>
+<tr><td>Resultado</td><td><code>result</code></td><td><code>TCP_DENIED/403</code> (bloqueado) o <code>TCP_MISS/301</code> (permitido)</td></tr>
+</table>
+<p>Un fragmento real del registro:</p>
+<pre style="font-size:9pt;">1791683680.424 35 192.168.20.10 TCP_DENIED/403 3380 GET http://www.youtube.com/ - HIER_NONE/- text/html
+1791683680.550 25 192.168.20.10 TCP_DENIED/403 3380 GET http://www.netflix.com/ - HIER_NONE/- text/html
+1791683680.634 3002 192.168.30.10 TCP_MISS_ABORTED/000 0 GET http://www.youtube.com/ - HIER_NONE/- -</pre>
+<p>El fragmento de logrotate conserva permisos <code>644</code> y grupo <code>proxy</code> para que el portal lea el log.</p>
+
+<!-- ==================== 9 ==================== -->
+<h2 style="color:#1f4e79;">9. Portal de administración y consulta de logs</h2>
+<ul>
+<li><b>Puerto 8080</b>, aplicación Flask (<code>portal/app.py</code>), servicio <code>squid-portal.service</code>.</li>
+<li><b>Acceso EXCLUSIVO desde VLAN ADMIN</b> (<code>192.168.10.0/24</code>): control en la aplicación
+(<code>ALLOWED_NETWORKS</code>) y refuerzo en firewall (nftables input). Cualquier otro origen → HTTP 403 / descartado.</li>
+<li>Muestra: <b>total de solicitudes</b>, <b>permitidas</b>, <b>bloqueadas</b>,
+filtros por <b>IP origen</b> y <b>dominio</b>, y tabla con fecha/hora, IP origen, resultado, método, dominio/URL y bytes.</li>
+</ul>
+
+<!-- ==================== 10 ==================== -->
+<h2 style="color:#1f4e79;">10. Scripts de automatización entregados</h2>
+<table border="1" cellpadding="4">
+<tr style="background:#d9e2f3;"><th>Script</th><th>Función</th></tr>
+<tr><td><code>scripts/install.sh</code></td><td>Instalación completa e idempotente: dependencias, configs, listas, ip_forward, rutas VLAN, nftables (con validación <code>nft -c</code>), persistencia, Squid y portal.</td></tr>
+<tr><td><code>scripts/status.sh</code></td><td>Diagnóstico en tiempo real del nodo (interfaces, rutas, servicios, puertos, redirección).</td></tr>
+<tr><td><code>scripts/reload.sh</code></td><td>Recarga de listas en caliente (<code>squid -k reconfigure</code>) sin reiniciar.</td></tr>
+<tr><td><code>scripts/add_domain.sh</code></td><td>Agrega un dominio a una lista negra.</td></tr>
+<tr><td><code>scripts/remove_domain.sh</code></td><td>Elimina un dominio de una lista negra.</td></tr>
+<tr><td><code>test/check_config.sh</code></td><td>Validación estática no destructiva de sintaxis y config.</td></tr>
+<tr><td><code>test/run_evidence.sh</code></td><td>Genera evidencias de filtrado simulando clientes de cada VLAN (IPs temporales en lo + <code>curl --resolve</code>).</td></tr>
+</table>
+
+<!-- ==================== 11 ==================== -->
+<h2 style="color:#1f4e79;">11. Persistencia y servicios</h2>
+<table border="1" cellpadding="4">
+<tr style="background:#d9e2f3;"><th>Recurso</th><th>Persistencia</th></tr>
+<tr><td>Squid</td><td><code>systemctl enable squid</code> (+ <code>squid -z</code>, permisos proxy).</td></tr>
+<tr><td>Reglas nftables</td><td><code>include</code> en <code>/etc/nftables.conf</code> + <code>systemctl enable nftables</code>.</td></tr>
+<tr><td>Portal</td><td><code>squid-portal.service</code> (<code>systemctl enable --now</code>), usuario del administrador en grupo <code>proxy</code>.</td></tr>
+<tr><td>IPv4 forwarding</td><td><code>/etc/sysctl.d/99-squid-transit.conf</code>.</td></tr>
+<tr><td>Logs</td><td>Fragmento logrotate (mantiene <code>access.log</code> 644, grupo proxy).</td></tr>
+</table>
+
+<!-- ==================== 12 ==================== -->
+<h2 style="color:#1f4e79;">12. Pruebas y evidencias</h2>
+<p>Evidencia organizada en <code>evidence/E2-squid/</code>:
+<code>filtrado-bloqueos-20261010.log</code>, <code>navegacion-permitida-ejemplos.log</code>,
+<code>validacion-componente-20261010.log</code> y su <code>README.md</code>.</p>
+<h3>12.1 Filtrado diferenciado (bloqueado / no bloqueado)</h3>
+<table border="1" cellpadding="4">
+<tr style="background:#d9e2f3;"><th>Origen</th><th>VLAN</th><th>Dominio</th><th>Resultado</th><th>Esperado</th></tr>
+<tr><td>192.168.20.10</td><td>USERS</td><td>youtube, facebook, tiktok, netflix</td><td><code>TCP_DENIED/403</code></td><td>Bloqueado ✅</td></tr>
+<tr><td>192.168.10.50</td><td>ADMIN</td><td>facebook, ilovepdf</td><td><code>TCP_DENIED/403</code></td><td>Bloqueado ✅ (admins_blacklist)</td></tr>
+<tr><td>192.168.30.10</td><td>SERVERS</td><td>youtube</td><td><code>TCP_MISS_ABORTED/000</code> (sin 403)</td><td>No denegado ✅</td></tr>
+<tr><td>192.168.40.10</td><td>MGMT</td><td>facebook</td><td><code>TCP_MISS_ABORTED/000</code> (sin 403)</td><td>No denegado ✅</td></tr>
+</table>
+<h3>12.2 Navegación permitida (respuestas reales de Internet)</h3>
+<table border="1" cellpadding="4">
+<tr style="background:#d9e2f3;"><th>Origen</th><th>URL</th><th>Resultado</th></tr>
+<tr><td>192.168.10.50</td><td>http://google.com/</td><td><code>TCP_MISS/301</code> (74.125.139.113)</td></tr>
+<tr><td>192.168.10.50</td><td>http://1.1.1.1/</td><td><code>TCP_REFRESH_MODIFIED/301</code></td></tr>
+<tr><td>192.168.10.50</td><td>http://www.youtube.com/</td><td><code>TCP_MISS/301</code> (permitido en ADMIN)</td></tr>
+<tr><td>192.168.20.10 / 30.10</td><td>http://deb.debian.org/.../Release</td><td><code>TCP_MEM_HIT/200</code></td></tr>
+</table>
+<h3>12.3 Validación del nodo</h3>
+<ul>
+<li><code>test/check_config.sh</code> → <b>VALIDACION OK</b>; <code>squid -k parse</code> sin errores.</li>
+<li>Tabla <code>ip squid_transparent</code> cargada con <code>redirect to :3129</code>; recarga OK tras reinicio de <code>nftables.service</code>.</li>
+<li>Puertos en escucha: <b>3128</b> (explícito), <b>3129</b> (intercept), <b>8080</b> (portal).</li>
+<li>Portal: <code>127.0.0.1</code> y origen simulado ADMIN → <b>HTTP 200</b>; origen no autorizado (<code>192.168.82.2</code>) → <b>HTTP 403</b>.</li>
+</ul>
+<p><b>Reproducción:</b> <code>sudo ./test/run_evidence.sh</code> (genera los eventos y los imprime desde <code>access.log</code>; limpia las IPs temporales al salir).</p>
+
+<h3>12.4 Capturas (imágenes de evidencia)</h3>
+<p>El enunciado (sección 9 – Entregables) exige <b>capturas</b> (imágenes). Capturas
+tomadas el 2026-10-10 con salidas reales de los comandos ejecutados en E2
+(carpeta <code>evidence/E2-squid/capturas/</code>):</p>
+<ol>
+<li><b>Filtrado diferenciado</b> — <code>TCP_DENIED/403</code> en USERS/ADMIN; sin 403 en SERVERS/MGMT:<br>
+<img src="/home/carlos/xelaju-network-coordination/evidence/E2-squid/capturas/captura-01-filtrado-bloqueados.png" width="560" alt="Filtrado diferenciado"></li>
+<li><b>Navegación permitida</b> con respuestas reales de Internet:<br>
+<img src="/home/carlos/xelaju-network-coordination/evidence/E2-squid/capturas/captura-02-navegacion-permitida.png" width="560" alt="Navegacion permitida"></li>
+<li><b>Estado del componente</b> (<code>status.sh</code>):<br>
+<img src="/home/carlos/xelaju-network-coordination/evidence/E2-squid/capturas/captura-03-estado-componente.png" width="560" alt="Estado del componente"></li>
+<li><b>Tabla nftables</b> (redirección 3129 + excepciones + portal):<br>
+<img src="/home/carlos/xelaju-network-coordination/evidence/E2-squid/capturas/captura-04-nftables-redireccion.png" width="560" alt="Tabla nftables"></li>
+<li><b>Interfaces y rutas</b> (VLAN vía 192.168.84.2, ping a R1):<br>
+<img src="/home/carlos/xelaju-network-coordination/evidence/E2-squid/capturas/captura-05-interfaces-rutas.png" width="560" alt="Interfaces y rutas"></li>
+<li><b>Acceso al portal</b> (200 ADMIN / 403 no autorizado):<br>
+<img src="/home/carlos/xelaju-network-coordination/evidence/E2-squid/capturas/captura-06-portal-acceso.png" width="560" alt="Acceso al portal"></li>
+<li><b>Portal web renderizado</b> (estadísticas y tabla de logs):<br>
+<img src="/home/carlos/xelaju-network-coordination/evidence/E2-squid/capturas/captura-07-portal-web.png" width="560" alt="Portal web"></li>
+</ol>
+
+<!-- ==================== 13 ==================== -->
+<h2 style="color:#1f4e79;">13. Problemas encontrados y soluciones</h2>
+<table border="1" cellpadding="4">
+<tr style="background:#d9e2f3;"><th>Problema</th><th>Solución</th></tr>
+<tr><td>Enlace E1↔E2 sin tráfico: el par visible era la NIC host de R1 (<code>10.0.0.2</code>) y no la VM.</td><td>R1 puenteó la VM (peer MAC <code>52:54:00:01:00:01</code>); desde entonces <code>ping 192.168.84.2</code> = 0 % pérdida y el tráfico de las VLAN llega a E2.</td></tr>
+<tr><td>Línea <code>delete table ... 2>/dev/null || true</code> en el archivo nft (sintaxis de shell no válida en nftables) invalidaba la carga futura.</td><td>Se corrigió al idioma idempotente válido (tabla sin cuerpo + <code>delete table</code>), se validó con <code>nft -c -f</code> y se endureció <code>install.sh</code> para fallar ante reglas inválidas.</td></tr>
+<tr><td>Portal aceptaba también el enlace de tránsito E1-E2, contraviniendo el acceso exclusivo a VLAN ADMIN.</td><td>Se restringió en la aplicación (<code>ALLOWED_NETWORKS</code>) y se reforzó con la <code>chain input</code> de nftables.</td></tr>
+<tr><td>Regla redirect errónea para el usuario de Squid (uid).</td><td>En Debian Squid corre como <code>proxy</code> (uid 13); la cadena output usa <code>meta skuid proxy</code> para evitar el bucle.</td></tr>
+</table>
+
+<!-- ==================== 14 ==================== -->
+<h2 style="color:#1f4e79;">14. Dependencias y bloqueantes de integración</h2>
+<ul>
+<li><b>E1 (resuelto):</b> enlace E1↔E2 operativo y rutas a las VLAN vía <code>192.168.84.2</code>.</li>
+<li><b>E5 (bloqueante externo):</b> <code>192.168.82.1</code> responde a nivel L2 pero no responde IPv4
+(ping/traceroute 100 % pérdida). Se requiere de E5: (1) levantar <code>192.168.82.1/30</code>;
+(2) rutas de retorno <code>192.168.10/20/30/40.0/24 via 192.168.82.2</code>; (3) no descartar IPv4 en el enlace E2↔E5.
+Mientras no responda, no se valida el salto final LAN → E2 → E5 → Internet (HTTP permitido, HTTPS y DNS).</li>
+<li><b>E3:</b> contrato E2↔E3 definido en ADR-0003 (conserva IP de cliente para políticas Multi-WAN).</li>
+<li><b>E4:</b> la exclusión por origen VPN (10.200.x) se valida cuando existan clientes VPN.</li>
+</ul>
+
+<!-- ==================== 15 ==================== -->
+<h2 style="color:#1f4e79;">15. Referencias</h2>
+<ul>
+<li>Enunciado del proyecto final: <code>reference/assignment/proyecto-final.pdf</code> / <code>.md</code> (sección 5 y sección 9-Entregables).</li>
+<li>Plan de direccionamiento y rutas: <code>core/ADDRESSING.yaml</code>; contratos: <code>core/SECURITY_CONTRACTS.yaml</code>; estado: <code>core/CURRENT_STATE.md</code>.</li>
+<li>ADR-0002 (direccionamiento/enrutamiento), ADR-0003 (Squid ↔ Multi-WAN), ADR-0004 (límite E1/E5).</li>
+<li>Documentación técnica del nodo: <code>nodes/E2-squid/README.md</code>.</li>
+<li>Evidencias: <code>evidence/E2-squid/</code>.</li>
+</ul>
+
+</body>
+</html>

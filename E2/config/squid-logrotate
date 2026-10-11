@@ -1,0 +1,23 @@
+#
+#       Logrotate fragment for squid — XelajuNetwork E2
+#       Sobreescribe /etc/logrotate.d/squid para mantener access.log legible
+#       por el grupo `proxy` (portal Flask + diagnóstico sin sudo).
+#
+/var/log/squid/*.log {
+        daily
+        compress
+        delaycompress
+        rotate 2
+        missingok
+        nocreate
+        create 644 proxy proxy
+        sharedscripts
+        prerotate
+                test ! -x /usr/sbin/sarg-reports || /usr/sbin/sarg-reports daily
+        endscript
+        postrotate
+                test ! -e /run/squid.pid || test ! -x /usr/sbin/squid || /usr/sbin/squid -k rotate
+                chmod 644 /var/log/squid/access.log 2>/dev/null || true
+                chmod 755 /var/log/squid 2>/dev/null || true
+        endscript
+}

@@ -1,0 +1,17 @@
+# Navegación PERMITIDA con respuesta real de Internet (registros previos de access.log)
+# Sesiones en las que el enlace hacia E5 estaba operativo: el proxy completó la
+# transacción con respuestas reales (HIER_DIRECT / ORIGINAL_DST) sin TCP_DENIED.
+# Formato: <ts> <tpo> <origen> <resultado> <bytes> <método> <URL> ...
+#     - 192.168.10.50 = VLAN 10 ADMIN (navegación permitida, incl. youtube)
+#     - 192.168.20.10 / 192.168.20.11 / 192.168.30.10 = USERS/SERVERS
+
+1791165185.407    538 192.168.10.50 TCP_MISS/301 465 GET http://youtube.com/ - ORIGINAL_DST/142.251.211.238 application/binary
+1791165185.802      3 192.168.20.10 TCP_MEM_HIT/200 139336 GET http://deb.debian.org/debian/dists/trixie/Release - HIER_NONE/- -
+1791165293.116   3782 192.168.10.50 TCP_REFRESH_MODIFIED/301 461 GET http://1.1.1.1/ - ORIGINAL_DST/1.1.1.1 text/html
+1791165621.388    108 192.168.10.50 TCP_REFRESH_MODIFIED/301 461 GET http://1.1.1.1/ - ORIGINAL_DST/1.1.1.1 text/html
+1791165622.131    309 192.168.10.50 TCP_MISS/301 865 GET http://google.com/ - ORIGINAL_DST/74.125.139.113 text/html
+1791165652.589    187 192.168.10.50 TCP_MISS/301 865 GET http://google.com/ - ORIGINAL_DST/142.251.218.46 text/html
+1791165655.359    191 192.168.10.50 TCP_MISS/301 646 HEAD http://google.com/ - ORIGINAL_DST/172.217.204.139 text/html
+1791169918.473      3 192.168.20.11 TCP_MEM_HIT/200 139334 GET http://deb.debian.org/debian/dists/trixie/Release - HIER_NONE/- -
+1791169998.303      3 192.168.30.10 TCP_MEM_HIT/200 139336 GET http://deb.debian.org/debian/dists/trixie/Release - HIER_NONE/- -
+1791170090.958    209 192.168.10.50 TCP_MISS/301 469 GET http://www.youtube.com/ - ORIGINAL_DST/142.251.155.4 application/binary

@@ -1,0 +1,6 @@
+# Dominios bloqueados para VLAN ADMIN (una por linea)
+# Formato: dominio (sin protocolo, con punto inicial opcional)
+.ilovepdf.com
+.facebook.com
+.tiktok.com
+.instagram.com

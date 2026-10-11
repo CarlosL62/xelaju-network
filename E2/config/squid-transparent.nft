@@ -1,0 +1,43 @@
+#!/usr/sbin/nft -f
+# Reglas nftables: redireccion transparente HTTP -> Squid (3129)
+# Alineado con ADDRESSING.yaml (PR #4): no redirigir LAN->DMZ ni trafico VPN
+# Ejecutar: nft -f /etc/nftables.d/squid-transparent.nft
+
+table ip squid_transparent
+delete table ip squid_transparent
+
+table ip squid_transparent {
+    chain input {
+        type filter hook input priority filter; policy accept;
+        # Tráfico local de mantenimiento/diagnóstico (E2 mismo)
+        iif "lo" accept
+        # Portal web (8080): accesible únicamente desde VLAN ADMIN (192.168.10.0/24)
+        tcp dport 8080 ip saddr != 192.168.10.0/24 drop
+        # El resto de tráfico hacia E2 (Squid intercept, gestión) queda permitido.
+    }
+
+    chain prerouting {
+        type nat hook prerouting priority dstnat; policy accept;
+        # No interceptar trafico con origen VPN (clientes VPN navegando)
+        ip saddr { 10.200.10.0/24, 10.200.20.0/24 } tcp dport 80 accept
+        # No interceptar trafico hacia DMZ
+        ip daddr 172.16.10.0/24 tcp dport 80 accept
+        # No interceptar trafico hacia VPN
+        ip daddr 10.200.10.0/24 tcp dport 80 accept
+        ip daddr 10.200.20.0/24 tcp dport 80 accept
+        # Redirigir HTTP restante hacia Squid (intercept 3129)
+        ip protocol tcp tcp dport 80 redirect to :3129
+    }
+
+    chain output {
+        type nat hook output priority dstnat; policy accept;
+        # Evita bucle: trafico saliente del usuario proxy
+        ip daddr != 127.0.0.0/8 tcp dport 80 meta skuid proxy accept
+        # No interceptar trafico con origen VPN (local)
+        ip saddr { 10.200.10.0/24, 10.200.20.0/24 } tcp dport 80 accept
+        ip daddr 172.16.10.0/24 tcp dport 80 accept
+        ip daddr 10.200.10.0/24 tcp dport 80 accept
+        ip daddr 10.200.20.0/24 tcp dport 80 accept
+        ip protocol tcp tcp dport 80 redirect to :3129
+    }
+}
