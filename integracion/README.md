@@ -4,6 +4,8 @@
 **Curso:** Redes de Computadoras 2 — CUNOC / USAC<br>
 **Objetivo:** Validar la operatividad conjunta y la interoperabilidad técnica de los cinco componentes de la infraestructura (E1 a E5) de acuerdo con los requerimientos del proyecto final.
 
+**Estado al 11/10/2026:** las descripciones combinan requisitos esperados y pruebas parciales. La prueba simultánea de cinco equipos ejecutando íntegramente los tres flujos sigue pendiente. E2–E5 sí se verificó en una sesión documentada mediante E5-T01.
+
 ---
 
 ## 1. Alcance de la Integración Grupal
