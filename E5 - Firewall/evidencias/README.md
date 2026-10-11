@@ -3,27 +3,25 @@
 **Componente:** E5 — Firewall Perimetral (`nftables`) + IDS (`Suricata 7.0.10`)  
 **Responsable:** Estudiante 5 (E5)  
 **Curso:** Redes de Computadoras 2 — CUNOC / USAC  
-**Sistema:** Debian GNU/Linux 13 (trixie) x86_64 — Kernel `6.12.107+deb13-amd64` (Modo Texto / Consola)  
-**Memoria técnica de trazabilidad:** Registro técnico formal conservado para informe individual académico.
+**Entorno:** Debian GNU/Linux 13 (trixie) x86_64 — Kernel `6.12.107+deb13-amd64` (Modo Texto)  
 
-Este directorio documenta el inventario oficial de evidencias técnicas recopiladas para el componente **E5** en la topología XelajuNetwork para el informe y entrega académica.
+Índice de ubicación de las evidencias técnicas del componente E5. Las explicaciones, análisis y conclusiones completas se presentan en los documentos PDF de entrega final.
 
 ---
 
-## 1. Estructura de Evidencias Académicas
+## 1. Estructura de Evidencias
 
 ```text
 E5 - Firewall/evidencias/
-├── README.md                      # Este índice oficial de evidencias
-├── logs/                          # Registros formateados de ejecución en consola (6 archivos + muestra)
+├── README.md                      # Este índice de archivos
+├── logs/                          # Registros formateados de consola (6 archivos)
 │   ├── E5-T00-baseline.log
 │   ├── E5-T01-e2-e5.log
 │   ├── E5-T02-e3-e5.log
 │   ├── E5-T03-e4-e5.log
 │   ├── E5-T04-e1-e5.log
-│   ├── E5-T13-zabbix-monitoring.log
-│   └── suricata-alert-sample.log  # Muestra histórica representativa de alertas Suricata
-├── pcap/                          # Capturas de tráfico perimetral analizables en Wireshark (7 archivos)
+│   └── E5-T13-zabbix-monitoring.log
+├── pcap/                          # Capturas de tráfico perimetral para Wireshark (7 archivos)
 │   ├── E5-T01-e2-e5-connectivity.pcap
 │   ├── E5-T02-e3-e5-connectivity.pcap
 │   ├── E5-T03-e4-e5-connectivity.pcap
@@ -31,31 +29,27 @@ E5 - Firewall/evidencias/
 │   ├── E5-T05-T13-group-flows.pcap
 │   ├── E5-T12-flujo-c-dmz-ngrok.pcap
 │   └── E5-T13-zabbix-monitoring.pcap
-└── capturas/                      # Directorio reservado para capturas de pantalla PNG de Wireshark GUI
+└── capturas/                      # Directorio para capturas visuales de Wireshark GUI
 ```
 
 ---
 
-## 2. Inventario de Evidencias Validadas
+## 2. Inventario de Evidencias Técnicas
 
-| Archivo | Tipo | Tamaño | Respaldo y Demostración Objetiva |
+| Archivo | Tipo | Tamaño | Descripción Técnica |
 |---|:---:|:---:|---|
-| [`logs/E5-T00-baseline.log`](./logs/E5-T00-baseline.log) | Log | 4.0 KB | Estado operativo inicial de interfaces `/30`, forwarding kernel `net.ipv4.ip_forward = 1`, tablas de rutas y reglas activas. |
-| [`logs/E5-T01-e2-e5.log`](./logs/E5-T01-e2-e5.log)<br>[`pcap/E5-T01-e2-e5-connectivity.pcap`](./pcap/E5-T01-e2-e5-connectivity.pcap) | Log<br>PCAP | 3.5 KB<br>16.1 KB | Enlace punto a punto E2–E5 (`192.168.82.0/30`), resolución ARP mutua, 8 paquetes ICMP (0% loss) y alertas de Suricata `SID 1000001` en `enxc0eac367f731`. |
-| [`logs/E5-T02-e3-e5.log`](./logs/E5-T02-e3-e5.log)<br>[`pcap/E5-T02-e3-e5-connectivity.pcap`](./pcap/E5-T02-e3-e5-connectivity.pcap) | Log<br>PCAP | 3.1 KB<br>10.6 KB | Enlace perimetral E3–E5 (`192.168.81.0/30`), sondeo ICMP 4/4 bidireccional y alertas IDS en `eno2`. |
-| [`logs/E5-T03-e4-e5.log`](./logs/E5-T03-e4-e5.log)<br>[`pcap/E5-T03-e4-e5-connectivity.pcap`](./pcap/E5-T03-e4-e5-connectivity.pcap) | Log<br>PCAP | 3.2 KB<br>1.5 KB | Enlace DMZ/VPN E4–E5 (`192.168.83.0/30`), tráfico ICMP 4/4 e inspección pasiva en `enxf8e43ba69459`. |
-| [`logs/E5-T04-e1-e5.log`](./logs/E5-T04-e1-e5.log)<br>[`pcap/E5-T04-e1-e5-routing.pcap`](./pcap/E5-T04-e1-e5-routing.pcap) | Log<br>PCAP | 2.9 KB<br>26.5 KB | Enrutamiento multihop LAN E1 hacia E5 a través de E2 con decremento de TTL=63 y paquetes ICMP *Time exceeded* de retorno. |
-| [`pcap/E5-T05-T13-group-flows.pcap`](./pcap/E5-T05-T13-group-flows.pcap) | PCAP | 1.82 MB | Concurrencia multi-flujo: 2,634 paquetes capturados demostrando tráfico simultáneo perimetral (telemetría Zabbix y sesiones TLS). |
-| [`pcap/E5-T12-flujo-c-dmz-ngrok.pcap`](./pcap/E5-T12-flujo-c-dmz-ngrok.pcap) | PCAP | 56.3 KB | Flujo C: sesión continua `TLSv1.2` bidireccional (448 paquetes) entre E4 y ngrok (`3.134.73.173:443`) a través de E5. |
-| [`logs/E5-T13-zabbix-monitoring.log`](./logs/E5-T13-zabbix-monitoring.log)<br>[`pcap/E5-T13-zabbix-monitoring.pcap`](./pcap/E5-T13-zabbix-monitoring.pcap) | Log<br>PCAP | 2.5 KB<br>49.8 KB | Contrato `SEC-E1-MONITORING`: handshake TCP completo y active checks del agente Zabbix de E3 hacia `192.168.30.10:10051`. |
-
-*Nota de depuración metodológica:* Los archivos `logs/E5-T05-flujo-a-squid-http.log`, `logs/E5-T12-flujo-c-dmz-ngrok.log` y `pcap/E5-T05-flujo-a-squid-http.pcap` fueron retirados del lote para evitar afirmaciones no respaldadas concluyentemente por la captura perimetral de E5, preservándose fuera del repositorio para trazabilidad interna.
+| [`logs/E5-T00-baseline.log`](./logs/E5-T00-baseline.log) | Log | 4.0 KB | Estado operativo de interfaces `/30`, reenvío en kernel (`net.ipv4.ip_forward = 1`), rutas y servicios activos. |
+| [`logs/E5-T01-e2-e5.log`](./logs/E5-T01-e2-e5.log)<br>[`pcap/E5-T01-e2-e5-connectivity.pcap`](./pcap/E5-T01-e2-e5-connectivity.pcap) | Log<br>PCAP | 3.5 KB<br>16.1 KB | Enlace E2–E5 (`192.168.82.0/30`), resolución ARP, ICMP bidireccional y alertas Suricata `SID 1000001` en `enxc0eac367f731`. |
+| [`logs/E5-T02-e3-e5.log`](./logs/E5-T02-e3-e5.log)<br>[`pcap/E5-T02-e3-e5-connectivity.pcap`](./pcap/E5-T02-e3-e5-connectivity.pcap) | Log<br>PCAP | 3.1 KB<br>10.6 KB | Enlace E3–E5 (`192.168.81.0/30`), sondeo ICMP bidireccional y alertas IDS en `eno2`. |
+| [`logs/E5-T03-e4-e5.log`](./logs/E5-T03-e4-e5.log)<br>[`pcap/E5-T03-e4-e5-connectivity.pcap`](./pcap/E5-T03-e4-e5-connectivity.pcap) | Log<br>PCAP | 3.2 KB<br>1.5 KB | Enlace E4–E5 (`192.168.83.0/30`), resolución ARP, paquetes ICMP y detección IDS en `enxf8e43ba69459`. |
+| [`logs/E5-T04-e1-e5.log`](./logs/E5-T04-e1-e5.log)<br>[`pcap/E5-T04-e1-e5-routing.pcap`](./pcap/E5-T04-e1-e5-routing.pcap) | Log<br>PCAP | 2.9 KB<br>26.5 KB | Enrutamiento multihop LAN (E1) hacia E5 a través de E2 con decremento de TTL=63 e ICMP Time exceeded. |
+| [`pcap/E5-T05-T13-group-flows.pcap`](./pcap/E5-T05-T13-group-flows.pcap) | PCAP | 1.82 MB | Captura de concurrencia perimetral: tráfico simultáneo de telemetría Zabbix y sesiones TLS. |
+| [`pcap/E5-T12-flujo-c-dmz-ngrok.pcap`](./pcap/E5-T12-flujo-c-dmz-ngrok.pcap) | PCAP | 56.3 KB | Flujo C: transporte `TLSv1.2` (448 paquetes) entre E4 (`192.168.83.2`) y ngrok (`3.134.73.173:443`) a través de E5. |
+| [`logs/E5-T13-zabbix-monitoring.log`](./logs/E5-T13-zabbix-monitoring.log)<br>[`pcap/E5-T13-zabbix-monitoring.pcap`](./pcap/E5-T13-zabbix-monitoring.pcap) | Log<br>PCAP | 2.5 KB<br>49.8 KB | Contrato `SEC-E1-MONITORING`: handshake TCP y active checks del agente Zabbix de E3 hacia `192.168.30.10:10051`. |
 
 ---
 
-## 3. Verificación de Integridad Criptográfica (SHA-256)
-
-Los 13 archivos oficiales coinciden bit a bit con los conservados en el repositorio de coordinación:
+## 3. Integridad Criptográfica (SHA-256)
 
 - `logs/E5-T00-baseline.log`: `85a179614d90f6b4d58358298aaeac3f4c91db15c35e8886b5605e46470b1aa8`
 - `logs/E5-T01-e2-e5.log`: `92688ee2462503f1abb795950667e5ae7fb4add7fe3cc53b985826563e349458`
@@ -70,4 +64,3 @@ Los 13 archivos oficiales coinciden bit a bit con los conservados en el reposito
 - `pcap/E5-T05-T13-group-flows.pcap`: `ab3dce315a6ec44b6333aafe208a96f39373e68ee86ecc0344944823e49df504`
 - `pcap/E5-T12-flujo-c-dmz-ngrok.pcap`: `7db7a04eec0e19dde382f01e4b4c98f04d2d475d14a64adcf7ba94623d83365d`
 - `pcap/E5-T13-zabbix-monitoring.pcap`: `7fd2692a15159db77ddba68f406d391966d410d102a3700b89e08a698b9ce548`
-- `logs/suricata-alert-sample.log`: `8ef9a7f9698a2ddb914bc6e4a196dff6591664623a5db953a4d2af4c9a0fc5d1`
