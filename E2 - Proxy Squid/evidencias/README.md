@@ -7,6 +7,8 @@ Evidencias del funcionamiento del componente E2 conforme al enunciado (sección 
 filtrado diferenciado por VLAN, interceptación transparente HTTP, registro de
 solicitudes, portal restringido a VLAN ADMIN y capturas (imágenes).
 
+**Alcance:** `test/run_evidence.sh` utiliza el Squid real pero simula IP de clientes VLAN sobre `lo` (loopback). Demuestra filtrado local, no recorrido extremo a extremo E1 → E2 → E5 → E3. `TCP_MISS_ABORTED/000` no acredita navegación exitosa.
+
 ---
 
 ## 1. Capturas (imágenes)
