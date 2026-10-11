@@ -69,11 +69,11 @@ La topología del sistema distribuye la red en tres planos principales:
 
 | Componente | Rol en la Red | Directorio | Responsabilidades Principales |
 |:---:|---|:---:|---|
-| **E1** | Router LAN y Monitoreo | [`E1/`](./E1/) | Segmentación en 4 VLANs (802.1Q), enrutamiento inter-VLAN, DHCP restringido con reservas MAC en VLAN 20 y servidor Zabbix (`192.168.30.10`). |
-| **E2** | Proxy Web Transparente | [`E2/`](./E2/) | Proxy Squid en modo intercepción transparente para HTTP, listas negras diferenciadas para ADMIN y USERS, y portal de logs restringido a ADMIN. |
-| **E3** | Borde Multi-WAN | [`E3/`](./E3/) | Enrutamiento multihomed hacia dos ISPs, balanceo por políticas (PBR), conmutación por error (*failover*), Source NAT y métricas a Zabbix. |
-| **E4** | VPN WireGuard y DMZ | [`E4/`](./E4/) | Servidor WireGuard con rangos diferenciados (`VPN-ADMIN: 10.200.10.0/24`, `VPN-USERS: 10.200.20.0/24`), servidor DMZ WEB01 y publicación vía túnel ngrok. |
-| **E5** | Firewall Perimetral e IDS | [`E5/`](./E5/) | Filtrado perimetral con estado (`nftables`, default drop), doble pasada de VPN, inspección pasiva en tiempo real con Suricata IDS (7.0.10). |
+| **E1** | Router LAN y Monitoreo | [`E1 - LAN/`](./E1%20-%20LAN/) | Segmentación en 4 VLANs (802.1Q), enrutamiento inter-VLAN, DHCP restringido con reservas MAC en VLAN 20 y servidor Zabbix (`192.168.30.10`). |
+| **E2** | Proxy Web Transparente | [`E2 - Proxy Squid/`](./E2%20-%20Proxy%20Squid/) | Proxy Squid en modo intercepción transparente para HTTP, listas negras diferenciadas para ADMIN y USERS, y portal de logs restringido a ADMIN. |
+| **E3** | Borde Multi-WAN | [`E3 - Multi-WAN/`](./E3%20-%20Multi-WAN/) | Enrutamiento multihomed hacia dos ISPs, balanceo por políticas (PBR), conmutación por error (*failover*), Source NAT y métricas a Zabbix. |
+| **E4** | VPN WireGuard y DMZ | [`E4 - VPN y DMZ/`](./E4%20-%20VPN%20y%20DMZ/) | Servidor WireGuard con rangos diferenciados (`VPN-ADMIN: 10.200.10.0/24`, `VPN-USERS: 10.200.20.0/24`), servidor DMZ WEB01 y publicación vía túnel ngrok. |
+| **E5** | Firewall Perimetral e IDS | [`E5 - Firewall/`](./E5%20-%20Firewall/) | Filtrado perimetral con estado (`nftables`, default drop), doble pasada de VPN, inspección pasiva en tiempo real con Suricata IDS (7.0.10). |
 
 ---
 
@@ -100,19 +100,19 @@ xelaju-network/
 │   ├── direccionamiento.csv       # Tabla canónica de direcciones IP, interfaces y máscaras
 │   ├── rutas.csv                  # Tablas de enrutamiento estático de los cinco nodos
 │   └── matriz-seguridad.csv       # Matriz consolidada de políticas de firewall y ACLs
-├── E1/                            # Componente: Segmentación LAN, DHCP y Zabbix
+├── E1 - LAN/                      # Componente: Segmentación LAN, DHCP y Zabbix
 │   └── README.md
-├── E2/                            # Componente: Proxy Squid Transparente
+├── E2 - Proxy Squid/              # Componente: Proxy Squid Transparente
 │   ├── README.md
 │   ├── config/
 │   ├── scripts/
 │   ├── portal/
 │   └── evidencias/
-├── E3/                            # Componente: Multi-WAN y Balanceo
+├── E3 - Multi-WAN/                # Componente: Multi-WAN y Balanceo
 │   └── README.md
-├── E4/                            # Componente: WireGuard VPN y DMZ
+├── E4 - VPN y DMZ/                # Componente: WireGuard VPN y DMZ
 │   └── README.md
-├── E5/                            # Componente: Firewall Perimetral e IDS Suricata
+├── E5 - Firewall/                 # Componente: Firewall Perimetral e IDS Suricata
 │   ├── README.md                  # Manual técnico detallado y estado de E5
 │   ├── config/                    # Reglas nftables, plantilla interfaces y Suricata
 │   ├── scripts/                   # Toolkit operativo (e5-status, e5-firewall, e5-ids, etc.)
@@ -133,11 +133,11 @@ xelaju-network/
   - Matriz de Seguridad y Reglas: [`tablas/matriz-seguridad.csv`](./tablas/matriz-seguridad.csv)
 - **Evidencias e Integración:**
   - Guía de pruebas y contratos: [`integracion/README.md`](./integracion/README.md)
-  - Evidencias de E2: [`E2/evidencias/`](./E2/evidencias/)
-  - Evidencias de E5: [`E5/evidencias/`](./E5/evidencias/)
+  - Evidencias de E2: [`E2 - Proxy Squid/evidencias/`](./E2%20-%20Proxy%20Squid/evidencias/)
+  - Evidencias de E5: [`E5 - Firewall/evidencias/`](./E5%20-%20Firewall/evidencias/)
 
 ---
 
 ## 8. Localización de Archivos Técnicos
 
-Cada estudiante mantiene la implementación de su respectivo componente en su carpeta individual (`E1/` a `E5/`). La configuración funcional y scripts de seguridad perimetral de **E5** se encuentran plenamente documentados e implementados en [`E5/config/`](./E5/config/) y [`E5/scripts/`](./E5/scripts/).
+Cada estudiante mantiene la implementación de su respectivo componente en su carpeta individual (`E1 - LAN/` a `E5 - Firewall/`). La configuración funcional y scripts de seguridad perimetral de **E5** se encuentran plenamente documentados e implementados en [`E5 - Firewall/config/`](./E5%20-%20Firewall/config/) y [`E5 - Firewall/scripts/`](./E5%20-%20Firewall/scripts/).
