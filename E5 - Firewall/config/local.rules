@@ -1,13 +1,5 @@
-# ==============================================================================
-# local.rules - Reglas personalizadas de Suricata para E5 (XelajuNetwork)
-# ==============================================================================
-#
-# Formato: action proto source_ip source_port -> dest_ip dest_port (options)
-# Ejemplo:
-# alert icmp any any -> any any (msg:"ICMP Ping detectado"; sid:1000001; rev:1;)
+# Suricata local rules used by E5 in the documented IDS tests.
+# SID 1000001: ICMP echo requests observed at the perimeter.
+# Active rules must still be compared with /etc/suricata/rules/local.rules on E5.
 
-# [Regla 1] Alerta sobre intentos de ping genéricos que lleguen a las interfaces de E5
 alert icmp any any -> any any (msg:"ICMP Echo Request detectado"; itype:8; sid:1000001; rev:1;)
-
-# [Regla 2] Alerta de tráfico no autorizado hacia la zona restringida (Ej. DMZ WEB01 desde IPs externas anómalas)
-# alert tcp !$HOME_NET any -> 172.16.10.10 8081 (msg:"Acceso anómalo a WEB01"; sid:1000002; rev:1;)
