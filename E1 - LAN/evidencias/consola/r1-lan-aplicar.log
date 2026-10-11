@@ -1,0 +1,116 @@
+
+[1;34m==> Base comun del nodo r1-lan[0m
+    [ OK ] nombre de equipo: r1-lan
+
+[1;34m==> Archivos de configuracion y herramientas (rootfs/ -> /)[0m
+    [ OK ] 22 archivos instalados desde nodos/r1-lan/rootfs
+
+[1;34m==> Router: reenvio IPv4, troncal y una subinterfaz por VLAN[0m
+    [ OK ] ip_forward=1
+
+[1;34m==> Modo de salida: individual (enlaces de salida + reglas nftables)[0m
+Modo actual de R1-LAN: individual
+Enlaces de salida:
+    tmp-nat          UP             10.0.2.15/24 
+Ruta por defecto:
+    default via 10.0.2.2 dev tmp-nat onlink 
+NAT en R1: si (masquerade de las 4 VLAN por tmp-nat)
+
+[1;34m==> Paquetes: servidor DHCP (isc-dhcp-server) y conntrack[0m
+    [ OK ] paquetes ya instalados: isc-dhcp-server conntrack
+    [ OK ] 22 archivos instalados desde nodos/r1-lan/rootfs
+
+[1;34m==> Registros en /var/log/xelaju (root:adm 0640)[0m
+    [ OK ] acl-lan.log (ACL) y dhcpd.log (DHCP) separados por rsyslog
+
+[1;34m==> DHCP restringido de la VLAN 20 y conjunto MAC.IP de las ACL[0m
+  isc-dhcp-server reiniciado con 3 reserva(s)
+  conjunto 'registrados' actualizado en las ACL
+Verificacion del DHCP restringido
+  [ OK ] CSV valido
+  [ OK ] reservas de dhcpd al dia (3)
+  [ OK ] archivo del conjunto nftables al dia
+  [ OK ] ACL en memoria: 3 par(es) MAC.IP
+  [ OK ] isc-dhcp-server activo
+  [ OK ] dhcpd escucha solo en trunk0.20 (VLAN 20)
+  [ OK ] sin 'range': no hay direcciones dinamicas
+
+[1;34m==> Agente de Zabbix (modo activo, autorregistro 'xelaju-lan')[0m
+    [ OK ] zabbix-agent2 activo: Hostname=R1-LAN HostMetadata=xelaju-lan ServerActive=192.168.30.10
+
+[1;34m==> Estado final[0m
+R1-LAN | 2026-10-03 18:38:44 | modo: individual
+
+[1;34m--- Interfaces y direcciones (ip -br addr) ---[0m
+trunk0           UP             
+up-squid         DOWN           
+tmp-nat          UP             10.0.2.15/24 
+trunk0.10@trunk0 UP             192.168.10.1/24 
+trunk0.20@trunk0 UP             192.168.20.1/24 
+trunk0.30@trunk0 UP             192.168.30.1/24 
+trunk0.40@trunk0 UP             192.168.40.1/24 
+
+[1;34m--- VLAN de cada subinterfaz (802.1Q) ---[0m
+    trunk0.10  vlan protocol 802.1Q id 10
+    trunk0.20  vlan protocol 802.1Q id 20
+    trunk0.30  vlan protocol 802.1Q id 30
+    trunk0.40  vlan protocol 802.1Q id 40
+
+[1;34m--- Tabla de rutas (ip route) ---[0m
+default via 10.0.2.2 dev tmp-nat onlink 
+10.0.2.0/24 dev tmp-nat proto kernel scope link src 10.0.2.15 
+192.168.10.0/24 dev trunk0.10 proto kernel scope link src 192.168.10.1 
+192.168.20.0/24 dev trunk0.20 proto kernel scope link src 192.168.20.1 
+192.168.30.0/24 dev trunk0.30 proto kernel scope link src 192.168.30.1 
+192.168.40.0/24 dev trunk0.40 proto kernel scope link src 192.168.40.1 
+
+[1;34m--- Reenvio y filtro de camino inverso ---[0m
+net.ipv4.ip_forward = 1
+net.ipv4.conf.all.rp_filter = 2
+
+[1;34m--- ACL: paquetes contados por cadena (nft list table inet xelaju) ---[0m
+    CADENA            REGLAS   PERMITIDOS   BLOQUEADOS
+    nat_salida             1            0            0
+    entrada_modo           1            0            0
+    entrada               12            0            0
+    reenvio                1            0            0
+    desde_admin            6            0            0
+    desde_users            8            0            0
+    desde_servers          9            1            0
+    desde_mgmt            11            5            0
+    desde_perimetro        5            0            0
+
+[1;34m--- DHCP restringido de la VLAN 20 ---[0m
+    servicio isc-dhcp-server: active
+    escucha en: INTERFACESv4="trunk0.20"
+    EQUIPO           MAC                 IP_RESERVADA
+    PC-USER01        aa:bb:cc:dd:ee:01   192.168.20.10
+    PC-USER02        aa:bb:cc:dd:ee:02   192.168.20.11
+    PC-USER03        aa:bb:cc:dd:ee:03   192.168.20.12
+    Total: 3 equipo(s) registrados en /etc/xelaju/usuarios.csv
+
+[1;34m--- Ultimos eventos DHCP (/var/log/xelaju/dhcpd.log) ---[0m
+2026-10-03T18:38:38.005763-06:00 r1-lan dhcpd[1900]: All rights reserved.
+2026-10-03T18:38:38.005813-06:00 r1-lan dhcpd[1900]: For info, please visit https://www.isc.org/software/dhcp/
+2026-10-03T18:38:38.005859-06:00 r1-lan dhcpd[1900]: Wrote 0 deleted host decls to leases file.
+2026-10-03T18:38:38.006021-06:00 r1-lan dhcpd[1900]: Wrote 0 new dynamic host decls to leases file.
+2026-10-03T18:38:38.006075-06:00 r1-lan dhcpd[1900]: Wrote 0 leases to leases file.
+2026-10-03T18:38:38.028084-06:00 r1-lan dhcpd[1900]: Server starting service.
+
+[1;34m--- Ultimos bloqueos de las ACL (/var/log/xelaju/acl-lan.log) ---[0m
+2026-10-03T18:31:50.722658-06:00 r1-lan kernel: ACL-DENY SERVERS->MGMT IN=trunk0.30 OUT=trunk0.40 MAC=52:54:00:01:00:00:52:54:00:30:00:10:08:00 SRC=192.168.30.10 DST=192.
+2026-10-03T18:31:51.746597-06:00 r1-lan kernel: ACL-DENY SERVERS->MGMT IN=trunk0.30 OUT=trunk0.40 MAC=52:54:00:01:00:00:52:54:00:30:00:10:08:00 SRC=192.168.30.10 DST=192.
+2026-10-03T18:34:30.914054-06:00 r1-lan kernel: ACL-DENY USERS->ADMIN IN=trunk0.20 OUT=trunk0.10 MAC=52:54:00:01:00:00:aa:bb:cc:dd:ee:02:08:00 SRC=192.168.20.11 DST=192.1
+2026-10-03T18:34:31.923697-06:00 r1-lan kernel: ACL-DENY USERS->ADMIN IN=trunk0.20 OUT=trunk0.10 MAC=52:54:00:01:00:00:aa:bb:cc:dd:ee:02:08:00 SRC=192.168.20.11 DST=192.1
+2026-10-03T18:34:32.947901-06:00 r1-lan kernel: ACL-DENY USERS->ADMIN IN=trunk0.20 OUT=trunk0.10 MAC=52:54:00:01:00:00:aa:bb:cc:dd:ee:02:08:00 SRC=192.168.20.11 DST=192.1
+2026-10-03T18:34:33.971912-06:00 r1-lan kernel: ACL-DENY USERS->ADMIN IN=trunk0.20 OUT=trunk0.10 MAC=52:54:00:01:00:00:aa:bb:cc:dd:ee:02:08:00 SRC=192.168.20.11 DST=192.1
+
+[1;34m--- Servicios ---[0m
+    nftables           active
+    isc-dhcp-server    active
+    rsyslog            active
+    ssh                active
+    zabbix-agent2      active
+
+[1;34m==> Listo: R1-LAN en modo individual. Cambio de modo: sudo r1-modo individual|grupal[0m
+    Para repetir o restaurar este nodo, vuelve a ejecutar este mismo script.

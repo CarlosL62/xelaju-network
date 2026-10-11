@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Intranet XelajuNetwork</title>
+  <style>
+    body { font-family: sans-serif; background: #eef3f8; color: #1b2a3a; margin: 0; }
+    header { background: #1565c0; color: #fff; padding: 1.2rem 2rem; }
+    main { max-width: 44rem; margin: 2rem auto; background: #fff; padding: 1.5rem 2rem; border-radius: 6px; }
+    code { background: #eef3f8; padding: 0 .3rem; }
+  </style>
+</head>
+<body>
+  <header><h1>Intranet XelajuNetwork</h1></header>
+  <main>
+    <p>Servidor <strong>SRV-INTRA01</strong> &mdash; <code>192.168.30.20</code>, VLAN 30 (SERVIDORES).</p>
+    <p>Si ves esta p&aacute;gina desde un equipo de la VLAN 20 (USUARIOS), la ACL de R1-LAN
+       est&aacute; permitiendo exactamente lo previsto: solo los puertos web
+       (TCP 80 y 443) de este servidor.</p>
+    <p>Desde esa misma VLAN no deben responder ni el <code>ping</code> ni el SSH a este
+       servidor, ni la interfaz web de Zabbix (<code>192.168.30.10</code>).</p>
+  </main>
+</body>
+</html>

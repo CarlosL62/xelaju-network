@@ -1,0 +1,28 @@
+#!/bin/bash
+# xelaju-metrica - imprime UN numero para un item de Zabbix (ver xelaju-r1.conf)
+#
+#   xelaju-metrica registrados     equipos registrados en el CSV
+#   xelaju-metrica dhcp_ack        prestamos DHCP concedidos (registro actual)
+#   xelaju-metrica dhcp_rechazos   peticiones DHCP de equipos no registrados
+#   xelaju-metrica acl_bloqueos    paquetes bloqueados por las ACL
+#
+# Lo ejecuta el usuario 'zabbix' (miembro del grupo adm para leer los registros).
+
+CSV=/etc/xelaju/usuarios.csv
+REG_DHCP=/var/log/xelaju/dhcpd.log
+REG_ACL=/var/log/xelaju/acl-lan.log
+
+# contar <expresion> <archivo>: lineas que coinciden; 0 si el archivo no existe
+contar() {
+    local n
+    n="$(grep -c -E "$1" "$2" 2>/dev/null)" || true
+    echo "${n:-0}"
+}
+
+case "${1:-}" in
+    registrados)   awk -F',' 'NR > 1 && $2 ~ /:/ {n++} END {print n + 0}' "$CSV" 2>/dev/null || echo 0 ;;
+    dhcp_ack)      contar 'DHCPACK' "$REG_DHCP" ;;
+    dhcp_rechazos) contar 'no free leases|unknown client|: unknown' "$REG_DHCP" ;;
+    acl_bloqueos)  contar 'ACL-DENY' "$REG_ACL" ;;
+    *)             echo "uso: xelaju-metrica registrados|dhcp_ack|dhcp_rechazos|acl_bloqueos" >&2; exit 1 ;;
+esac

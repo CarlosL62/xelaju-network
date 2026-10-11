@@ -1,0 +1,13 @@
+=== Pruebas del perfil 'mgmt' en pc-mgmt01 - 2026-10-10 20:32:56 ===
+CASO  RES.  ESPERADO       OBTENIDO       PRUEBA
+M01   PASS  192.168.40.10  192.168.40.10  ip de lan0 - IP manual de la VLAN 40
+M02   PASS  OK             OK             ping 192.168.40.1 - Puerta de enlace de su VLAN
+M03   PASS  OK             OK             tcp 192.168.40.1:22 - SSH a R1-LAN: permitido desde GESTION
+M04   PASS  OK             OK             ping 192.168.40.2 - SW-CORE01 (misma VLAN, sin pasar por R1)
+M05   PASS  OK             OK             tcp 192.168.30.20:22 - GESTION -> SSH de servidores: permitido
+M06   PASS  OK             OK             ping 192.168.30.10 - GESTION -> ping a servidores: permitido
+M07   PASS  BLOQUEADO      BLOQUEADO      http://192.168.30.10/zabbix/ - Web de Zabbix: denegada a GESTION
+M08   PASS  BLOQUEADO      BLOQUEADO      ping 192.168.10.50 - GESTION -> ADMIN denegado
+M09   PASS  BLOQUEADO      BLOQUEADO      ping 192.168.20.10 - GESTION -> USUARIOS denegado
+M10   PASS  OK             OK             internet - GESTION -> Internet: solo web y DNS (actualizaciones)
+Resumen 'mgmt': 10 casos, 10 PASS, 0 FAIL, 0 omitidas

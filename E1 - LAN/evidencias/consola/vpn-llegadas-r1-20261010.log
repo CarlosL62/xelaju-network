@@ -1,0 +1,40 @@
+Llegadas por VPN registradas en R1-LAN (regla ACL-ALLOW VPN->LAN de la cadena desde_perimetro)   (2026-10-10 19:28:13)
+R1 no repite la politica VPN: lo que llega aqui ya lo autorizo el firewall de E5 (ADR-0002).
+
+##### 1. Resumen por dia: conexiones, origen -> destino, protocolo y puerto
+      6 2026-10-05 10.200.10.10 -> 192.168.30.20 TCP 80
+      5 2026-10-05 10.200.20.10 -> 192.168.30.20 TCP 80
+      4 2026-10-05 10.200.10.10 -> 192.168.10.50 TCP 80
+      1 2026-10-10 10.200.10.10 -> 192.168.10.50 ICMP 
+      1 2026-10-10 10.200.10.10 -> 192.168.20.10 TCP 22
+      1 2026-10-10 10.200.10.10 -> 192.168.30.10 ICMP 
+      1 2026-10-10 10.200.10.10 -> 192.168.30.20 TCP 80
+      1 2026-10-10 10.200.10.10 -> 192.168.40.2 TCP 22
+      1 2026-10-10 10.200.20.10 -> 192.168.20.10 ICMP 
+      1 2026-10-10 10.200.20.10 -> 192.168.30.20 TCP 443
+      1 2026-10-10 10.200.20.10 -> 192.168.30.20 TCP 80
+
+##### 2. Las lineas del 10 de octubre (matriz VPN de E4: admin1 = 10.200.10.10, user1 = 10.200.20.10)
+2026-10-10T16:56:36.617383-06:00 r1-lan kernel: ACL-ALLOW VPN->LAN IN=up-squid OUT=trunk0.10 SRC=10.200.10.10 DST=192.168.10.50 PROTO=ICMP
+2026-10-10T16:56:36.659662-06:00 r1-lan kernel: ACL-ALLOW VPN->LAN IN=up-squid OUT=trunk0.20 SRC=10.200.10.10 DST=192.168.20.10 PROTO=TCP SPT=34748 DP
+2026-10-10T16:56:36.692879-06:00 r1-lan kernel: ACL-ALLOW VPN->LAN IN=up-squid OUT=trunk0.30 SRC=10.200.10.10 DST=192.168.30.10 PROTO=ICMP
+2026-10-10T16:56:36.725315-06:00 r1-lan kernel: ACL-ALLOW VPN->LAN IN=up-squid OUT=trunk0.30 SRC=10.200.10.10 DST=192.168.30.20 PROTO=TCP SPT=41518 DP
+2026-10-10T16:56:36.773619-06:00 r1-lan kernel: ACL-ALLOW VPN->LAN IN=up-squid OUT=trunk0.40 SRC=10.200.10.10 DST=192.168.40.2 PROTO=TCP SPT=37806 DPT
+2026-10-10T16:56:51.391453-06:00 r1-lan kernel: ACL-ALLOW VPN->LAN IN=up-squid OUT=trunk0.20 SRC=10.200.20.10 DST=192.168.20.10 PROTO=ICMP
+2026-10-10T16:56:51.428700-06:00 r1-lan kernel: ACL-ALLOW VPN->LAN IN=up-squid OUT=trunk0.30 SRC=10.200.20.10 DST=192.168.30.20 PROTO=TCP SPT=55954 DP
+2026-10-10T16:56:51.484545-06:00 r1-lan kernel: ACL-ALLOW VPN->LAN IN=up-squid OUT=trunk0.30 SRC=10.200.20.10 DST=192.168.30.20 PROTO=TCP SPT=56342 DP
+
+##### 3. Contadores de la cadena desde_perimetro desde el arranque de R1 de hoy
+ip saddr { 192.168.10.0/24, 192.168.20.0/24, 192.168.30.0/24, 192.168.40.0/24 } log prefix "ACL-SPOOF PERIMETRO " counter packets 0 bytes 0 drop
+ip daddr 192.168.30.10 tcp dport { 80, 443 } log prefix "ACL-DENY PERIMETRO->ZBXWEB " counter packets 6 bytes 360 drop
+ip saddr { 10.200.10.0/24, 10.200.20.0/24 } log prefix "ACL-ALLOW VPN->LAN " counter packets 8 bytes 552 accept
+ip saddr { 192.168.81.0/30, 192.168.82.0/30, 192.168.83.0/30, 192.168.84.0/30 } ip daddr 192.168.30.10 tcp dport 10051 counter packets 1 bytes 60 accept
+log prefix "ACL-DENY PERIMETRO->LAN " counter packets 0 bytes 0 drop
+
+##### 4. Intentos de abrir la web de Zabbix desde fuera de la VLAN ADMIN (R1 los niega, tambien por VPN)
+2026-10-10T16:56:36.805627-06:00 r1-lan kernel: ACL-DENY PERIMETRO->ZBXWEB IN=up-squid OUT=trunk0.30 SRC=10.200.10.10 DST=192.168.30.10 PROTO=TCP SPT=
+2026-10-10T16:56:37.808971-06:00 r1-lan kernel: ACL-DENY PERIMETRO->ZBXWEB IN=up-squid OUT=trunk0.30 SRC=10.200.10.10 DST=192.168.30.10 PROTO=TCP SPT=
+2026-10-10T16:56:38.833014-06:00 r1-lan kernel: ACL-DENY PERIMETRO->ZBXWEB IN=up-squid OUT=trunk0.30 SRC=10.200.10.10 DST=192.168.30.10 PROTO=TCP SPT=
+2026-10-10T16:56:39.857011-06:00 r1-lan kernel: ACL-DENY PERIMETRO->ZBXWEB IN=up-squid OUT=trunk0.30 SRC=10.200.10.10 DST=192.168.30.10 PROTO=TCP SPT=
+2026-10-10T16:56:40.880769-06:00 r1-lan kernel: ACL-DENY PERIMETRO->ZBXWEB IN=up-squid OUT=trunk0.30 SRC=10.200.10.10 DST=192.168.30.10 PROTO=TCP SPT=
+2026-10-10T16:56:41.908561-06:00 r1-lan kernel: ACL-DENY PERIMETRO->ZBXWEB IN=up-squid OUT=trunk0.30 SRC=10.200.10.10 DST=192.168.30.10 PROTO=TCP SPT=

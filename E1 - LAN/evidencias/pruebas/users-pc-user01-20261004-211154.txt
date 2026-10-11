@@ -1,0 +1,18 @@
+=== Pruebas del perfil 'users' en pc-user01 - 2026-10-04 21:11:19 ===
+CASO  RES.  ESPERADO       OBTENIDO       PRUEBA
+U01   PASS  192.168.20.10  192.168.20.10  ip de lan0 - DHCP: recibio la IP reservada para su MAC
+U02   PASS  192.168.20.10  192.168.20.10  dhcp renovar - DHCP: al soltar y volver a pedir recibe la MISMA IP
+U03   PASS  OK             OK             ping 192.168.20.1 - Puerta de enlace de su VLAN
+U04   PASS  BLOQUEADO      BLOQUEADO      ping 192.168.10.50 - USUARIOS -> ADMIN denegado
+U05   PASS  BLOQUEADO      BLOQUEADO      ping 192.168.40.10 - USUARIOS -> GESTION denegado
+U06   PASS  BLOQUEADO      BLOQUEADO      tcp 192.168.40.2:22 - USUARIOS -> SSH del switch denegado
+U07   PASS  200            200            http://192.168.30.20/ - Intranet por HTTP: permitido
+U08   PASS  200            200            https://192.168.30.20/ - Intranet por HTTPS: permitido
+U09   PASS  BLOQUEADO      BLOQUEADO      ping 192.168.30.20 - Ping a la Intranet: denegado (solo 80/443)
+U10   PASS  BLOQUEADO      BLOQUEADO      tcp 192.168.30.20:22 - SSH a la Intranet: denegado
+U11   PASS  BLOQUEADO      BLOQUEADO      http://192.168.30.10/zabbix/ - Web de Zabbix: denegada a usuarios
+U12   PASS  BLOQUEADO      BLOQUEADO      ping 192.168.30.10 - Ping a Zabbix: denegado
+U13   PASS  BLOQUEADO      BLOQUEADO      tcp 192.168.20.1:22 - SSH a R1-LAN: denegado a usuarios
+U14   PASS  BLOQUEADO      BLOQUEADO      ping 192.168.10.1 - Ping a la puerta de enlace de OTRA VLAN: denegado
+U15   PASS  OK             OK             internet - USUARIOS registrados -> Internet
+Resumen 'users': 15 casos, 15 PASS, 0 FAIL, 0 omitidas

@@ -1,0 +1,276 @@
+=== Pruebas del perfil 'admin' en pc-admin01 - 2026-10-03 18:38:17 ===
+CASO  RES.  ESPERADO       OBTENIDO       PRUEBA
+A01   PASS  192.168.10.50  192.168.10.50  ip de lan0 - IP manual de la VLAN 10
+A02   PASS  OK             OK             ping 192.168.10.1 - Puerta de enlace de su VLAN
+A03   PASS  OK             OK             ping 192.168.40.1 - ADMIN puede hacer ping a cualquier interfaz de R1
+A04   PASS  OK             OK             tcp 192.168.10.1:22 - SSH a R1-LAN
+A05   PASS  OK             OK             ping 192.168.20.10 - ADMIN -> USUARIOS (PC-USER01)
+A06   PASS  OK             OK             ping 192.168.30.10 - ADMIN -> SERVIDORES (ZBX-SRV01)
+A07   PASS  200            200            http://192.168.30.10/zabbix/ - Web de Zabbix: solo ADMIN la abre
+A08   PASS  OK             OK             tcp 192.168.30.20:22 - SSH a SRV-INTRA01
+A09   PASS  OK             OK             ping 192.168.40.2 - ADMIN -> GESTION (SW-CORE01)
+A10   PASS  OK             OK             tcp 192.168.40.2:22 - SSH a SW-CORE01
+A11   PASS  OK             OK             tcp 192.168.40.3:22 - SSH a SW-ACC01
+A12   PASS  OK             OK             internet - ADMIN -> Internet
+Resumen 'admin': 12 casos, 12 PASS, 0 FAIL, 0 omitidas
+=== Pruebas del perfil 'users' en pc-user01 - 2026-10-03 18:38:22 ===
+CASO  RES.  ESPERADO       OBTENIDO       PRUEBA
+U01   PASS  192.168.20.10  192.168.20.10  ip de lan0 - DHCP: recibio la IP reservada para su MAC
+U02   --    192.168.20.10  OMITIDA        dhcp renovar - DHCP: al soltar y volver a pedir recibe la MISMA IP
+U03   PASS  OK             OK             ping 192.168.20.1 - Puerta de enlace de su VLAN
+U04   PASS  BLOQUEADO      BLOQUEADO      ping 192.168.10.50 - USUARIOS -> ADMIN denegado
+U05   PASS  BLOQUEADO      BLOQUEADO      ping 192.168.40.10 - USUARIOS -> GESTION denegado
+U06   PASS  BLOQUEADO      BLOQUEADO      tcp 192.168.40.2:22 - USUARIOS -> SSH del switch denegado
+U07   PASS  200            200            http://192.168.30.20/ - Intranet por HTTP: permitido
+U08   PASS  200            200            https://192.168.30.20/ - Intranet por HTTPS: permitido
+U09   PASS  BLOQUEADO      BLOQUEADO      ping 192.168.30.20 - Ping a la Intranet: denegado (solo 80/443)
+U10   PASS  BLOQUEADO      BLOQUEADO      tcp 192.168.30.20:22 - SSH a la Intranet: denegado
+U11   PASS  BLOQUEADO      BLOQUEADO      http://192.168.30.10/zabbix/ - Web de Zabbix: denegada a usuarios
+U12   PASS  BLOQUEADO      BLOQUEADO      ping 192.168.30.10 - Ping a Zabbix: denegado
+U13   PASS  BLOQUEADO      BLOQUEADO      tcp 192.168.20.1:22 - SSH a R1-LAN: denegado a usuarios
+U14   PASS  BLOQUEADO      BLOQUEADO      ping 192.168.10.1 - Ping a la puerta de enlace de OTRA VLAN: denegado
+U15   PASS  OK             OK             internet - USUARIOS registrados -> Internet
+Resumen 'users': 15 casos, 14 PASS, 0 FAIL, 1 omitidas
+=== Pruebas del perfil 'users2' en pc-user02 - 2026-10-03 18:38:57 ===
+CASO  RES.  ESPERADO       OBTENIDO       PRUEBA
+V01   PASS  192.168.20.11  192.168.20.11  ip de lan0 - DHCP: recibio la IP reservada para su MAC
+V02   PASS  BLOQUEADO      BLOQUEADO      ping 192.168.10.50 - USUARIOS -> ADMIN denegado
+V03   PASS  200            200            http://192.168.30.20/ - Intranet por HTTP: permitido
+V04   PASS  OK             OK             internet - USUARIOS registrados -> Internet
+Resumen 'users2': 4 casos, 4 PASS, 0 FAIL, 0 omitidas
+=== Pruebas del perfil 'intruso' en pc-intruso - 2026-10-03 18:39:00 ===
+CASO  RES.  ESPERADO       OBTENIDO       PRUEBA
+I01   --    SIN-OFERTA     OMITIDA        dhcp pedir - DHCP restringido: nadie contesta a una MAC no registrada
+I02   PASS  OK             OK             ip a mano 192.168.20.99/24 - (preparacion) se pone a mano una IP libre de la red
+I03   PASS  BLOQUEADO      BLOQUEADO      ping 192.168.20.1 - Ni siquiera la puerta de enlace le responde
+I04   PASS  BLOQUEADO      BLOQUEADO      http://192.168.30.20/ - Intranet: denegada (par MAC.IP no registrado)
+I05   PASS  BLOQUEADO      BLOQUEADO      ping 192.168.10.50 - ADMIN: denegado
+I06   PASS  BLOQUEADO      BLOQUEADO      tcp 1.1.1.1:80 - Internet por IP: denegado
+I07   PASS  BLOQUEADO      BLOQUEADO      internet - Internet: denegado
+I08   PASS  OK             OK             ip a mano 192.168.20.12/24 - (preparacion) usa la IP de un equipo registrado (PC-USER03) con su propia MAC
+I09   PASS  BLOQUEADO      BLOQUEADO      ping 192.168.20.1 - IP registrada pero MAC distinta: denegado
+I10   PASS  BLOQUEADO      BLOQUEADO      http://192.168.30.20/ - IP registrada pero MAC distinta: denegado
+I11   PASS  OK             OK             quitar ip a mano - (limpieza) quita la IP puesta a mano
+Resumen 'intruso': 11 casos, 10 PASS, 0 FAIL, 1 omitidas
+=== Pruebas del perfil 'mgmt' en pc-mgmt01 - 2026-10-03 18:39:35 ===
+CASO  RES.  ESPERADO       OBTENIDO       PRUEBA
+M01   PASS  192.168.40.10  192.168.40.10  ip de lan0 - IP manual de la VLAN 40
+M02   PASS  OK             OK             ping 192.168.40.1 - Puerta de enlace de su VLAN
+M03   PASS  OK             OK             tcp 192.168.40.1:22 - SSH a R1-LAN: permitido desde GESTION
+M04   PASS  OK             OK             ping 192.168.40.2 - SW-CORE01 (misma VLAN, sin pasar por R1)
+M05   PASS  OK             OK             tcp 192.168.30.20:22 - GESTION -> SSH de servidores: permitido
+M06   PASS  OK             OK             ping 192.168.30.10 - GESTION -> ping a servidores: permitido
+M07   PASS  BLOQUEADO      BLOQUEADO      http://192.168.30.10/zabbix/ - Web de Zabbix: denegada a GESTION
+M08   PASS  BLOQUEADO      BLOQUEADO      ping 192.168.10.50 - GESTION -> ADMIN denegado
+M09   PASS  BLOQUEADO      BLOQUEADO      ping 192.168.20.10 - GESTION -> USUARIOS denegado
+M10   PASS  OK             OK             internet - GESTION -> Internet: solo web y DNS (actualizaciones)
+Resumen 'mgmt': 10 casos, 10 PASS, 0 FAIL, 0 omitidas
+=== Pruebas del perfil 'zbx' en zbx-srv01 - 2026-10-03 18:39:50 ===
+CASO  RES.  ESPERADO       OBTENIDO       PRUEBA
+Z01   PASS  192.168.30.10  192.168.30.10  ip de lan0 - IP manual de la VLAN 30
+Z02   PASS  OK             OK             ping 192.168.30.1 - Puerta de enlace de su VLAN
+Z03   PASS  OK             OK             ping 192.168.10.50 - Zabbix -> ping a ADMIN (monitoreo)
+Z04   PASS  OK             OK             ping 192.168.20.10 - Zabbix -> ping a USUARIOS (monitoreo)
+Z05   PASS  OK             OK             ping 192.168.40.2 - Zabbix -> ping a SW-CORE01
+Z06   PASS  OK             OK             ping 192.168.40.3 - Zabbix -> ping a SW-ACC01
+Z07   PASS  OK             OK             tcp 192.168.40.2:10050 - Zabbix -> agente de SW-CORE01 (TCP 10050)
+Z08   PASS  BLOQUEADO      BLOQUEADO      tcp 192.168.10.50:22 - SERVIDORES -> SSH de ADMIN denegado
+Z09   PASS  BLOQUEADO      BLOQUEADO      tcp 192.168.20.10:22 - SERVIDORES -> SSH de USUARIOS denegado
+Z10   PASS  BLOQUEADO      BLOQUEADO      tcp 192.168.40.2:22 - SERVIDORES -> SSH de GESTION denegado
+Z11   PASS  OK             OK             internet - SERVIDORES -> Internet
+Resumen 'zbx': 11 casos, 11 PASS, 0 FAIL, 0 omitidas
+=== Pruebas del perfil 'g-admin' en pc-admin01 - 2026-10-03 18:40:07 ===
+CASO  RES.  ESPERADO       OBTENIDO       PRUEBA
+GL1   PASS  OK             OK             ping 192.168.84.1 - [R1] ADMIN -> vecino Squid
+GL2   PASS  200            200            http://172.16.10.10:8081/ - [R1][E5] ADMIN -> WEB01 de la DMZ por E2 -> E5 -> E4
+Resumen 'g-admin': 2 casos, 2 PASS, 0 FAIL, 0 omitidas
+=== Pruebas del perfil 'g-users' en pc-user01 - 2026-10-03 18:40:08 ===
+CASO  RES.  ESPERADO       OBTENIDO       PRUEBA
+GL3   PASS  200            200            http://172.16.10.10:8081/ - [R1][E5] USUARIOS -> WEB01 de la DMZ
+GL4   PASS  BLOQUEADO      BLOQUEADO      tcp 172.16.10.10:22 - [E5] LAN -> DMZ: solo el puerto de WEB01
+Resumen 'g-users': 2 casos, 2 PASS, 0 FAIL, 0 omitidas
+=== Pruebas del perfil 'g-mgmt' en pc-mgmt01 - 2026-10-03 18:40:12 ===
+CASO  RES.  ESPERADO       OBTENIDO       PRUEBA
+GL5   PASS  BLOQUEADO      BLOQUEADO      http://172.16.10.10:8081/ - [R1] GESTION solo sale a web y DNS (80, 443, 53)
+Resumen 'g-mgmt': 1 casos, 1 PASS, 0 FAIL, 0 omitidas
+=== Pruebas del perfil 'g-zbx' en zbx-srv01 - 2026-10-03 18:40:18 ===
+CASO  RES.  ESPERADO       OBTENIDO       PRUEBA
+GL6   PASS  200            200            http://172.16.10.10:8081/ - [R1][E5] SERVIDORES -> WEB01 de la DMZ
+Resumen 'g-zbx': 1 casos, 1 PASS, 0 FAIL, 0 omitidas
+=== Pruebas del perfil 'e2' en e2 - 2026-10-03 18:40:18 ===
+CASO  RES.  ESPERADO       OBTENIDO       PRUEBA
+GS1   PASS  OK             OK             ping 192.168.84.2 - [R1] Squid (.84.1) hace ping a R1 up-squid (.84.2)
+GS2   PASS  BLOQUEADO      BLOQUEADO      tcp 192.168.84.2:22 - [R1] SSH a R1 desde el enlace de salida: denegado
+GW6   PASS  OK             OK             tcp 192.168.30.10:10051 - [R1] Agente de Squid (192.168.84.1) -> Zabbix TCP 10051
+GW7   PASS  BLOQUEADO      BLOQUEADO      ping 192.168.10.50 - [R1] Squid -> ADMIN: denegado
+Resumen 'e2': 4 casos, 4 PASS, 0 FAIL, 0 omitidas
+=== Pruebas del perfil 'e3' en e3 - 2026-10-03 18:40:26 ===
+CASO  RES.  ESPERADO       OBTENIDO       PRUEBA
+GS3   PASS  OK             OK             ping 192.168.84.2 - [R1] El Multi-WAN llega a R1 pasando por E5 y E2 (prueba de rutas)
+GW1   PASS  OK             OK             tcp 192.168.30.10:10051 - [E5][R1] Agente del Multi-WAN (192.168.81.1) -> Zabbix TCP 10051
+GW2   PASS  BLOQUEADO      BLOQUEADO      http://192.168.30.10/zabbix/ - [E5][R1] Multi-WAN -> web de Zabbix: denegado
+GW3   PASS  BLOQUEADO      BLOQUEADO      ping 192.168.10.50 - [E5][R1] Multi-WAN -> ADMIN: denegado
+Resumen 'e3': 4 casos, 4 PASS, 0 FAIL, 0 omitidas
+=== Pruebas del perfil 'e4' en e4 - 2026-10-03 18:40:36 ===
+CASO  RES.  ESPERADO       OBTENIDO       PRUEBA
+GW4   PASS  OK             OK             tcp 192.168.30.10:10051 - [E5][R1] Agente de VPN/DMZ (192.168.83.2) -> Zabbix TCP 10051
+GW5   PASS  BLOQUEADO      BLOQUEADO      ping 192.168.20.10 - [E5][R1] VPN/DMZ -> USUARIOS: denegado
+Resumen 'e4': 2 casos, 2 PASS, 0 FAIL, 0 omitidas
+=== Pruebas del perfil 'vpn-admin' en vpn-admin - 2026-10-03 18:40:39 ===
+CASO  RES.  ESPERADO       OBTENIDO       PRUEBA
+GA1   PASS  OK             OK             ping 192.168.10.50 - [E5] VPN-ADMIN -> ADMIN (R1 lo deja pasar)
+GA2   PASS  OK             OK             tcp 192.168.20.10:22 - [E5] VPN-ADMIN -> USUARIOS
+GA3   PASS  OK             OK             ping 192.168.30.10 - [E5] VPN-ADMIN -> ping a Zabbix
+GA4   PASS  200            200            http://192.168.30.20/ - [E5] VPN-ADMIN -> Intranet
+GA5   PASS  OK             OK             tcp 192.168.40.2:22 - [E5] VPN-ADMIN -> SSH de SW-CORE01
+GA6   PASS  BLOQUEADO      BLOQUEADO      http://192.168.30.10/zabbix/ - [R1] Web de Zabbix: solo la VLAN ADMIN, tampoco por VPN
+Resumen 'vpn-admin': 6 casos, 6 PASS, 0 FAIL, 0 omitidas
+=== Pruebas del perfil 'vpn-users' en vpn-users - 2026-10-03 18:40:47 ===
+CASO  RES.  ESPERADO       OBTENIDO       PRUEBA
+GU1   PASS  OK             OK             ping 192.168.20.10 - [E5] VPN-USERS -> USUARIOS
+GU2   PASS  200            200            http://192.168.30.20/ - [E5] VPN-USERS -> Intranet HTTP (servicio permitido de la VLAN 30)
+GU3   PASS  200            200            https://192.168.30.20/ - [E5] VPN-USERS -> Intranet HTTPS
+GU4   PASS  BLOQUEADO      BLOQUEADO      tcp 192.168.30.20:22 - [E5] VPN-USERS -> SSH de la Intranet: fuera de la lista de servicios
+GU5   PASS  BLOQUEADO      BLOQUEADO      ping 192.168.10.50 - [E5] VPN-USERS -> ADMIN: denegado
+GU6   PASS  BLOQUEADO      BLOQUEADO      tcp 192.168.40.2:22 - [E5] VPN-USERS -> GESTION: denegado
+GU7   PASS  BLOQUEADO      BLOQUEADO      http://192.168.30.10/zabbix/ - [E5][R1] VPN-USERS -> web de Zabbix: denegado
+Resumen 'vpn-users': 7 casos, 7 PASS, 0 FAIL, 0 omitidas
+=== Pruebas del perfil 'dmz' en web01 - 2026-10-03 18:41:06 ===
+CASO  RES.  ESPERADO       OBTENIDO       PRUEBA
+GD1   PASS  BLOQUEADO      BLOQUEADO      ping 192.168.10.50 - [E5][R1] DMZ -> ADMIN: denegado
+GD2   PASS  BLOQUEADO      BLOQUEADO      ping 192.168.20.10 - [E5][R1] DMZ -> USUARIOS: denegado
+GD3   PASS  BLOQUEADO      BLOQUEADO      http://192.168.30.20/ - [E5][R1] DMZ -> Intranet: denegado
+Resumen 'dmz': 3 casos, 3 PASS, 0 FAIL, 0 omitidas
+
+##### Estado de los switches #####
+
+SW-CORE01# show vlan brief
+VLAN  NOMBRE       ESTADO   PUERTOS DE ACCESO
+10    ADMIN        activa   -
+20    USUARIOS     activa   -
+30    SERVIDORES   activa   p2, p3
+40    GESTION      activa   p4
+(no existe VLAN 1 por omision: vlan_default_pvid 0)
+
+SW-CORE01# show interfaces trunk
+PUERTO   MODO      ENCAPSULADO  VLAN NATIVA  VLAN PERMITIDAS
+p0       troncal   802.1Q       ninguna      10,20,30,40
+p1       troncal   802.1Q       ninguna      10,20,40
+
+SW-CORE01# show interfaces status
+PUERTO  ESTADO    MODO     VLAN         RX paq.    TX paq.    DESCRIPCION
+p0      conectado trunk    10,20,30,40  297        423        Troncal a R1-LAN (trunk0)
+p1      conectado trunk    10,20,40     240        177        Troncal a SW-ACC01 (VLAN 30 podada: alli no hay servidores)
+p2      conectado access   30           72         85         ZBX-SRV01
+p3      conectado access   30           56         83         SRV-INTRA01
+p4      conectado access   40           49         63         PC-MGMT01
+p5      conectado span     p0           0          732        SPAN: espejo de la troncal a R1 (para Wireshark / Est. 5)
+
+SW-CORE01# show mac address-table
+VLAN   DIRECCION MAC       TIPO       PUERTO
+10     52:54:00:01:00:00   dinamica   p0
+10     52:54:00:10:00:50   dinamica   p1
+20     52:54:00:01:00:00   dinamica   p0
+20     aa:bb:cc:dd:ee:01   dinamica   p1
+20     aa:bb:cc:dd:ee:02   dinamica   p1
+20     aa:bb:cc:dd:ee:99   dinamica   p1
+30     52:54:00:01:00:00   dinamica   p0
+30     52:54:00:30:00:10   dinamica   p2
+30     52:54:00:30:00:20   dinamica   p3
+40     52:54:00:01:00:00   dinamica   p0
+40     52:54:00:03:00:00   dinamica   p1
+40     52:54:00:40:00:10   dinamica   p4
+Total de direcciones aprendidas: 12
+
+SW-ACC01# show vlan brief
+VLAN  NOMBRE       ESTADO   PUERTOS DE ACCESO
+10    ADMIN        activa   p1
+20    USUARIOS     activa   p2, p3, p4
+40    GESTION      activa   -
+(no existe VLAN 1 por omision: vlan_default_pvid 0)
+
+SW-ACC01# show interfaces trunk
+PUERTO   MODO      ENCAPSULADO  VLAN NATIVA  VLAN PERMITIDAS
+p0       troncal   802.1Q       ninguna      10,20,40
+
+SW-ACC01# show interfaces status
+PUERTO  ESTADO    MODO     VLAN         RX paq.    TX paq.    DESCRIPCION
+p0      conectado trunk    10,20,40     177        240        Troncal a SW-CORE01 (p1)
+p1      conectado access   10           60         69         PC-ADMIN01
+p2      conectado access   20           82         85         PC-USER01
+p3      conectado access   20           25         58         PC-USER02
+p4      conectado access   20           42         48         PC-INTRUSO (equipo no registrado)
+
+SW-ACC01# show mac address-table
+VLAN   DIRECCION MAC       TIPO       PUERTO
+10     52:54:00:01:00:00   dinamica   p0
+10     52:54:00:10:00:50   dinamica   p1
+20     52:54:00:01:00:00   dinamica   p0
+20     aa:bb:cc:dd:ee:01   dinamica   p2
+20     aa:bb:cc:dd:ee:02   dinamica   p3
+20     aa:bb:cc:dd:ee:99   dinamica   p4
+40     52:54:00:01:00:00   dinamica   p0
+40     52:54:00:02:00:00   dinamica   p0
+40     52:54:00:40:00:10   dinamica   p0
+Total de direcciones aprendidas: 9
+
+##### R1-LAN: interfaces, rutas y reglas con paquetes contados #####
+trunk0@if2       UP             fe80::5054:ff:fe01:0/64 
+tmp-nat          DOWN           
+up-squid@if2     UP             192.168.84.2/30 fe80::5054:ff:fe01:1/64 
+trunk0.10@trunk0 UP             192.168.10.1/24 fe80::5054:ff:fe01:0/64 
+trunk0.20@trunk0 UP             192.168.20.1/24 fe80::5054:ff:fe01:0/64 
+trunk0.30@trunk0 UP             192.168.30.1/24 fe80::5054:ff:fe01:0/64 
+trunk0.40@trunk0 UP             192.168.40.1/24 fe80::5054:ff:fe01:0/64 
+default via 192.168.84.1 dev up-squid 
+192.168.10.0/24 dev trunk0.10 proto kernel scope link src 192.168.10.1 
+192.168.20.0/24 dev trunk0.20 proto kernel scope link src 192.168.20.1 
+192.168.30.0/24 dev trunk0.30 proto kernel scope link src 192.168.30.1 
+192.168.40.0/24 dev trunk0.40 proto kernel scope link src 192.168.40.1 
+192.168.84.0/30 dev up-squid proto kernel scope link src 192.168.84.2 
+	chain entrada_modo {
+		iifname "up-squid" ip saddr { 192.168.81.0/30, 192.168.82.0/30, 192.168.83.0/30, 192.168.84.0/30 } icmp type echo-request counter packets 2 bytes 168 accept
+	chain ajuste_mss {
+	chain entrada {
+		iifname "trunk0.20" ether saddr . ip saddr != @registrados log prefix "ACL-DENY USERS-NOREG->R1 " counter packets 4 bytes 336 drop
+		iifname "trunk0.10" ip saddr 192.168.10.0/24 icmp type echo-request counter packets 2 bytes 168 accept
+		iifname "trunk0.20" ip saddr 192.168.20.0/24 ip daddr 192.168.20.1 icmp type echo-request counter packets 1 bytes 84 accept
+		iifname "trunk0.30" ip saddr 192.168.30.10 icmp type echo-request counter packets 1 bytes 84 accept
+		iifname "trunk0.40" ip saddr 192.168.40.0/24 ip daddr 192.168.40.1 icmp type echo-request counter packets 1 bytes 84 accept
+		iifname "trunk0.10" ip saddr 192.168.10.0/24 tcp dport 22 counter packets 1 bytes 60 accept
+		iifname "trunk0.40" ip saddr 192.168.40.0/24 tcp dport 22 counter packets 1 bytes 60 accept
+		log prefix "ACL-DENY ->R1 " counter packets 10 bytes 648 drop
+	chain salida {
+	chain reenvio {
+	chain desde_admin {
+		oifname "trunk0.20" log prefix "ACL-ALLOW ADMIN->USERS " counter packets 1 bytes 84 accept
+		oifname "trunk0.30" log prefix "ACL-ALLOW ADMIN->SERVERS " counter packets 3 bytes 204 accept
+		oifname "trunk0.40" log prefix "ACL-ALLOW ADMIN->MGMT " counter packets 3 bytes 204 accept
+		oifname { "tmp-nat", "up-squid" } counter packets 3 bytes 204 accept
+	chain desde_users {
+		ether saddr . ip saddr != @registrados log prefix "ACL-DENY USERS-NOREG " counter packets 25 bytes 1548 drop
+		oifname "trunk0.10" log prefix "ACL-DENY USERS->ADMIN " counter packets 4 bytes 336 drop
+		oifname "trunk0.40" log prefix "ACL-DENY USERS->MGMT " counter packets 6 bytes 408 drop
+		oifname "trunk0.30" ip daddr 192.168.30.20 tcp dport { 80, 443 } counter packets 3 bytes 180 accept
+		oifname "trunk0.30" log prefix "ACL-DENY USERS->SERVERS " counter packets 14 bytes 936 drop
+		oifname { "tmp-nat", "up-squid" } counter packets 7 bytes 420 accept
+	chain desde_servers {
+		ip saddr 192.168.30.10 oifname { "trunk0.10", "trunk0.20", "trunk0.30", "trunk0.40" } icmp type echo-request counter packets 4 bytes 336 accept
+		ip saddr 192.168.30.10 oifname "trunk0.40" tcp dport 10050 counter packets 1 bytes 60 accept
+		oifname "trunk0.10" log prefix "ACL-DENY SERVERS->ADMIN " counter packets 4 bytes 240 drop
+		oifname "trunk0.20" log prefix "ACL-DENY SERVERS->USERS " counter packets 4 bytes 240 drop
+		oifname "trunk0.40" log prefix "ACL-DENY SERVERS->MGMT " counter packets 4 bytes 240 drop
+		oifname { "tmp-nat", "up-squid" } counter packets 2 bytes 120 accept
+	chain desde_mgmt {
+		oifname "trunk0.30" ip daddr 192.168.30.10 tcp dport { 80, 443 } log prefix "ACL-DENY MGMT->ZBXWEB " counter packets 6 bytes 360 drop
+		oifname "trunk0.30" tcp dport 22 counter packets 1 bytes 60 accept
+		oifname "trunk0.30" icmp type echo-request counter packets 1 bytes 84 accept
+		oifname "trunk0.10" log prefix "ACL-DENY MGMT->ADMIN " counter packets 2 bytes 168 drop
+		oifname "trunk0.20" log prefix "ACL-DENY MGMT->USERS " counter packets 2 bytes 168 drop
+		oifname { "tmp-nat", "up-squid" } tcp dport { 53, 80, 443 } counter packets 1 bytes 60 accept
+		log prefix "ACL-DENY MGMT->? " counter packets 6 bytes 360 drop
+	chain desde_perimetro {
+		ip daddr 192.168.30.10 tcp dport { 80, 443 } log prefix "ACL-DENY PERIMETRO->ZBXWEB " counter packets 10 bytes 600 drop
+		iifname "up-squid" ip saddr { 10.200.10.0/24, 10.200.20.0/24 } oifname { "trunk0.10", "trunk0.20", "trunk0.30", "trunk0.40" } log prefix "ACL-ALLOW VPN->LAN " counter packets 9 bytes 636 accept
+		iifname "up-squid" ip saddr { 192.168.81.0/30, 192.168.82.0/30, 192.168.83.0/30, 192.168.84.0/30 } ip daddr 192.168.30.10 tcp dport 10051 counter packets 4 bytes 240 accept
+		log prefix "ACL-DENY PERIMETRO->LAN " counter packets 11 bytes 756 drop

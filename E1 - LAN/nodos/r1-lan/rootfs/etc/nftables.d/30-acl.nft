@@ -1,0 +1,173 @@
+# /etc/nftables.d/30-acl.nft - ACL de R1-LAN (iguales en modo individual y grupal)
+#
+# Dos cadenas base, que NO son lo mismo:
+#   entrada  (hook input)    trafico cuyo destino es el propio R1 (ping al gateway, SSH, DHCP)
+#   reenvio  (hook forward)  trafico que ATRAVIESA R1 de una red a otra: aqui estan las ACL
+#
+# Politica por omision: drop (se deniega todo lo que no este permitido).
+# Con estado: las respuestas de una conexion permitida pasan solas.
+# Cada regla lleva "counter" para ver cuantas veces actuo (nft list ruleset).
+# Las denegaciones se registran con prefijo "ACL-DENY ORIGEN->DESTINO" y van a
+# /var/log/xelaju/acl-lan.log (rsyslog).
+
+table inet xelaju {
+
+    # =========================================================================
+    # ENTRADA: proteccion del propio router
+    # =========================================================================
+    chain entrada {
+        type filter hook input priority filter; policy drop;
+
+        ct state vmap { established : accept, related : accept, invalid : drop }
+        iifname "lo" accept
+
+        # DHCP solo en la VLAN 20. Va antes que todo lo demas porque el
+        # DISCOVER llega con origen 0.0.0.0. (dhcpd ademas solo escucha en
+        # trunk0.20: /etc/default/isc-dhcp-server)
+        iifname $IF_USERS udp sport 68 udp dport 67 counter accept
+
+        # Reglas propias del modo (acceso desde el host / ping de los vecinos)
+        jump entrada_modo
+
+        # Un equipo de usuarios no registrado no obtiene nada de R1
+        iifname $IF_USERS ether saddr . ip saddr != @registrados log prefix "ACL-DENY USERS-NOREG->R1 " counter drop
+
+        # Ping: cada VLAN a SU puerta de enlace. ADMIN y Zabbix (monitoreo) a cualquiera de R1.
+        iifname $IF_ADMIN   ip saddr $RED_ADMIN   icmp type echo-request counter accept
+        iifname $IF_USERS   ip saddr $RED_USERS   ip daddr $GW_USERS   icmp type echo-request counter accept
+        iifname $IF_SERVERS ip saddr $ZBX         icmp type echo-request counter accept
+        iifname $IF_SERVERS ip saddr $RED_SERVERS ip daddr $GW_SERVERS icmp type echo-request counter accept
+        iifname $IF_MGMT    ip saddr $RED_MGMT    ip daddr $GW_MGMT    icmp type echo-request counter accept
+
+        # SSH a R1: solo desde ADMIN y GESTION
+        iifname $IF_ADMIN ip saddr $RED_ADMIN tcp dport 22 counter accept
+        iifname $IF_MGMT  ip saddr $RED_MGMT  tcp dport 22 counter accept
+
+        # Zabbix: consultas pasivas del servidor al agente de R1
+        iifname $IF_SERVERS ip saddr $ZBX tcp dport 10050 counter accept
+
+        # Difusion y multidifusion que no es para R1: se descarta sin registrar
+        meta pkttype { broadcast, multicast } counter drop
+
+        log prefix "ACL-DENY ->R1 " counter drop
+    }
+
+    # R1 puede iniciar cualquier conexion (apt, agente de Zabbix hacia ZBX:10051)
+    chain salida {
+        type filter hook output priority filter; policy accept;
+    }
+
+    # =========================================================================
+    # REENVIO: ACL entre redes
+    # =========================================================================
+    chain reenvio {
+        type filter hook forward priority filter; policy drop;
+
+        # 1. Lo que pertenece a una conexion ya permitida pasa; lo invalido no.
+        ct state vmap { established : accept, related : accept, invalid : drop }
+
+        # 2. Conexiones nuevas: se despachan segun la interfaz por la que entran.
+        iifname vmap {
+            "trunk0.10" : jump desde_admin,
+            "trunk0.20" : jump desde_users,
+            "trunk0.30" : jump desde_servers,
+            "trunk0.40" : jump desde_mgmt,
+            "tmp-nat"   : jump desde_perimetro,
+            "up-squid"  : jump desde_perimetro
+        }
+
+        # 3. Cualquier otra cosa
+        log prefix "ACL-DENY ?->? " counter drop
+    }
+
+    # ---- VLAN 10 ADMIN: puede llegar a todo; se registra lo que abre hacia otras VLAN
+    chain desde_admin {
+        ip saddr != $RED_ADMIN log prefix "ACL-SPOOF ADMIN " counter drop
+
+        oifname $IF_USERS   log prefix "ACL-ALLOW ADMIN->USERS " counter accept
+        oifname $IF_SERVERS log prefix "ACL-ALLOW ADMIN->SERVERS " counter accept
+        oifname $IF_MGMT    log prefix "ACL-ALLOW ADMIN->MGMT " counter accept
+        oifname $IFS_SALIDA counter accept
+
+        log prefix "ACL-DENY ADMIN->? " counter drop
+    }
+
+    # ---- VLAN 20 USUARIOS: solo equipos registrados; Intranet web e Internet
+    chain desde_users {
+        ip saddr != $RED_USERS log prefix "ACL-SPOOF USERS " counter drop
+
+        # Binding MAC . IP: aunque alguien se ponga una IP a mano, si el par no
+        # esta en el CSV no pasa (refuerzo del DHCP restringido).
+        ether saddr . ip saddr != @registrados log prefix "ACL-DENY USERS-NOREG " counter drop
+
+        oifname $IF_ADMIN log prefix "ACL-DENY USERS->ADMIN " counter drop
+        oifname $IF_MGMT  log prefix "ACL-DENY USERS->MGMT " counter drop
+
+        oifname $IF_SERVERS ip daddr $INTRANET tcp dport { 80, 443 } counter accept
+        oifname $IF_SERVERS log prefix "ACL-DENY USERS->SERVERS " counter drop
+
+        oifname $IFS_SALIDA counter accept
+
+        log prefix "ACL-DENY USERS->? " counter drop
+    }
+
+    # ---- VLAN 30 SERVIDORES: solo Zabbix inicia trafico hacia otras VLAN (monitoreo)
+    chain desde_servers {
+        ip saddr != $RED_SERVERS log prefix "ACL-SPOOF SERVERS " counter drop
+
+        ip saddr $ZBX oifname $IFS_LAN icmp type echo-request counter accept
+        ip saddr $ZBX oifname $IF_MGMT tcp dport 10050 counter accept      # agente Zabbix pasivo
+        ip saddr $ZBX oifname $IF_MGMT udp dport 161 counter accept        # SNMP
+
+        oifname $IF_ADMIN log prefix "ACL-DENY SERVERS->ADMIN " counter drop
+        oifname $IF_USERS log prefix "ACL-DENY SERVERS->USERS " counter drop
+        oifname $IF_MGMT  log prefix "ACL-DENY SERVERS->MGMT " counter drop
+
+        oifname $IFS_SALIDA counter accept
+
+        log prefix "ACL-DENY SERVERS->? " counter drop
+    }
+
+    # ---- VLAN 40 GESTION: administra servidores por SSH; a Internet solo actualizaciones
+    chain desde_mgmt {
+        ip saddr != $RED_MGMT log prefix "ACL-SPOOF MGMT " counter drop
+
+        # La web de Zabbix es solo para ADMIN
+        oifname $IF_SERVERS ip daddr $ZBX tcp dport { 80, 443 } log prefix "ACL-DENY MGMT->ZBXWEB " counter drop
+        oifname $IF_SERVERS tcp dport 22 counter accept
+        oifname $IF_SERVERS ip daddr $ZBX tcp dport 10051 counter accept   # agentes activos de los switches
+        oifname $IF_SERVERS icmp type echo-request counter accept
+        oifname $IF_SERVERS log prefix "ACL-DENY MGMT->SERVERS " counter drop
+
+        oifname $IF_ADMIN log prefix "ACL-DENY MGMT->ADMIN " counter drop
+        oifname $IF_USERS log prefix "ACL-DENY MGMT->USERS " counter drop
+
+        oifname $IFS_SALIDA tcp dport { 53, 80, 443 } counter accept       # DNS y repositorios
+        oifname $IFS_SALIDA udp dport { 53, 123 } counter accept           # DNS y hora (NTP)
+
+        log prefix "ACL-DENY MGMT->? " counter drop
+    }
+
+    # ---- Desde el perimetro (enlace de salida): lo que llega por E2
+    # Frontera E1/E5 (ADR-0001 y ADR-0002): el firewall del Est. 5 ya filtro
+    # todo lo que llega hasta aqui (Internet, VPN, DMZ). R1 NO repite la
+    # politica VPN-ADMIN / VPN-USERS: la aplica E5 en su segunda pasada. R1
+    # solo protege lo suyo: nadie suplanta una direccion de la LAN, la web de
+    # Zabbix sigue siendo solo de la VLAN ADMIN, y lo que no es VPN ni
+    # monitoreo no entra.
+    chain desde_perimetro {
+        # Una direccion interna no puede llegar desde fuera
+        ip saddr $REDES_LAN log prefix "ACL-SPOOF PERIMETRO " counter drop
+
+        # La web de Zabbix es solo para la VLAN ADMIN (tampoco por VPN)
+        ip daddr $ZBX tcp dport { 80, 443 } log prefix "ACL-DENY PERIMETRO->ZBXWEB " counter drop
+
+        # (grupal) clientes VPN ya autorizados por E5: pasan a las VLAN
+        iifname "up-squid" ip saddr $REDES_VPN oifname $IFS_LAN log prefix "ACL-ALLOW VPN->LAN " counter accept
+
+        # (grupal) agentes de Zabbix de los companeros (E2..E5) hacia el servidor
+        iifname "up-squid" ip saddr $REDES_TRANSITO ip daddr $ZBX tcp dport 10051 counter accept
+
+        log prefix "ACL-DENY PERIMETRO->LAN " counter drop
+    }
+}

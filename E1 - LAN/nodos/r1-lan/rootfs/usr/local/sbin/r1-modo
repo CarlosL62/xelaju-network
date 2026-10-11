@@ -1,0 +1,95 @@
+#!/bin/bash
+# =============================================================================
+# r1-modo - cambia R1-LAN entre el modo individual y el modo grupal
+#
+#   r1-modo estado        muestra el modo actual, los enlaces de salida y las rutas
+#   r1-modo individual    salida temporal por el NAT de QEMU (tmp-nat) + NAT en R1
+#   r1-modo grupal        enlace /30 hacia Squid (up-squid), SIN NAT
+#
+# El modo son dos enlaces simbolicos:
+#   /etc/network/interfaces.d/uplinks -> /etc/network/modos/<modo>       (interfaces y rutas)
+#   /etc/nftables.d/20-modo.nft       -> /etc/nftables.d/modos/<modo>.nft (NAT y reglas del modo)
+# Las ACL entre VLAN (30-acl.nft) son las mismas en los dos modos.
+# =============================================================================
+set -euo pipefail
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+ENLACE_RED=/etc/network/interfaces.d/uplinks
+ENLACE_NFT=/etc/nftables.d/20-modo.nft
+DIR_RED=/etc/network/modos
+DIR_NFT=/etc/nftables.d/modos
+
+morir() { echo "ERROR: $*" >&2; exit 1; }
+
+modo_actual() {
+    case "$(readlink "$ENLACE_RED" 2>/dev/null || true)" in
+        */individual) echo individual ;;
+        */grupal)     echo grupal ;;
+        *)            echo ninguno ;;
+    esac
+}
+
+# interfaces que define el archivo de un modo (lineas "iface <nombre> ...")
+interfaces_de() { awk '$1 == "iface" { print $2 }' "$DIR_RED/$1"; }
+
+mostrar_estado() {
+    local modo i
+    modo="$(modo_actual)"
+    echo "Modo actual de R1-LAN: $modo"
+    if [ "$modo" = ninguno ]; then return 0; fi
+    echo "Enlaces de salida:"
+    for i in $(interfaces_de "$modo"); do
+        ip -br addr show dev "$i" 2>/dev/null | sed 's/^/    /' || echo "    $i (no existe)"
+    done
+    echo "Ruta por defecto:"
+    ip route show default | sed 's/^/    /'
+    if [ "$modo" = grupal ]; then
+        echo "NAT en R1: no (las IP de las VLAN salen sin traducir; el NAT lo hace el Multi-WAN)"
+    else
+        echo "NAT en R1: si (masquerade de las 4 VLAN por tmp-nat)"
+    fi
+}
+
+cambiar() {
+    local nuevo="$1" viejo i
+    if [ "$(id -u)" -ne 0 ]; then morir "hay que ejecutarlo como root: sudo r1-modo $nuevo"; fi
+    if [ ! -f "$DIR_RED/$nuevo" ] || [ ! -f "$DIR_NFT/$nuevo.nft" ]; then morir "faltan los archivos del modo $nuevo"; fi
+    viejo="$(modo_actual)"
+
+    # 1. Probar las reglas del modo nuevo ANTES de tocar la red
+    ln -sfn "$DIR_NFT/$nuevo.nft" "$ENLACE_NFT"
+    if ! nft -c -f /etc/nftables.conf; then
+        if [ "$viejo" = ninguno ]; then rm -f "$ENLACE_NFT"; else ln -sfn "$DIR_NFT/$viejo.nft" "$ENLACE_NFT"; fi
+        morir "las reglas del modo $nuevo no son validas: no se cambio nada"
+    fi
+
+    # 2. Bajar los enlaces del modo anterior (mientras ifupdown aun los conoce)
+    if [ "$viejo" != ninguno ]; then
+        for i in $(interfaces_de "$viejo"); do
+            ifdown --force "$i" >/dev/null 2>&1 || true
+            ip addr flush dev "$i" 2>/dev/null || true
+        done
+    fi
+
+    # 3. Apuntar al modo nuevo y levantar sus enlaces
+    mkdir -p "$(dirname "$ENLACE_RED")"
+    ln -sfn "$DIR_RED/$nuevo" "$ENLACE_RED"
+    for i in $(interfaces_de "$nuevo"); do
+        ifup "$i" || echo "AVISO: no se pudo levantar $i" >&2
+    done
+
+    # 4. Cargar las reglas (una sola transaccion) y olvidar los estados y
+    #    traducciones NAT que quedaran del modo anterior
+    nft -f /etc/nftables.conf
+    if command -v conntrack >/dev/null; then conntrack -F >/dev/null 2>&1 || true; fi
+
+    logger -t r1-modo "modo $viejo -> $nuevo" 2>/dev/null || true
+    mostrar_estado
+}
+
+case "${1:-estado}" in
+    estado)            mostrar_estado ;;
+    nombre)            modo_actual ;;
+    individual|grupal) cambiar "$1" ;;
+    *)                 sed -n '3,12p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
+esac

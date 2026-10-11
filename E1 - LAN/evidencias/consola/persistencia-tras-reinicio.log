@@ -1,0 +1,83 @@
+##### R1-LAN tras reiniciar (sin ejecutar nada)
+ 18:29:32 up 0 min,  0 users,  load average: 0.22, 0.05, 0.02
+R1-LAN | 2026-10-03 18:29:32 | modo: individual
+--- Interfaces y direcciones (ip -br addr) ---
+trunk0           UP             
+up-squid         DOWN           
+tmp-nat          UP             10.0.2.15/24 
+trunk0.10@trunk0 UP             192.168.10.1/24 
+trunk0.20@trunk0 UP             192.168.20.1/24 
+trunk0.30@trunk0 UP             192.168.30.1/24 
+trunk0.40@trunk0 UP             192.168.40.1/24 
+--- VLAN de cada subinterfaz (802.1Q) ---
+    trunk0.10  vlan protocol 802.1Q id 10
+    trunk0.20  vlan protocol 802.1Q id 20
+    trunk0.30  vlan protocol 802.1Q id 30
+    trunk0.40  vlan protocol 802.1Q id 40
+--- Tabla de rutas (ip route) ---
+default via 10.0.2.2 dev tmp-nat onlink 
+10.0.2.0/24 dev tmp-nat proto kernel scope link src 10.0.2.15 
+192.168.10.0/24 dev trunk0.10 proto kernel scope link src 192.168.10.1 
+192.168.20.0/24 dev trunk0.20 proto kernel scope link src 192.168.20.1 
+192.168.30.0/24 dev trunk0.30 proto kernel scope link src 192.168.30.1 
+192.168.40.0/24 dev trunk0.40 proto kernel scope link src 192.168.40.1 
+--- Reenvio y filtro de camino inverso ---
+net.ipv4.ip_forward = 1
+net.ipv4.conf.all.rp_filter = 2
+--- ACL: paquetes contados por cadena (nft list table inet xelaju) ---
+    CADENA            REGLAS   PERMITIDOS   BLOQUEADOS
+    nat_salida             1            0            0
+    entrada_modo           1            0            0
+    entrada               12            0            0
+    reenvio                1            0            0
+    desde_admin            6            0            0
+    desde_users            8            0            0
+    desde_servers          9            3            0
+    desde_mgmt            11            4            0
+    desde_perimetro        5            0            0
+--- DHCP restringido de la VLAN 20 ---
+    servicio isc-dhcp-server: active
+    escucha en: INTERFACESv4="trunk0.20"
+    EQUIPO           MAC                 IP_RESERVADA
+    PC-USER01        aa:bb:cc:dd:ee:01   192.168.20.10
+    PC-USER02        aa:bb:cc:dd:ee:02   192.168.20.11
+    PC-USER03        aa:bb:cc:dd:ee:03   192.168.20.12
+    Total: 3 equipo(s) registrados en /etc/xelaju/usuarios.csv
+--- Ultimos eventos DHCP (/var/log/xelaju/dhcpd.log) ---
+2026-10-03T18:29:25.925044-06:00 r1-lan dhcpd[880]: All rights reserved.
+2026-10-03T18:29:25.925193-06:00 r1-lan dhcpd[880]: For info, please visit https://www.isc.org/software/dhcp/
+2026-10-03T18:29:25.926295-06:00 r1-lan dhcpd[880]: Wrote 0 deleted host decls to leases file.
+2026-10-03T18:29:25.926400-06:00 r1-lan dhcpd[880]: Wrote 0 new dynamic host decls to leases file.
+2026-10-03T18:29:25.926464-06:00 r1-lan dhcpd[880]: Wrote 0 leases to leases file.
+2026-10-03T18:29:25.941732-06:00 r1-lan dhcpd[880]: Server starting service.
+--- Ultimos bloqueos de las ACL (/var/log/xelaju/acl-lan.log) ---
+2026-10-03T18:24:41.146138-06:00 r1-lan kernel: ACL-DENY MGMT->ZBXWEB IN=trunk0.40 OUT=trunk0.30 MAC=52:54:00:01:00:00:52:54:00:40:00:10:08:00 SRC=192.168.40.10 DST=192.1
+2026-10-03T18:24:42.168150-06:00 r1-lan kernel: ACL-DENY MGMT->ZBXWEB IN=trunk0.40 OUT=trunk0.30 MAC=52:54:00:01:00:00:52:54:00:40:00:10:08:00 SRC=192.168.40.10 DST=192.1
+2026-10-03T18:24:43.192355-06:00 r1-lan kernel: ACL-DENY MGMT->ZBXWEB IN=trunk0.40 OUT=trunk0.30 MAC=52:54:00:01:00:00:52:54:00:40:00:10:08:00 SRC=192.168.40.10 DST=192.1
+2026-10-03T18:24:44.216326-06:00 r1-lan kernel: ACL-DENY MGMT->ZBXWEB IN=trunk0.40 OUT=trunk0.30 MAC=52:54:00:01:00:00:52:54:00:40:00:10:08:00 SRC=192.168.40.10 DST=192.1
+2026-10-03T18:24:45.240444-06:00 r1-lan kernel: ACL-DENY MGMT->ZBXWEB IN=trunk0.40 OUT=trunk0.30 MAC=52:54:00:01:00:00:52:54:00:40:00:10:08:00 SRC=192.168.40.10 DST=192.1
+2026-10-03T18:24:46.264388-06:00 r1-lan kernel: ACL-DENY MGMT->ZBXWEB IN=trunk0.40 OUT=trunk0.30 MAC=52:54:00:01:00:00:52:54:00:40:00:10:08:00 SRC=192.168.40.10 DST=192.1
+--- Servicios ---
+    nftables           active
+
+##### SW-CORE01 tras reiniciar
+ 18:29:33 up 0 min,  0 users,  load average: 0.29, 0.06, 0.02
+SW-CORE01# show vlan brief
+VLAN  NOMBRE       ESTADO   PUERTOS DE ACCESO
+10    ADMIN        activa   -
+20    USUARIOS     activa   -
+30    SERVIDORES   activa   p2, p3
+40    GESTION      activa   p4
+(no existe VLAN 1 por omision: vlan_default_pvid 0)
+SW-CORE01# show interfaces trunk
+PUERTO   MODO      ENCAPSULADO  VLAN NATIVA  VLAN PERMITIDAS
+p0       troncal   802.1Q       ninguna      10,20,30,40
+p1       troncal   802.1Q       ninguna      10,20,40
+Sesion 1: origen p0 (ambos sentidos) -> destino p5
+active
+active
+p5 tx_packets: 197
+    TX:  bytes packets errors dropped carrier collsns           
+         20984     197      0       0       0       0 
+ Sent 20196 bytes 197 pkt (dropped 0, overlimits 0 requeues 1) 
+ backlog 0b 0p requeues 1

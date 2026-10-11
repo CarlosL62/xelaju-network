@@ -1,0 +1,101 @@
+table inet xelaju {
+	set registrados {
+		type ether_addr . ipv4_addr
+		elements = { aa:bb:cc:dd:ee:01 . 192.168.20.10,
+			     aa:bb:cc:dd:ee:02 . 192.168.20.11,
+			     aa:bb:cc:dd:ee:03 . 192.168.20.12 }
+	}
+
+	chain nat_salida {
+		type nat hook postrouting priority srcnat; policy accept;
+		oifname "tmp-nat" ip saddr { 192.168.10.0/24, 192.168.20.0/24, 192.168.30.0/24, 192.168.40.0/24 } counter packets 43 bytes 2908 masquerade
+	}
+
+	chain entrada_modo {
+		iifname "tmp-nat" ip saddr 10.0.2.2 tcp dport 22 counter packets 0 bytes 0 accept
+	}
+
+	chain entrada {
+		type filter hook input priority filter; policy drop;
+		ct state vmap { invalid : drop, established : accept, related : accept }
+		iifname "lo" accept
+		iifname "trunk0.20" udp sport 68 udp dport 67 counter packets 2 bytes 656 accept
+		jump entrada_modo
+		iifname "trunk0.20" ether saddr . ip saddr != @registrados log prefix "ACL-DENY USERS-NOREG->R1 " counter packets 0 bytes 0 drop
+		iifname "trunk0.10" ip saddr 192.168.10.0/24 icmp type echo-request counter packets 0 bytes 0 accept
+		iifname "trunk0.20" ip saddr 192.168.20.0/24 ip daddr 192.168.20.1 icmp type echo-request counter packets 0 bytes 0 accept
+		iifname "trunk0.30" ip saddr 192.168.30.10 icmp type echo-request counter packets 0 bytes 0 accept
+		iifname "trunk0.30" ip saddr 192.168.30.0/24 ip daddr 192.168.30.1 icmp type echo-request counter packets 0 bytes 0 accept
+		iifname "trunk0.40" ip saddr 192.168.40.0/24 ip daddr 192.168.40.1 icmp type echo-request counter packets 0 bytes 0 accept
+		iifname "trunk0.10" ip saddr 192.168.10.0/24 tcp dport 22 counter packets 0 bytes 0 accept
+		iifname "trunk0.40" ip saddr 192.168.40.0/24 tcp dport 22 counter packets 0 bytes 0 accept
+		iifname "trunk0.30" ip saddr 192.168.30.10 tcp dport 10050 counter packets 0 bytes 0 accept
+		meta pkttype { broadcast, multicast } counter packets 0 bytes 0 drop
+		log prefix "ACL-DENY ->R1 " counter packets 0 bytes 0 drop
+	}
+
+	chain salida {
+		type filter hook output priority filter; policy accept;
+	}
+
+	chain reenvio {
+		type filter hook forward priority filter; policy drop;
+		ct state vmap { invalid : drop, established : accept, related : accept }
+		iifname vmap { "tmp-nat" : jump desde_perimetro, "up-squid" : jump desde_perimetro, "trunk0.10" : jump desde_admin, "trunk0.20" : jump desde_users, "trunk0.30" : jump desde_servers, "trunk0.40" : jump desde_mgmt }
+		log prefix "ACL-DENY ?->? " counter packets 0 bytes 0 drop
+	}
+
+	chain desde_admin {
+		ip saddr != 192.168.10.0/24 log prefix "ACL-SPOOF ADMIN " counter packets 0 bytes 0 drop
+		oifname "trunk0.20" log prefix "ACL-ALLOW ADMIN->USERS " counter packets 0 bytes 0 accept
+		oifname "trunk0.30" log prefix "ACL-ALLOW ADMIN->SERVERS " counter packets 1 bytes 60 accept
+		oifname "trunk0.40" log prefix "ACL-ALLOW ADMIN->MGMT " counter packets 0 bytes 0 accept
+		oifname { "tmp-nat", "up-squid" } counter packets 18 bytes 1188 accept
+		log prefix "ACL-DENY ADMIN->? " counter packets 0 bytes 0 drop
+	}
+
+	chain desde_users {
+		ip saddr != 192.168.20.0/24 log prefix "ACL-SPOOF USERS " counter packets 0 bytes 0 drop
+		ether saddr . ip saddr != @registrados log prefix "ACL-DENY USERS-NOREG " counter packets 0 bytes 0 drop
+		oifname "trunk0.10" log prefix "ACL-DENY USERS->ADMIN " counter packets 0 bytes 0 drop
+		oifname "trunk0.40" log prefix "ACL-DENY USERS->MGMT " counter packets 0 bytes 0 drop
+		oifname "trunk0.30" ip daddr 192.168.30.20 tcp dport { 80, 443 } counter packets 0 bytes 0 accept
+		oifname "trunk0.30" log prefix "ACL-DENY USERS->SERVERS " counter packets 6 bytes 360 drop
+		oifname { "tmp-nat", "up-squid" } counter packets 21 bytes 1416 accept
+		log prefix "ACL-DENY USERS->? " counter packets 0 bytes 0 drop
+	}
+
+	chain desde_servers {
+		ip saddr != 192.168.30.0/24 log prefix "ACL-SPOOF SERVERS " counter packets 0 bytes 0 drop
+		ip saddr 192.168.30.10 oifname { "trunk0.10", "trunk0.20", "trunk0.30", "trunk0.40" } icmp type echo-request counter packets 16 bytes 1344 accept
+		ip saddr 192.168.30.10 oifname "trunk0.40" tcp dport 10050 counter packets 0 bytes 0 accept
+		ip saddr 192.168.30.10 oifname "trunk0.40" udp dport 161 counter packets 0 bytes 0 accept
+		oifname "trunk0.10" log prefix "ACL-DENY SERVERS->ADMIN " counter packets 0 bytes 0 drop
+		oifname "trunk0.20" log prefix "ACL-DENY SERVERS->USERS " counter packets 0 bytes 0 drop
+		oifname "trunk0.40" log prefix "ACL-DENY SERVERS->MGMT " counter packets 0 bytes 0 drop
+		oifname { "tmp-nat", "up-squid" } counter packets 2 bytes 152 accept
+		log prefix "ACL-DENY SERVERS->? " counter packets 0 bytes 0 drop
+	}
+
+	chain desde_mgmt {
+		ip saddr != 192.168.40.0/24 log prefix "ACL-SPOOF MGMT " counter packets 0 bytes 0 drop
+		oifname "trunk0.30" ip daddr 192.168.30.10 tcp dport { 80, 443 } log prefix "ACL-DENY MGMT->ZBXWEB " counter packets 6 bytes 360 drop
+		oifname "trunk0.30" tcp dport 22 counter packets 0 bytes 0 accept
+		oifname "trunk0.30" ip daddr 192.168.30.10 tcp dport 10051 counter packets 152 bytes 9120 accept
+		oifname "trunk0.30" icmp type echo-request counter packets 0 bytes 0 accept
+		oifname "trunk0.30" log prefix "ACL-DENY MGMT->SERVERS " counter packets 0 bytes 0 drop
+		oifname "trunk0.10" log prefix "ACL-DENY MGMT->ADMIN " counter packets 0 bytes 0 drop
+		oifname "trunk0.20" log prefix "ACL-DENY MGMT->USERS " counter packets 0 bytes 0 drop
+		oifname { "tmp-nat", "up-squid" } tcp dport { 53, 80, 443 } counter packets 0 bytes 0 accept
+		oifname { "tmp-nat", "up-squid" } udp dport { 53, 123 } counter packets 2 bytes 152 accept
+		log prefix "ACL-DENY MGMT->? " counter packets 0 bytes 0 drop
+	}
+
+	chain desde_perimetro {
+		ip saddr { 192.168.10.0/24, 192.168.20.0/24, 192.168.30.0/24, 192.168.40.0/24 } log prefix "ACL-SPOOF PERIMETRO " counter packets 0 bytes 0 drop
+		ip daddr 192.168.30.10 tcp dport { 80, 443 } log prefix "ACL-DENY PERIMETRO->ZBXWEB " counter packets 0 bytes 0 drop
+		iifname "up-squid" ip saddr { 10.200.10.0/24, 10.200.20.0/24 } oifname { "trunk0.10", "trunk0.20", "trunk0.30", "trunk0.40" } log prefix "ACL-ALLOW VPN->LAN " counter packets 0 bytes 0 accept
+		iifname "up-squid" ip saddr { 192.168.81.0/30, 192.168.82.0/30, 192.168.83.0/30, 192.168.84.0/30 } ip daddr 192.168.30.10 tcp dport 10051 counter packets 0 bytes 0 accept
+		log prefix "ACL-DENY PERIMETRO->LAN " counter packets 0 bytes 0 drop
+	}
+}

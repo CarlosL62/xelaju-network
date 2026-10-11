@@ -1,0 +1,270 @@
+#!/bin/bash
+# =============================================================================
+# xelaju-dhcp - registro de equipos de la VLAN 20 (DHCP restringido)
+#
+# El archivo externo /etc/xelaju/usuarios.csv es la lista de equipos
+# autorizados:   Equipo,Direccion_MAC,IP_reservada
+# De el se generan DOS cosas, siempre juntas:
+#   /etc/dhcp/reservas-vlan20.conf     un bloque "host" por equipo (dhcpd)
+#   /etc/nftables.d/10-registrados.nft conjunto MAC . IP para las ACL (nftables)
+#
+#   xelaju-dhcp listar                  muestra los equipos registrados
+#   xelaju-dhcp alta <equipo> <mac> [ip]   registra un equipo (IP libre si se omite)
+#   xelaju-dhcp baja <equipo|mac>       quita un equipo
+#   xelaju-dhcp aplicar                 valida el CSV, regenera y recarga servicios
+#   xelaju-dhcp verificar               compara CSV, reservas, ACL en memoria y servicio
+#   xelaju-dhcp log [n]                 auditoria de altas/bajas y ultimos eventos DHCP
+# =============================================================================
+set -euo pipefail
+
+CSV="${XJ_CSV:-/etc/xelaju/usuarios.csv}"
+RESERVAS="${XJ_RESERVAS:-/etc/dhcp/reservas-vlan20.conf}"
+SET_NFT="${XJ_SET_NFT:-/etc/nftables.d/10-registrados.nft}"
+AUDITORIA="${XJ_AUDITORIA:-/var/log/xelaju/registro-dhcp.log}"
+REG_DHCP=/var/log/xelaju/dhcpd.log
+SIN_SERVICIOS="${XJ_SIN_SERVICIOS:-0}"     # 1 = solo generar archivos (pruebas fuera de R1)
+CABECERA="Equipo,Direccion_MAC,IP_reservada"
+RED="192.168.20"; IP_MIN=10; IP_MAX=250
+
+error() { echo "ERROR: $*" >&2; }
+morir() { error "$*"; exit 1; }
+
+auditar() {     # deja constancia de quien hizo que y cuando
+    mkdir -p "$(dirname "$AUDITORIA")" 2>/dev/null || true
+    printf '%s usuario=%s %s\n' "$(date '+%F %T')" "${SUDO_USER:-$(id -un)}" "$*" >> "$AUDITORIA" 2>/dev/null || true
+}
+
+# filas: imprime "linea equipo mac ip" por cada registro (MAC en minusculas,
+# sin espacios ni retornos de carro; ignora la cabecera, vacias y comentarios)
+filas() {
+    awk -F',' '
+        NR == 1 { next }
+        { gsub(/\r/, ""); gsub(/[ \t]/, "") }
+        /^$/ || /^#/ { next }
+        { print NR, $1, tolower($2), $3 }' "$CSV"
+}
+
+# ---- Validacion del CSV ------------------------------------------------------
+validar() {
+    local errores=0 n equipo mac ip ultimo repetidos
+    if [ ! -r "$CSV" ]; then error "no se puede leer $CSV"; return 1; fi
+    if [ "$(head -1 "$CSV" | tr -d '\r')" != "$CABECERA" ]; then
+        error "la primera linea debe ser exactamente: $CABECERA"; errores=1
+    fi
+    while read -r n equipo mac ip; do
+        if ! [[ "$equipo" =~ ^[A-Za-z0-9][A-Za-z0-9-]{0,30}$ ]]; then
+            error "linea $n: nombre de equipo invalido '$equipo' (letras, numeros y guion)"; errores=1
+        fi
+        if ! [[ "$mac" =~ ^([0-9a-f]{2}:){5}[0-9a-f]{2}$ ]]; then
+            error "linea $n: MAC invalida '$mac' (formato aa:bb:cc:dd:ee:ff)"; errores=1
+        elif [ $(( 16#${mac:0:2} & 1 )) -ne 0 ]; then
+            # bit menos significativo del primer octeto = 1 -> multidifusion/difusion
+            error "linea $n: $mac es una direccion de grupo, no identifica a un equipo"; errores=1
+        elif [ "$mac" = "00:00:00:00:00:00" ]; then
+            error "linea $n: la MAC no puede ser todo ceros"; errores=1
+        fi
+        if [[ "$ip" =~ ^192\.168\.20\.([0-9]{1,3})$ ]]; then
+            ultimo=$(( 10#${BASH_REMATCH[1]} ))
+            if [ "$ultimo" -lt "$IP_MIN" ] || [ "$ultimo" -gt "$IP_MAX" ]; then
+                error "linea $n: $ip fuera del rango de reservas $RED.$IP_MIN-$RED.$IP_MAX"; errores=1
+            fi
+        else
+            error "linea $n: IP invalida '$ip' (debe ser $RED.x)"; errores=1
+        fi
+    done < <(filas)
+    repetidos="$(filas | awk '
+        { e[tolower($2)]++; m[$3]++; i[$4]++ }
+        END {
+            for (k in e) if (e[k] > 1) print "equipo repetido: " k
+            for (k in m) if (m[k] > 1) print "MAC repetida: " k
+            for (k in i) if (i[k] > 1) print "IP repetida: " k
+        }')"
+    if [ -n "$repetidos" ]; then
+        while IFS= read -r n; do error "$n"; done <<< "$repetidos"
+        errores=1
+    fi
+    return "$errores"
+}
+
+# ---- Generacion de los dos archivos derivados ---------------------------------
+generar() {     # generar <archivo de reservas> <archivo del conjunto nft>
+    local equipo mac ip elementos
+    {
+        echo "# /etc/dhcp/reservas-vlan20.conf"
+        echo "# Generado por xelaju-dhcp a partir de /etc/xelaju/usuarios.csv."
+        echo "# NO editar a mano: use 'xelaju-dhcp alta|baja', o edite el CSV y 'xelaju-dhcp aplicar'."
+        while read -r _ equipo mac ip; do
+            printf '\nhost %s {\n    hardware ethernet %s;\n    fixed-address %s;\n    option host-name "%s";\n}\n' \
+                "$equipo" "$mac" "$ip" "$equipo"
+        done < <(filas)
+    } > "$1"
+    elementos="$(filas | awk '{ printf "%s%s . %s", (n++ ? ",\n                     " : ""), $3, $4 }')"
+    {
+        echo "# /etc/nftables.d/10-registrados.nft"
+        echo "# Generado por xelaju-dhcp a partir de /etc/xelaju/usuarios.csv."
+        echo "# NO editar a mano: use 'xelaju-dhcp alta|baja', o edite el CSV y 'xelaju-dhcp aplicar'."
+        echo "#"
+        echo "# Cada elemento es un par MAC . IP autorizado en la VLAN 20. Las ACL solo dejan"
+        echo "# pasar trafico de usuarios cuyo par (MAC de origen, IP de origen) este aqui."
+        echo "table inet xelaju {"
+        echo "    set registrados {"
+        echo "        type ether_addr . ipv4_addr"
+        if [ -n "$elementos" ]; then echo "        elements = { $elementos }"; fi
+        echo "    }"
+        echo "}"
+    } > "$2"
+}
+
+# Sustituye el contenido del conjunto en el kernel en una sola transaccion,
+# sin recargar el resto de reglas (los contadores de las ACL no se pierden).
+actualizar_conjunto() {
+    if ! nft list set inet xelaju registrados >/dev/null 2>&1; then
+        echo "  (la tabla 'inet xelaju' aun no esta cargada: el conjunto entrara con nftables)"
+        return 0
+    fi
+    {
+        echo "flush set inet xelaju registrados"
+        filas | awk '{ print "add element inet xelaju registrados { " $3 " . " $4 " }" }'
+    } | nft -f -
+    echo "  conjunto 'registrados' actualizado en las ACL"
+}
+
+aplicar() {
+    local tmp_res tmp_set
+    validar || morir "el CSV tiene errores: no se aplico ningun cambio"
+    tmp_res="$(mktemp)"; tmp_set="$(mktemp)"
+    generar "$tmp_res" "$tmp_set"
+    if [ "$SIN_SERVICIOS" = 1 ]; then
+        install -D -m 0644 "$tmp_res" "$RESERVAS"; install -D -m 0644 "$tmp_set" "$SET_NFT"
+        rm -f "$tmp_res" "$tmp_set"
+        echo "  archivos generados (sin tocar servicios)"; return 0
+    fi
+    # Se guarda lo anterior para deshacer si la configuracion nueva no es valida
+    cp -a "$RESERVAS" "$RESERVAS.anterior" 2>/dev/null || true
+    cp -a "$SET_NFT" "$SET_NFT.anterior" 2>/dev/null || true
+    install -D -m 0644 "$tmp_res" "$RESERVAS"; install -D -m 0644 "$tmp_set" "$SET_NFT"
+    rm -f "$tmp_res" "$tmp_set"
+    if ! dhcpd -t -q -cf /etc/dhcp/dhcpd.conf; then
+        mv -f "$RESERVAS.anterior" "$RESERVAS" 2>/dev/null || true
+        mv -f "$SET_NFT.anterior" "$SET_NFT" 2>/dev/null || true
+        morir "dhcpd rechazo la configuracion (dhcpd -t): se restauro la anterior"
+    fi
+    if ! nft -c -f /etc/nftables.conf; then
+        mv -f "$RESERVAS.anterior" "$RESERVAS" 2>/dev/null || true
+        mv -f "$SET_NFT.anterior" "$SET_NFT" 2>/dev/null || true
+        morir "nftables rechazo la configuracion (nft -c): se restauro la anterior"
+    fi
+    rm -f "$RESERVAS.anterior" "$SET_NFT.anterior"
+    systemctl restart isc-dhcp-server
+    echo "  isc-dhcp-server reiniciado con $(filas | wc -l) reserva(s)"
+    actualizar_conjunto
+}
+
+# ---- Ordenes -------------------------------------------------------------------
+cmd_listar() {
+    validar || true
+    printf '%-16s %-19s %s\n' EQUIPO MAC IP_RESERVADA
+    filas | awk '{ printf "%-16s %-19s %s\n", $2, $3, $4 }'
+    echo "Total: $(filas | wc -l) equipo(s) registrados en $CSV"
+}
+
+siguiente_ip() {
+    local usadas i
+    usadas=" $(filas | awk '{print $4}' | tr '\n' ' ')"
+    for i in $(seq "$IP_MIN" "$IP_MAX"); do
+        case "$usadas" in
+            *" $RED.$i "*) ;;
+            *) echo "$RED.$i"; return 0 ;;
+        esac
+    done
+    return 1
+}
+
+cmd_alta() {
+    local equipo="${1:-}" mac="${2:-}" ip="${3:-}" copia
+    if [ -z "$equipo" ] || [ -z "$mac" ]; then morir "uso: xelaju-dhcp alta <equipo> <mac> [ip]"; fi
+    mac="$(printf '%s' "$mac" | tr 'A-F-' 'a-f:')"
+    if [ -z "$ip" ]; then ip="$(siguiente_ip)" || morir "no quedan direcciones libres en el rango"; fi
+    copia="$(mktemp)"; cp -a "$CSV" "$copia"
+    if [ -n "$(tail -c 1 "$CSV")" ]; then echo >> "$CSV"; fi      # el archivo debe acabar en salto de linea
+    printf '%s,%s,%s\n' "$equipo" "$mac" "$ip" >> "$CSV"
+    if ! validar; then
+        cp -a "$copia" "$CSV"; rm -f "$copia"
+        morir "alta rechazada: el CSV no se modifico"
+    fi
+    rm -f "$copia"
+    echo "Alta: $equipo  $mac  ->  $ip"
+    aplicar
+    auditar "ALTA equipo=$equipo mac=$mac ip=$ip"
+}
+
+cmd_baja() {
+    local clave="${1:-}" fila equipo mac ip nuevo
+    if [ -z "$clave" ]; then morir "uso: xelaju-dhcp baja <equipo|mac>"; fi
+    clave="$(printf '%s' "$clave" | tr 'A-Z' 'a-z')"
+    fila="$(filas | awk -v k="$clave" 'tolower($2) == k || $3 == k { print $2, $3, $4; exit }')"
+    if [ -z "$fila" ]; then morir "no hay ningun equipo registrado como '$clave'"; fi
+    read -r equipo mac ip <<< "$fila"
+    nuevo="$(mktemp)"
+    awk -F',' -v m="$mac" '
+        { linea = $0; campo = $2; gsub(/[ \t\r]/, "", campo) }
+        NR == 1 || tolower(campo) != m { print linea }' "$CSV" > "$nuevo"
+    cat "$nuevo" > "$CSV"; rm -f "$nuevo"
+    echo "Baja: $equipo  $mac  ($ip)"
+    aplicar
+    # Las ACL son con estado: lo ya establecido seguiria pasando. Se borran los
+    # estados de esa IP para que el corte sea inmediato.
+    if [ "$SIN_SERVICIOS" != 1 ] && command -v conntrack >/dev/null; then
+        conntrack -D -s "$ip" >/dev/null 2>&1 || true
+        conntrack -D -d "$ip" >/dev/null 2>&1 || true
+        echo "  conexiones activas de $ip eliminadas"
+    fi
+    auditar "BAJA equipo=$equipo mac=$mac ip=$ip"
+}
+
+cmd_verificar() {
+    local fallos=0 n_csv n_res n_set tmp_res tmp_set
+    echo "Verificacion del DHCP restringido"
+    if validar; then echo "  [ OK ] CSV valido"; else echo "  [FALLO] CSV con errores"; fallos=1; fi
+    n_csv="$(filas | wc -l)"
+    tmp_res="$(mktemp)"; tmp_set="$(mktemp)"
+    generar "$tmp_res" "$tmp_set"
+    if cmp -s "$tmp_res" "$RESERVAS"; then echo "  [ OK ] reservas de dhcpd al dia ($n_csv)"
+    else echo "  [FALLO] $RESERVAS no coincide con el CSV: ejecute 'xelaju-dhcp aplicar'"; fallos=1; fi
+    if cmp -s "$tmp_set" "$SET_NFT"; then echo "  [ OK ] archivo del conjunto nftables al dia"
+    else echo "  [FALLO] $SET_NFT no coincide con el CSV: ejecute 'xelaju-dhcp aplicar'"; fallos=1; fi
+    rm -f "$tmp_res" "$tmp_set"
+    if [ "$SIN_SERVICIOS" != 1 ]; then
+        n_res="$(grep -c '^host ' "$RESERVAS" 2>/dev/null || true)"
+        n_set="$(nft list set inet xelaju registrados 2>/dev/null | grep -o -E '([0-9a-f]{2}:){5}[0-9a-f]{2} \. [0-9.]+' | wc -l || true)"
+        if [ "$n_set" = "$n_csv" ]; then echo "  [ OK ] ACL en memoria: $n_set par(es) MAC.IP"
+        else echo "  [FALLO] ACL en memoria: $n_set par(es), CSV: $n_csv"; fallos=1; fi
+        if [ "${n_res:-0}" != "$n_csv" ]; then echo "  [FALLO] reservas: ${n_res:-0}, CSV: $n_csv"; fallos=1; fi
+        if systemctl is-active --quiet isc-dhcp-server; then echo "  [ OK ] isc-dhcp-server activo"
+        else echo "  [FALLO] isc-dhcp-server detenido"; fallos=1; fi
+        if grep -q '^INTERFACESv4="trunk0.20"' /etc/default/isc-dhcp-server; then echo "  [ OK ] dhcpd escucha solo en trunk0.20 (VLAN 20)"
+        else echo "  [FALLO] INTERFACESv4 no es trunk0.20"; fallos=1; fi
+        if grep -q -E '^[[:space:]]*range' /etc/dhcp/dhcpd.conf; then echo "  [FALLO] dhcpd.conf tiene un 'range': habria direcciones dinamicas"; fallos=1
+        else echo "  [ OK ] sin 'range': no hay direcciones dinamicas"; fi
+    fi
+    return "$fallos"
+}
+
+cmd_log() {
+    local n="${1:-15}"
+    echo "--- Auditoria de altas y bajas ($AUDITORIA) ---"
+    tail -n "$n" "$AUDITORIA" 2>/dev/null || echo "(sin registros)"
+    echo
+    echo "--- Ultimos eventos DHCP ($REG_DHCP) ---"
+    grep -E 'DHCP(DISCOVER|OFFER|REQUEST|ACK|NAK)' "$REG_DHCP" 2>/dev/null | tail -n "$n" || echo "(sin eventos)"
+}
+
+case "${1:-}" in
+    listar)    cmd_listar ;;
+    alta)      shift; cmd_alta "$@" ;;
+    baja)      shift; cmd_baja "$@" ;;
+    aplicar)   aplicar; auditar "APLICAR reservas=$(filas | wc -l)" ;;
+    verificar) cmd_verificar ;;
+    log)       shift; cmd_log "$@" ;;
+    *)         sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
+esac

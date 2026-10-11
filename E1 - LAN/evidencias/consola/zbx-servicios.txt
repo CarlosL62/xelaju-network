@@ -1,0 +1,24 @@
+active active active active active
+
+LISTEN 0      511          0.0.0.0:80         0.0.0.0:*   
+LISTEN 0      4096         0.0.0.0:10051      0.0.0.0:*   
+LISTEN 0      4096               *:10050            *:*   
+LISTEN 0      4096            [::]:10051         [::]:*   
+
+table inet xelaju_zbx {
+	chain entrada {
+		type filter hook input priority filter; policy drop;
+		ct state vmap { invalid : drop, established : accept, related : accept }
+		iifname "lo" accept
+		ip saddr { 10.200.10.0/24, 192.168.10.0/24, 192.168.20.0/24, 192.168.30.0/24, 192.168.40.0/24 } icmp type echo-request counter packets 2 bytes 168 accept
+		ip saddr 192.168.10.0/24 tcp dport 80 counter packets 2 bytes 120 accept
+		ip saddr { 192.168.30.0/24, 192.168.40.0/24, 192.168.81.0/30, 192.168.82.0/30, 192.168.83.0/30, 192.168.84.0/30 } tcp dport 10051 counter packets 561 bytes 33660 accept
+		ip saddr { 10.200.10.0/24, 192.168.10.0/24, 192.168.40.0/24 } tcp dport 22 counter packets 0 bytes 0 accept
+		meta pkttype { broadcast, multicast } counter packets 0 bytes 0 drop
+		log prefix "ZBX-DENY " counter packets 0 bytes 0 drop
+	}
+
+	chain salida {
+		type filter hook output priority filter; policy accept;
+	}
+}

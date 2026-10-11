@@ -1,0 +1,16 @@
+# /etc/systemd/system/xelaju-switch.service
+# Aplica la configuracion del switch (bridge, VLAN por puerto, gestion, SPAN)
+# en cada arranque. "systemctl restart xelaju-switch" la vuelve a aplicar.
+[Unit]
+Description=XelajuNetwork - configuracion del switch 802.1Q (switch-aplicar)
+After=network-pre.target systemd-udevd.service systemd-sysctl.service
+Before=network.target ssh.service zabbix-agent2.service
+Wants=network.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/switch-aplicar
+
+[Install]
+WantedBy=multi-user.target

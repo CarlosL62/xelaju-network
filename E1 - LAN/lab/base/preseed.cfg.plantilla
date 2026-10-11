@@ -1,0 +1,94 @@
+#_preseed_V1
+# =============================================================================
+# lab/base/preseed.cfg.plantilla - instalacion desatendida de la imagen base
+#
+# Debian 13 "trixie" minimo, en modo texto, que luego se clona para todas las
+# VMs del laboratorio XelajuNetwork. "lab.sh base" sustituye @@HASH@@ por el
+# hash SHA-512 de la contrasena y mete este archivo en el initrd del
+# instalador como /preseed.cfg, que el instalador carga solo.
+#
+# Cada linea responde por adelantado una pregunta del instalador:
+#     <dueno> <pregunta> <tipo> <respuesta>
+# =============================================================================
+
+# ---- Idioma, pais y teclado -------------------------------------------------
+# El instalador corre por consola serie, que no puede dibujar todos los
+# alfabetos: ahi solo ofrece "C" e "English". Si se pide "es" la pregunta deja
+# de estar respondida y la instalacion se detiene en "Select a language". Por
+# eso el sistema se instala en ingles y el espanol se agrega como locale
+# adicional (el teclado si es latinoamericano).
+d-i debian-installer/language string en
+d-i debian-installer/country string GT
+d-i debian-installer/locale string en_US.UTF-8
+d-i localechooser/supported-locales multiselect es_ES.UTF-8, es_GT.UTF-8
+d-i keyboard-configuration/xkb-keymap select latam
+
+# ---- Red del instalador -----------------------------------------------------
+# Solo durante la instalacion se usa el DHCP del NAT de QEMU para bajar los
+# paquetes. Cada nodo recibe despues su configuracion definitiva (estatica en
+# toda la infraestructura) con su aplicar.sh.
+d-i netcfg/choose_interface select auto
+d-i netcfg/get_hostname string xelaju-base
+d-i netcfg/get_domain string xelajunetwork.lan
+d-i netcfg/hostname string xelaju-base
+d-i netcfg/wireless_wep string
+d-i hw-detect/load_firmware boolean false
+
+# ---- Replica de paquetes ----------------------------------------------------
+d-i mirror/country string manual
+d-i mirror/http/hostname string deb.debian.org
+d-i mirror/http/directory string /debian
+d-i mirror/http/proxy string
+
+# ---- Cuentas ----------------------------------------------------------------
+# Sin contrasena de root: el usuario 'xelaju' administra con sudo.
+d-i passwd/root-login boolean false
+d-i passwd/user-fullname string Administrador XelajuNetwork
+d-i passwd/username string xelaju
+d-i passwd/user-password-crypted password @@HASH@@
+
+# ---- Reloj ------------------------------------------------------------------
+d-i clock-setup/utc boolean true
+d-i time/zone string America/Guatemala
+d-i clock-setup/ntp boolean false
+
+# ---- Particionado: todo el disco virtual, una raiz y swap -------------------
+d-i partman-auto/disk string /dev/vda
+d-i partman-auto/method string regular
+d-i partman-auto/choose_recipe select atomic
+d-i partman-lvm/device_remove_lvm boolean true
+d-i partman-md/device_remove_md boolean true
+d-i partman-partitioning/confirm_write_new_label boolean true
+d-i partman/choose_partition select finish
+d-i partman/confirm boolean true
+d-i partman/confirm_nooverwrite boolean true
+
+# ---- Sistema base y repositorios --------------------------------------------
+d-i base-installer/kernel/image string linux-image-amd64
+d-i apt-setup/cdrom/set-first boolean false
+d-i apt-setup/non-free-firmware boolean false
+d-i apt-setup/non-free boolean false
+d-i apt-setup/contrib boolean false
+d-i apt-setup/services-select multiselect security, updates
+d-i apt-setup/security_host string security.debian.org
+
+# ---- Paquetes ---------------------------------------------------------------
+# Sin escritorio: utilidades estandar y servidor SSH. Se agregan las
+# herramientas que usa todo el laboratorio para que los switches y el router
+# no necesiten Internet al configurarse.
+tasksel tasksel/first multiselect standard, ssh-server
+d-i pkgsel/include string sudo qemu-guest-agent ifupdown isc-dhcp-client nftables rsyslog curl wget ca-certificates tcpdump traceroute iputils-ping netcat-openbsd ethtool less nano psmisc
+d-i pkgsel/upgrade select safe-upgrade
+popularity-contest popularity-contest/participate boolean false
+
+# ---- Cargador de arranque ---------------------------------------------------
+d-i grub-installer/only_debian boolean true
+d-i grub-installer/with_other_os boolean false
+d-i grub-installer/bootdev string /dev/vda
+
+# ---- Ajustes finales y apagado ----------------------------------------------
+# post-base.sh viaja en el mismo initrd; se copia al sistema instalado y se
+# ejecuta dentro de el (in-target = chroot a /target).
+d-i preseed/late_command string cp /post-base.sh /target/root/post-base.sh; chmod 700 /target/root/post-base.sh; in-target /bin/bash /root/post-base.sh
+d-i finish-install/reboot_in_progress note
+d-i debian-installer/exit/poweroff boolean true

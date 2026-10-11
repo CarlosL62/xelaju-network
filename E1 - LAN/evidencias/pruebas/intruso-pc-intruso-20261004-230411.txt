@@ -1,0 +1,14 @@
+=== Pruebas del perfil 'intruso' en pc-intruso - 2026-10-04 23:03:25 ===
+CASO  RES.  ESPERADO       OBTENIDO       PRUEBA
+I01   PASS  SIN-OFERTA     SIN-OFERTA     dhcp pedir - DHCP restringido: nadie contesta a una MAC no registrada
+I02   PASS  OK             OK             ip a mano 192.168.20.99/24 - (preparacion) se pone a mano una IP libre de la red
+I03   PASS  BLOQUEADO      BLOQUEADO      ping 192.168.20.1 - Ni siquiera la puerta de enlace le responde
+I04   PASS  BLOQUEADO      BLOQUEADO      http://192.168.30.20/ - Intranet: denegada (par MAC.IP no registrado)
+I05   PASS  BLOQUEADO      BLOQUEADO      ping 192.168.10.50 - ADMIN: denegado
+I06   PASS  BLOQUEADO      BLOQUEADO      tcp 1.1.1.1:80 - Internet por IP: denegado
+I07   PASS  BLOQUEADO      BLOQUEADO      internet - Internet: denegado
+I08   PASS  OK             OK             ip a mano 192.168.20.12/24 - (preparacion) usa la IP de un equipo registrado (PC-USER03) con su propia MAC
+I09   PASS  BLOQUEADO      BLOQUEADO      ping 192.168.20.1 - IP registrada pero MAC distinta: denegado
+I10   PASS  BLOQUEADO      BLOQUEADO      http://192.168.30.20/ - IP registrada pero MAC distinta: denegado
+I11   PASS  OK             OK             quitar ip a mano - (limpieza) quita la IP puesta a mano
+Resumen 'intruso': 11 casos, 11 PASS, 0 FAIL, 0 omitidas

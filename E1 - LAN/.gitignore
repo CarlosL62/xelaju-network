@@ -1,0 +1,26 @@
+# Imagenes y discos de las VMs (pesados, se regeneran con lab.sh base / crear)
+lab/imagenes/
+lab/vms/
+
+# Estado en ejecucion: sockets, PID, logs de QEMU
+lab/run/
+
+# Secretos locales del laboratorio (hash de la contrasena del usuario xelaju)
+lab/base/preseed.cfg
+lab/base/.secreto-*
+
+# Capturas pesadas; las evidencias pequenas si se versionan
+*.pcap
+*.pcapng
+!evidencias/**/*.pcap
+evidencias/tmp/
+
+# Los registros de consola de evidencias/ son entregables y si se versionan
+!evidencias/consola/*.log
+
+# Basura de editores y de Python
+__pycache__/
+*.pyc
+*.swp
+*~
+.~lock.*

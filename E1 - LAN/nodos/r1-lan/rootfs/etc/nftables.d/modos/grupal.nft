@@ -1,0 +1,24 @@
+# /etc/nftables.d/modos/grupal.nft - reglas propias del MODO GRUPAL
+# (se activa como /etc/nftables.d/20-modo.nft con: r1-modo grupal)
+#
+# En este modo NO hay cadena de NAT: las IP de las VLAN llegan sin traducir a
+# Squid (que elige admins_blacklist o users_blacklist segun la red de origen)
+# y al Multi-WAN (que reparte la salida por IP). El unico NAT del grupo lo hace
+# el Multi-WAN (ADR-0002).
+table inet xelaju {
+
+    # Los equipos del grupo pueden hacer ping a R1 por su enlace /30: Squid, que
+    # es el vecino directo (prueba de cableado), y el firewall, el Multi-WAN y
+    # VPN/DMZ desde sus enlaces de transito (prueba de rutas en la integracion).
+    chain entrada_modo {
+        iifname "up-squid" ip saddr $REDES_TRANSITO icmp type echo-request counter accept
+    }
+
+    # Ajuste del MSS de TCP al MTU del enlace de salida. Con MTU 1500 no cambia
+    # nada; si el enlace va por VXLAN (MTU 1450) evita que los paquetes grandes
+    # se pierdan en el tunel.
+    chain ajuste_mss {
+        type filter hook forward priority mangle; policy accept;
+        oifname "up-squid" tcp flags syn tcp option maxseg size set rt mtu
+    }
+}

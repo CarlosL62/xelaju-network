@@ -1,0 +1,28 @@
+
+[1;34m==> Base comun del nodo pc-user01[0m
+    [ OK ] machine-id y llaves SSH propias de pc-user01
+    [ OK ] nombre de equipo: pc-user01
+    [ OK ] interfaz enp0s5 -> lan0 (aa:bb:cc:dd:ee:01)
+    [ OK ] archivos .link escritos; actualizando initramfs (tarda unos segundos)
+
+[1;34m==> Red de pc-user01[0m
+Internet Systems Consortium DHCP Client 4.4.3-P1
+Copyright 2004-2022 Internet Systems Consortium.
+All rights reserved.
+For info, please visit https://www.isc.org/software/dhcp/
+
+Listening on LPF/lan0/aa:bb:cc:dd:ee:01
+Sending on   LPF/lan0/aa:bb:cc:dd:ee:01
+Sending on   Socket/fallback
+Created duid "\000\001\000\0012TX:\252\273\314\335\356\001".
+DHCPDISCOVER on lan0 to 255.255.255.255 port 67 interval 3
+DHCPOFFER of 192.168.20.10 from 192.168.20.1
+DHCPREQUEST for 192.168.20.10 on lan0 to 255.255.255.255 port 67
+DHCPACK of 192.168.20.10 from 192.168.20.1
+bound to 192.168.20.10 -- renewal in 277 seconds.
+lo               UNKNOWN        127.0.0.1/8 
+lan0             UP             192.168.20.10/24 
+    [ OK ] DHCP: recibio 192.168.20.10 (la IP reservada para su MAC)
+
+[1;34m==> Listo: PC-USER01: revisa que lan0 tenga 192.168.20.10 (reserva DHCP por MAC). Escritorio: sudo /mnt/proyecto/nodos/pc-user01/escritorio.sh[0m
+    Para repetir o restaurar este nodo, vuelve a ejecutar este mismo script.

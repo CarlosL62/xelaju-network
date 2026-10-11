@@ -1,0 +1,4 @@
+=== Pruebas del perfil 'g-mgmt' en pc-mgmt01 - 2026-10-04 23:24:01 ===
+CASO  RES.  ESPERADO       OBTENIDO       PRUEBA
+GL5   PASS  BLOQUEADO      BLOQUEADO      http://172.16.10.10:8081/ - [R1] GESTION solo sale a web y DNS (80, 443, 53)
+Resumen 'g-mgmt': 1 casos, 1 PASS, 0 FAIL, 0 omitidas

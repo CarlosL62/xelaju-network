@@ -1,0 +1,19 @@
+# /etc/network/modos/grupal - salida de R1-LAN en MODO GRUPAL
+#
+# Un solo enlace punto a punto /30 (2 direcciones utiles), el que fija
+# core/ADDRESSING.yaml como link_e1_e2:
+#   up-squid  192.168.84.2 (R1)  <->  192.168.84.1 (Squid, Est. 2)
+# No hay enlace directo con VPN/DMZ (ADR-0001): todo lo que no es una VLAN
+# sale por la ruta por defecto hacia E2, que lo entrega al firewall (E5), y
+# de ahi al Multi-WAN (E3) o a VPN/DMZ (E4). Por eso no hacen falta rutas
+# estaticas a las redes VPN ni a la DMZ: las cubre la ruta por defecto.
+#
+# R1 NO hace NAT en este modo: Squid y el Multi-WAN aplican politicas segun la
+# IP de origen, asi que las direcciones de las VLAN deben llegar intactas. El
+# unico NAT del grupo lo hace E3 (ADR-0002).
+
+auto up-squid
+iface up-squid inet static
+    address 192.168.84.2/30
+    gateway 192.168.84.1
+    # mtu 1450        # solo si el enlace va por VXLAN (uplinks-host.sh --vxlan)

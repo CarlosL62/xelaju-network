@@ -1,0 +1,14 @@
+=== Pruebas del perfil 'zbx' en zbx-srv01 - 2026-10-03 18:23:39 ===
+CASO  RES.  ESPERADO       OBTENIDO       PRUEBA
+Z01   PASS  192.168.30.10  192.168.30.10  ip de lan0 - IP manual de la VLAN 30
+Z02   PASS  OK             OK             ping 192.168.30.1 - Puerta de enlace de su VLAN
+Z03   PASS  OK             OK             ping 192.168.10.50 - Zabbix -> ping a ADMIN (monitoreo)
+Z04   PASS  OK             OK             ping 192.168.20.10 - Zabbix -> ping a USUARIOS (monitoreo)
+Z05   PASS  OK             OK             ping 192.168.40.2 - Zabbix -> ping a SW-CORE01
+Z06   PASS  OK             OK             ping 192.168.40.3 - Zabbix -> ping a SW-ACC01
+Z07   PASS  OK             OK             tcp 192.168.40.2:10050 - Zabbix -> agente de SW-CORE01 (TCP 10050)
+Z08   PASS  BLOQUEADO      BLOQUEADO      tcp 192.168.10.50:22 - SERVIDORES -> SSH de ADMIN denegado
+Z09   PASS  BLOQUEADO      BLOQUEADO      tcp 192.168.20.10:22 - SERVIDORES -> SSH de USUARIOS denegado
+Z10   PASS  BLOQUEADO      BLOQUEADO      tcp 192.168.40.2:22 - SERVIDORES -> SSH de GESTION denegado
+Z11   PASS  OK             OK             internet - SERVIDORES -> Internet
+Resumen 'zbx': 11 casos, 11 PASS, 0 FAIL, 0 omitidas

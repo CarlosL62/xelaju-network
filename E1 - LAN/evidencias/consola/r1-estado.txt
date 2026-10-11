@@ -1,0 +1,72 @@
+R1-LAN | 2026-10-03 18:27:37 | modo: individual
+
+--- Interfaces y direcciones (ip -br addr) ---
+trunk0           UP             
+up-squid         DOWN           
+tmp-nat          UP             10.0.2.15/24 
+trunk0.10@trunk0 UP             192.168.10.1/24 
+trunk0.20@trunk0 UP             192.168.20.1/24 
+trunk0.30@trunk0 UP             192.168.30.1/24 
+trunk0.40@trunk0 UP             192.168.40.1/24 
+
+--- VLAN de cada subinterfaz (802.1Q) ---
+    trunk0.10  vlan protocol 802.1Q id 10
+    trunk0.20  vlan protocol 802.1Q id 20
+    trunk0.30  vlan protocol 802.1Q id 30
+    trunk0.40  vlan protocol 802.1Q id 40
+
+--- Tabla de rutas (ip route) ---
+default via 10.0.2.2 dev tmp-nat onlink 
+10.0.2.0/24 dev tmp-nat proto kernel scope link src 10.0.2.15 
+192.168.10.0/24 dev trunk0.10 proto kernel scope link src 192.168.10.1 
+192.168.20.0/24 dev trunk0.20 proto kernel scope link src 192.168.20.1 
+192.168.30.0/24 dev trunk0.30 proto kernel scope link src 192.168.30.1 
+192.168.40.0/24 dev trunk0.40 proto kernel scope link src 192.168.40.1 
+
+--- Reenvio y filtro de camino inverso ---
+net.ipv4.ip_forward = 1
+net.ipv4.conf.all.rp_filter = 2
+
+--- ACL: paquetes contados por cadena (nft list table inet xelaju) ---
+    CADENA            REGLAS   PERMITIDOS   BLOQUEADOS
+    nat_salida             1           43            0
+    entrada_modo           1            0            0
+    entrada               12            2            0
+    reenvio                1            0            0
+    desde_admin            6           19            0
+    desde_users            8           21            6
+    desde_servers          9           18            0
+    desde_mgmt            11          153            6
+    desde_perimetro        5            0            0
+
+--- DHCP restringido de la VLAN 20 ---
+    servicio isc-dhcp-server: active
+    escucha en: INTERFACESv4="trunk0.20"
+    EQUIPO           MAC                 IP_RESERVADA
+    PC-USER01        aa:bb:cc:dd:ee:01   192.168.20.10
+    PC-USER02        aa:bb:cc:dd:ee:02   192.168.20.11
+    PC-USER03        aa:bb:cc:dd:ee:03   192.168.20.12
+    Total: 3 equipo(s) registrados en /etc/xelaju/usuarios.csv
+
+--- Ultimos eventos DHCP (/var/log/xelaju/dhcpd.log) ---
+2026-10-03T18:22:40.423682-06:00 r1-lan dhcpd[3902]: DHCPDISCOVER from aa:bb:cc:dd:ee:99 via trunk0.20: network 192.168.20.0/24: no free leases
+2026-10-03T18:22:46.647722-06:00 r1-lan dhcpd[3902]: DHCPDISCOVER from aa:bb:cc:dd:ee:99 via trunk0.20: network 192.168.20.0/24: no free leases
+2026-10-03T18:24:49.813217-06:00 r1-lan dhcpd[3902]: DHCPREQUEST for 192.168.20.11 from aa:bb:cc:dd:ee:02 via trunk0.20
+2026-10-03T18:24:49.813431-06:00 r1-lan dhcpd[3902]: DHCPACK on 192.168.20.11 to aa:bb:cc:dd:ee:02 via trunk0.20
+2026-10-03T18:26:36.218952-06:00 r1-lan dhcpd[3902]: DHCPREQUEST for 192.168.20.10 from aa:bb:cc:dd:ee:01 via trunk0.20
+2026-10-03T18:26:36.219115-06:00 r1-lan dhcpd[3902]: DHCPACK on 192.168.20.10 to aa:bb:cc:dd:ee:01 via trunk0.20
+
+--- Ultimos bloqueos de las ACL (/var/log/xelaju/acl-lan.log) ---
+2026-10-03T18:24:41.146138-06:00 r1-lan kernel: ACL-DENY MGMT->ZBXWEB IN=trunk0.40 OUT=trunk0.30 MAC=52:54:00:01:00:00:52:54:00:40:00:10:08:00 SRC=192.168.40.10 DST=192.1
+2026-10-03T18:24:42.168150-06:00 r1-lan kernel: ACL-DENY MGMT->ZBXWEB IN=trunk0.40 OUT=trunk0.30 MAC=52:54:00:01:00:00:52:54:00:40:00:10:08:00 SRC=192.168.40.10 DST=192.1
+2026-10-03T18:24:43.192355-06:00 r1-lan kernel: ACL-DENY MGMT->ZBXWEB IN=trunk0.40 OUT=trunk0.30 MAC=52:54:00:01:00:00:52:54:00:40:00:10:08:00 SRC=192.168.40.10 DST=192.1
+2026-10-03T18:24:44.216326-06:00 r1-lan kernel: ACL-DENY MGMT->ZBXWEB IN=trunk0.40 OUT=trunk0.30 MAC=52:54:00:01:00:00:52:54:00:40:00:10:08:00 SRC=192.168.40.10 DST=192.1
+2026-10-03T18:24:45.240444-06:00 r1-lan kernel: ACL-DENY MGMT->ZBXWEB IN=trunk0.40 OUT=trunk0.30 MAC=52:54:00:01:00:00:52:54:00:40:00:10:08:00 SRC=192.168.40.10 DST=192.1
+2026-10-03T18:24:46.264388-06:00 r1-lan kernel: ACL-DENY MGMT->ZBXWEB IN=trunk0.40 OUT=trunk0.30 MAC=52:54:00:01:00:00:52:54:00:40:00:10:08:00 SRC=192.168.40.10 DST=192.1
+
+--- Servicios ---
+    nftables           active
+    isc-dhcp-server    active
+    rsyslog            active
+    ssh                active
+    zabbix-agent2      active

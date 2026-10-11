@@ -1,0 +1,19 @@
+# /etc/nftables.d/modos/individual.nft - reglas propias del MODO INDIVIDUAL
+# (se activa como /etc/nftables.d/20-modo.nft con: r1-modo individual)
+table inet xelaju {
+
+    # NAT de salida. Solo existe en modo individual: las VLAN salen a Internet
+    # con la IP de R1 en tmp-nat (10.0.2.15), que es la unica que conoce el NAT
+    # de QEMU. En modo grupal esta cadena NO se carga.
+    chain nat_salida {
+        type nat hook postrouting priority srcnat; policy accept;
+        oifname "tmp-nat" ip saddr $REDES_LAN counter masquerade
+    }
+
+    # Acceso fuera de banda desde el host del laboratorio:
+    #     ssh -p 2221 xelaju@127.0.0.1
+    # QEMU reenvia ese puerto y la conexion llega a R1 con origen 10.0.2.2.
+    chain entrada_modo {
+        iifname "tmp-nat" ip saddr 10.0.2.2 tcp dport 22 counter accept
+    }
+}

@@ -1,0 +1,9 @@
+# /etc/default/isc-dhcp-server - R1-LAN
+#
+# dhcpd recibe las peticiones con sockets de capa 2 (leen la trama antes de
+# que pase por el firewall), asi que la forma de limitarlo a una VLAN es
+# indicarle AQUI en que interfaz escucha: solo la subinterfaz de la VLAN 20.
+INTERFACESv4="trunk0.20"
+
+# Sin DHCPv6 (el proyecto es solo IPv4).
+INTERFACESv6=""

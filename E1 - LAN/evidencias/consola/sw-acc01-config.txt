@@ -1,0 +1,51 @@
+SW-ACC01# show vlan brief
+VLAN  NOMBRE       ESTADO   PUERTOS DE ACCESO
+10    ADMIN        activa   p1
+20    USUARIOS     activa   p2, p3, p4
+40    GESTION      activa   -
+(no existe VLAN 1 por omision: vlan_default_pvid 0)
+
+SW-ACC01# show interfaces trunk
+PUERTO   MODO      ENCAPSULADO  VLAN NATIVA  VLAN PERMITIDAS
+p0       troncal   802.1Q       ninguna      10,20,40
+
+SW-ACC01# show interfaces status
+PUERTO  ESTADO    MODO     VLAN         RX paq.    TX paq.    DESCRIPCION
+p0      conectado trunk    10,20,40     209411     92216      Troncal a SW-CORE01 (p1)
+p1      conectado access   10           60624      139842     PC-ADMIN01
+p2      conectado access   20           30721      68703      PC-USER01
+p3      conectado access   20           126        172        PC-USER02
+p4      conectado access   20           37         11         PC-INTRUSO (equipo no registrado)
+
+SW-ACC01# show mac address-table
+VLAN   DIRECCION MAC       TIPO       PUERTO
+10     52:54:00:01:00:00   dinamica   p0
+10     52:54:00:10:00:50   dinamica   p1
+20     52:54:00:01:00:00   dinamica   p0
+20     aa:bb:cc:dd:ee:01   dinamica   p2
+20     aa:bb:cc:dd:ee:02   dinamica   p3
+20     aa:bb:cc:dd:ee:99   dinamica   p4
+40     52:54:00:01:00:00   dinamica   p0
+40     52:54:00:40:00:10   dinamica   p0
+Total de direcciones aprendidas: 8
+
+SW-ACC01# show running-config
+! --- /etc/xelaju/switch.conf
+NOMBRE="SW-ACC01"
+VLANS="10:ADMIN 20:USUARIOS 40:GESTION"
+VLAN_GESTION=40
+IP_GESTION="192.168.40.3/24"
+GW_GESTION="192.168.40.1"
+! --- /etc/xelaju/puertos.conf (puerto modo vlan descripcion)
+p0        trunk    10,20,40      Troncal a SW-CORE01 (p1)
+p1        access   10            PC-ADMIN01
+p2        access   20            PC-USER01
+p3        access   20            PC-USER02
+p4        access   20            PC-INTRUSO (equipo no registrado)
+! --- bridge
+stp_state 0 vlan_filtering 1 vlan_default_pvid 0 
+! --- gestion
+br0.40@br0       UP             192.168.40.3/24 
+default via 192.168.40.1 dev br0.40 
+! --- puerto espejo
+No hay puertos espejo activos

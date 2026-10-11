@@ -1,0 +1,24 @@
+# /etc/nginx/sites-available/intranet - SRV-INTRA01
+# Sitio de la Intranet por HTTP (80) y HTTPS (443). Es el UNICO servicio de la
+# VLAN de servidores que las ACL de R1 abren a la VLAN de usuarios.
+# El certificado es el autofirmado "snakeoil" del paquete ssl-cert: sirve para
+# probar el puerto 443, no para identificar al servidor.
+
+server {
+    listen 80 default_server;
+    listen 443 ssl default_server;
+    server_name intranet.xelajunetwork.lan srv-intra01 _;
+
+    ssl_certificate     /etc/ssl/certs/ssl-cert-snakeoil.pem;
+    ssl_certificate_key /etc/ssl/private/ssl-cert-snakeoil.key;
+
+    root  /var/www/intranet;
+    index index.html;
+
+    access_log /var/log/nginx/intranet.access.log;
+    error_log  /var/log/nginx/intranet.error.log;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}

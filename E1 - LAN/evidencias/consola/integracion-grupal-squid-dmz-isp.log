@@ -1,0 +1,119 @@
+Integracion grupal, segunda ronda - Squid (E2), DMZ (E4/E5) e ISP en uso (E3)   (2026-10-04 21:31:16)
+
+##### 1. Squid (E2) visto desde cada VLAN  (curl dentro de cada equipo; listas de nodes/E2-squid/config/lists/)
+## pc-admin01 (192.168.10.50/24)
+HTTPS directo https://1.1.1.1            : 301   (esperado 301)
+HTTP permitido http://example.com         : 200   via='1.1 debian (squid/6.13)'
+HTTP http://www.facebook.com (lista admin+users) : 403
+HTTP http://www.youtube.com  (solo lista users)  : 301
+HTTP http://www.ilovepdf.com (solo lista admin)  : 403
+HTTPS https://www.facebook.com (no pasa por Squid): 200
+Puertos de E2 192.168.84.1: 3128 abierto | 3129 abierto | 8080 abierto
+Proxy explicito 3128 -> http://example.com : 200
+Portal de logs http://192.168.84.1:8080/   : 200
+
+## pc-user01 (192.168.20.10/24)
+HTTPS directo https://1.1.1.1            : 301   (esperado 301)
+HTTP permitido http://example.com         : 200   via='1.1 debian (squid/6.13)'
+HTTP http://www.facebook.com (lista admin+users) : 403
+HTTP http://www.youtube.com  (solo lista users)  : 403
+HTTP http://www.ilovepdf.com (solo lista admin)  : 301
+HTTPS https://www.facebook.com (no pasa por Squid): 200
+Puertos de E2 192.168.84.1: 3128 abierto | 3129 abierto | 8080 abierto
+Proxy explicito 3128 -> http://example.com : 200
+Portal de logs http://192.168.84.1:8080/   : 403
+
+## zbx-srv01 (192.168.30.10/24)
+HTTPS directo https://1.1.1.1            : 301   (esperado 301)
+HTTP permitido http://example.com         : 200   via='1.1 debian (squid/6.13)'
+HTTP http://www.facebook.com (lista admin+users) : 301
+HTTP http://www.youtube.com  (solo lista users)  : 301
+HTTP http://www.ilovepdf.com (solo lista admin)  : 301
+HTTPS https://www.facebook.com (no pasa por Squid): 200
+Puertos de E2 192.168.84.1: 3128 abierto | 3129 abierto | 8080 abierto
+Proxy explicito 3128 -> http://example.com : 200
+Portal de logs http://192.168.84.1:8080/   : 403
+
+## pc-mgmt01 (192.168.40.10/24)
+HTTPS directo https://1.1.1.1            : 301   (esperado 301)
+HTTP permitido http://example.com         : 200   via='1.1 debian (squid/6.13)'
+HTTP http://www.facebook.com (lista admin+users) : 301
+HTTP http://www.youtube.com  (solo lista users)  : 301
+HTTP http://www.ilovepdf.com (solo lista admin)  : 301
+HTTPS https://www.facebook.com (no pasa por Squid): 200
+Puertos de E2 192.168.84.1: 3128 cerrado | 3129 cerrado | 8080 cerrado
+Proxy explicito 3128 -> http://example.com : 000
+Portal de logs http://192.168.84.1:8080/   : 000
+
+(PC-MGMT01 ve cerrados los puertos de E2 porque R1 solo deja salir a GESTION por 53, 80 y 443: es una regla de E1)
+
+##### 2. Portal de E2 abierto desde PC-ADMIN01: direcciones de cliente que registra Squid (R1 no hace NAT)
+     41 192.168.10.50
+     25 192.168.20.10
+     21 192.168.82.2
+     13 192.168.30.10
+     11 192.168.40.10
+      5 192.168.10.1
+      4 192.168.1.191
+      1 192.168.20.11
+
+##### 3. LAN -> WEB01 de la DMZ (172.16.10.10:8081), con origen 192.168.10.1, capturado en up-squid de R1
+curl: (7) Failed to connect to 172.16.10.10 port 8081 after 3063 ms: Could not connect to server
+21:31:59.179079 IP 192.168.10.1.56478 > 172.16.10.10.8081: Flags [S], seq 438559059, win 64240, options [mss 1
+21:32:00.181147 IP 192.168.10.1.56478 > 172.16.10.10.8081: Flags [S], seq 438559059, win 64240, options [mss 1
+21:32:01.205176 IP 192.168.10.1.56478 > 172.16.10.10.8081: Flags [S], seq 438559059, win 64240, options [mss 1
+21:32:02.229157 IP 192.168.10.1.56478 > 172.16.10.10.8081: Flags [S], seq 438559059, win 64240, options [mss 1
+21:32:02.242113 IP 192.168.82.1 > 192.168.10.1: ICMP host 172.16.10.10 unreachable, length 68
+21:32:02.242114 IP 192.168.82.1 > 192.168.10.1: ICMP host 172.16.10.10 unreachable, length 68
+comparacion, Internet por TCP 443 (E2 -> E5 -> E3): OK
+
+##### 4. ISP por el que sale cada clase de trafico (grupal/isp-activo.sh -n 9 -i 8 dentro de R1)
+# Registro, una linea por ciclo: <clase>=<ISP de la sonda>,<conexion real OK o FALLA>
+2026-10-04 21:32:59 INICIO intervalo=8s clases=8 ref_isp1='192.168.10.1 tcp 443' ref_isp2='192.168.30.1 tcp 443'
+2026-10-04 21:33:05 NORMAL isp1=192.168.1.1 isp2=10.234.88.51 | ADMIN/tcp443=ISP1,OK ADMIN/udp53=ISP1,OK USUARIOS/tcp443=ISP1,OK USUARIOS/udp53=ISP2,OK SERVIDORES/tcp443=ISP2,OK SERVIDORES/udp53=ISP1,OK GESTION/tcp443=ISP1,OK GESTION/udp53=ISP1,OK
+2026-10-04 21:33:14 NORMAL isp1=192.168.1.1 isp2=10.234.88.51 | ADMIN/tcp443=ISP1,OK ADMIN/udp53=ISP1,OK USUARIOS/tcp443=ISP1,OK USUARIOS/udp53=ISP2,OK SERVIDORES/tcp443=ISP2,OK SERVIDORES/udp53=ISP1,OK GESTION/tcp443=ISP1,FALLA GESTION/udp53=ISP2,OK
+2026-10-04 21:33:24 NORMAL isp1=192.168.1.1 isp2=10.234.88.51 | ADMIN/tcp443=ISP1,OK ADMIN/udp53=ISP1,OK USUARIOS/tcp443=ISP1,FALLA USUARIOS/udp53=ISP2,OK SERVIDORES/tcp443=ISP2,OK SERVIDORES/udp53=ISP1,OK GESTION/tcp443=ISP2,FALLA GESTION/udp53=ISP1,OK
+2026-10-04 21:33:30 NORMAL isp1=192.168.1.1 isp2=10.234.88.51 | ADMIN/tcp443=ISP1,OK ADMIN/udp53=ISP1,OK USUARIOS/tcp443=ISP1,OK USUARIOS/udp53=ISP2,OK SERVIDORES/tcp443=ISP2,OK SERVIDORES/udp53=ISP1,OK GESTION/tcp443=ISP1,OK GESTION/udp53=ISP2,OK
+2026-10-04 21:33:38 NORMAL isp1=192.168.1.1 isp2=10.234.88.51 | ADMIN/tcp443=ISP1,OK ADMIN/udp53=ISP2,OK USUARIOS/tcp443=ISP1,FALLA USUARIOS/udp53=ISP2,OK SERVIDORES/tcp443=ISP2,OK SERVIDORES/udp53=ISP1,OK GESTION/tcp443=ISP1,OK GESTION/udp53=ISP1,OK
+2026-10-04 21:33:45 NORMAL isp1=192.168.1.1 isp2=10.234.88.51 | ADMIN/tcp443=ISP1,OK ADMIN/udp53=ISP2,OK USUARIOS/tcp443=ISP1,OK USUARIOS/udp53=ISP2,OK SERVIDORES/tcp443=ISP2,OK SERVIDORES/udp53=ISP1,OK GESTION/tcp443=ISP2,OK GESTION/udp53=ISP1,OK
+2026-10-04 21:33:55 NORMAL isp1=192.168.1.1 isp2=10.234.88.51 | ADMIN/tcp443=ISP1,FALLA ADMIN/udp53=ISP1,OK USUARIOS/tcp443=ISP1,OK USUARIOS/udp53=ISP2,OK SERVIDORES/tcp443=ISP2,OK SERVIDORES/udp53=ISP2,OK GESTION/tcp443=ISP2,OK GESTION/udp53=ISP2,OK
+2026-10-04 21:34:02 NORMAL isp1=192.168.1.1 isp2=10.234.88.51 | ADMIN/tcp443=ISP1,OK ADMIN/udp53=ISP2,FALLA USUARIOS/tcp443=ISP1,OK USUARIOS/udp53=ISP2,OK SERVIDORES/tcp443=ISP2,OK SERVIDORES/udp53=ISP1,OK GESTION/tcp443=ISP2,OK GESTION/udp53=ISP2,OK
+2026-10-04 21:34:08 NORMAL isp1=192.168.1.1 isp2=10.234.88.51 | ADMIN/tcp443=ISP1,OK ADMIN/udp53=ISP1,OK USUARIOS/tcp443=ISP1,OK USUARIOS/udp53=ISP2,OK SERVIDORES/tcp443=ISP2,OK SERVIDORES/udp53=ISP1,OK GESTION/tcp443=ISP1,OK GESTION/udp53=ISP1,OK
+2026-10-04 21:34:08 FIN
+
+
+ORIGEN      TRAFICO  ISP       PUERTA DE SALIDA EXTREMO  ULTIMOS 10 (ISP1/ISP2/otro)
+ADMIN       tcp/443  ISP1      192.168.1.1      OK       9/0/0
+ADMIN       udp/53   ISP1      192.168.1.1      OK       6/3/0
+USUARIOS    tcp/443  ISP1      192.168.1.1      OK       9/0/0
+USUARIOS    udp/53   ISP2      10.234.88.51     OK       0/9/0
+SERVIDORES  tcp/443  ISP2      10.234.88.51     OK       0/9/0
+SERVIDORES  udp/53   ISP1      192.168.1.1      OK       8/1/0
+GESTION     tcp/443  ISP1      192.168.1.1      OK       5/4/0
+GESTION     udp/53   ISP1      192.168.1.1      OK       5/4/0
+# Los FALLA de estos minutos (la mayoria en TCP 443 con salida por ISP1) no aparecian en la serie de
+# las 21:16-21:20 (isp-activo-20261004.log, todo OK). Ver el punto 6.
+
+##### 5. Zabbix: datos recibidos en los ultimos 15 minutos y paquetes llegados a R1 desde los enlaces de transito
+PC-ADMIN01          con     datos  
+PC-MGMT01           con     datos  
+PC-USER01           con     datos  
+PC-USER02           con     datos  
+R1-LAN              con     datos  
+Router-MultiWAN-E3  sin     datos  
+SRV-INTRA01         con     datos  
+SW-ACC01            con     datos  
+SW-CORE01           con     datos  
+Zabbix              server  con    datos
+iifname "up-squid" ip saddr { 192.168.81.0/30, 192.168.82.0/30, 192.168.83.0/30, 192.168.84.0/30 } ip daddr 192.168.30.10 tcp dport 10051 counter packets 0 byte
+
+##### 6. Despues de estas pruebas: el camino se fue degradando y E2 dejo de responder
+# 21:34-21:36  20 conexiones TCP 443 seguidas por origen, desde R1 (nc -w 4 a 1.1.1.1):
+#   origen 192.168.10.1 (sale por ISP1): 20/20 y 20/20
+#   origen 192.168.30.1 (sale por ISP2): 20/20 y despues 8/20
+# 21:37  R1 ya no recibe respuesta de 192.168.84.1 (E2): ni ping ni ARP. El cable sigue con portadora.
+# Captura del enlace (./lab/lab.sh capturar r1-lan up-squid 12): solo preguntas de R1, ninguna trama de E2
+52:54:00:01:00:01 > ff:ff:ff:ff:ff:ff, ethertype ARP (0x0806), length 42: Request who-has 192.168.84.1 tell 192.168.84.2
+52:54:00:01:00:01 > ff:ff:ff:ff:ff:ff, ethertype ARP (0x0806), length 42: Request who-has 192.168.84.1 tell 192.168.84.2
+52:54:00:01:00:01 > ff:ff:ff:ff:ff:ff, ethertype ARP (0x0806), length 42: Request who-has 192.168.84.1 tell 192.168.84.2
+# (11 tramas en 12 s, todas de R1)

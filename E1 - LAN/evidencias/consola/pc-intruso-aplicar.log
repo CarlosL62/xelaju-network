@@ -1,0 +1,13 @@
+
+[1;34m==> Base comun del nodo pc-intruso[0m
+    [ OK ] machine-id y llaves SSH propias de pc-intruso
+    [ OK ] nombre de equipo: pc-intruso
+    [ OK ] interfaz enp0s5 -> lan0 (aa:bb:cc:dd:ee:99)
+    [ OK ] archivos .link escritos; actualizando initramfs (tarda unos segundos)
+
+[1;34m==> Red de pc-intruso[0m
+lo               UNKNOWN        127.0.0.1/8 
+lan0             UP             
+
+[1;34m==> Listo: PC-INTRUSO sin direccion. Pruebas: sudo /mnt/proyecto/pruebas/probar.sh intruso[0m
+    Para repetir o restaurar este nodo, vuelve a ejecutar este mismo script.

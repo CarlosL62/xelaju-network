@@ -1,0 +1,56 @@
+
+[1;34m==> Base comun del nodo srv-intra01[0m
+    [ OK ] machine-id y llaves SSH propias de srv-intra01
+    [ OK ] nombre de equipo: srv-intra01
+    [ OK ] interfaz enp0s5 -> lan0 (52:54:00:30:00:20)
+    [ OK ] archivos .link escritos; actualizando initramfs (tarda unos segundos)
+
+[1;34m==> Red: IP estatica 192.168.30.20 en la VLAN 30[0m
+
+[1;34m==> Paquetes: nginx y certificado autofirmado (ssl-cert)[0m
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following additional packages will be installed:
+  nginx-common
+Suggested packages:
+  fcgiwrap nginx-doc
+The following NEW packages will be installed:
+  nginx nginx-common ssl-cert
+0 upgraded, 3 newly installed, 0 to remove and 0 not upgraded.
+Need to get 742 kB of archives.
+After this operation, 1968 kB of additional disk space will be used.
+Get:1 http://deb.debian.org/debian trixie/main amd64 ssl-cert all 1.1.3 [16.8 kB]
+Get:2 http://security.debian.org/debian-security trixie-security/main amd64 nginx-common all 1.26.3-3+deb13u9 [112 kB]
+Get:3 http://security.debian.org/debian-security trixie-security/main amd64 nginx amd64 1.26.3-3+deb13u9 [613 kB]
+Preconfiguring packages ...
+Fetched 742 kB in 1s (668 kB/s)
+Selecting previously unselected package nginx-common.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 33921 files and directories currently installed.)
+Preparing to unpack .../nginx-common_1.26.3-3+deb13u9_all.deb ...
+Unpacking nginx-common (1.26.3-3+deb13u9) ...
+Selecting previously unselected package nginx.
+Preparing to unpack .../nginx_1.26.3-3+deb13u9_amd64.deb ...
+Unpacking nginx (1.26.3-3+deb13u9) ...
+Selecting previously unselected package ssl-cert.
+Preparing to unpack .../ssl-cert_1.1.3_all.deb ...
+Unpacking ssl-cert (1.1.3) ...
+Setting up nginx-common (1.26.3-3+deb13u9) ...
+Created symlink '/etc/systemd/system/multi-user.target.wants/nginx.service' → '/usr/lib/systemd/system/nginx.service'.
+Setting up ssl-cert (1.1.3) ...
+Setting up nginx (1.26.3-3+deb13u9) ...
+Upgrading binary: nginx.
+Processing triggers for man-db (2.13.1-1) ...
+    [ OK ] instalado: nginx ssl-cert
+
+[1;34m==> Sitio de la Intranet (HTTP 80 y HTTPS 443)[0m
+    nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+    nginx: configuration file /etc/nginx/nginx.conf test is successful
+    [ OK ] HTTP  -> 200
+    [ OK ] HTTPS -> 200
+
+[1;34m==> Agente de Zabbix (modo activo, autorregistro 'xelaju-lan')[0m
+    [ OK ] zabbix-agent2 activo: Hostname=SRV-INTRA01 HostMetadata=xelaju-lan ServerActive=192.168.30.10
+
+[1;34m==> Listo: SRV-INTRA01 (http://192.168.30.20 y https://192.168.30.20)[0m
+    Para repetir o restaurar este nodo, vuelve a ejecutar este mismo script.

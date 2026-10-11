@@ -1,0 +1,13 @@
+
+[1;34m==> Base comun del nodo pc-admin01[0m
+    [ OK ] machine-id y llaves SSH propias de pc-admin01
+    [ OK ] nombre de equipo: pc-admin01
+    [ OK ] interfaz enp0s5 -> lan0 (52:54:00:10:00:50)
+    [ OK ] archivos .link escritos; actualizando initramfs (tarda unos segundos)
+
+[1;34m==> Red de pc-admin01[0m
+lo               UNKNOWN        127.0.0.1/8 
+lan0             UP             192.168.10.50/24 
+
+[1;34m==> Listo: PC-ADMIN01 (192.168.10.50). Escritorio y navegador: sudo /mnt/proyecto/nodos/pc-admin01/escritorio.sh[0m
+    Para repetir o restaurar este nodo, vuelve a ejecutar este mismo script.
