@@ -1,0 +1,18 @@
+# Plantilla de perfil de cliente. scripts/gen_peers.sh escribe uno por peer en
+# ~/.local/share/xelaju-e4/wireguard (fuera del repositorio), ya completo.
+# Este ejemplo es admin1 (VPN-ADMIN); los otros cuatro peers tienen la misma estructura
+# con su propia Address y PrivateKey (sus IP están en server.conf.example).
+#
+# Un perfil tiene un solo Endpoint. Para entrar por el segundo ISP se genera un segundo
+# perfil con las mismas llaves: gen_peers.sh --endpoint HOST:PUERTO --suffix isp2 --apply
+
+[Interface]
+PrivateKey = <LLAVE_PRIVADA_DEL_PEER>
+Address = 10.200.10.10/32
+DNS = 8.8.8.8
+
+[Peer]
+PublicKey = NRYE/+iGxsyNkbCjqqkn1pvFAHBXu0KfnzvA5CYYTQ4=
+Endpoint = <DIRECCION_WAN_DE_E3>:51820
+AllowedIPs = 0.0.0.0/0, ::/0
+PersistentKeepalive = 25

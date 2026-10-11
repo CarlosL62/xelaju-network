@@ -1,0 +1,83 @@
+# Fuente: E4 (equipo del servidor WireGuard)
+# Fecha: 2026-10-05, 01:32
+# Comando: sudo tcpdump -ni enp1s0 host 192.168.10.50
+# Qué muestra: los SYN de user1 (10.200.20.10) hacia PC-ADMIN01 (192.168.10.50:80) salen de E4 hacia E5 y no reciben respuesta.
+# Nota: 69 paquetes: 67 SYN de user1 sin respuesta y 2 RST de 192.168.10.50 dirigidos a 10.200.10.10 (admin1, a las 01:25:04), es decir, con admin1 el paquete sí llega al equipo y este responde.
+# Salida original pegada tal cual; solo se agregó este encabezado.
+#
+tcpdump: verbose output suppressed, use -v[v]... for full protocol decode
+listening on enp1s0, link-type EN10MB (Ethernet), snapshot length 262144 bytes
+01:23:26.560427 IP 10.200.20.10.51447 > 192.168.10.50.80: Flags [SEW], seq 2900195629, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 2297436388 ecr 0,sackOK,eol], length 0
+01:23:27.461292 IP 10.200.20.10.51447 > 192.168.10.50.80: Flags [S], seq 2900195629, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 2297437393 ecr 0,sackOK,eol], length 0
+01:23:28.506720 IP 10.200.20.10.51447 > 192.168.10.50.80: Flags [S], seq 2900195629, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 2297438393 ecr 0,sackOK,eol], length 0
+01:23:29.529587 IP 10.200.20.10.51447 > 192.168.10.50.80: Flags [S], seq 2900195629, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 2297439398 ecr 0,sackOK,eol], length 0
+01:23:30.473813 IP 10.200.20.10.51447 > 192.168.10.50.80: Flags [S], seq 2900195629, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 2297440403 ecr 0,sackOK,eol], length 0
+01:23:31.473876 IP 10.200.20.10.51447 > 192.168.10.50.80: Flags [S], seq 2900195629, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 2297441408 ecr 0,sackOK,eol], length 0
+01:23:33.478054 IP 10.200.20.10.51447 > 192.168.10.50.80: Flags [S], seq 2900195629, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 2297443413 ecr 0,sackOK,eol], length 0
+01:23:36.460791 IP 10.200.20.10.51448 > 192.168.10.50.80: Flags [SEW], seq 1377548883, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1813182108 ecr 0,sackOK,eol], length 0
+01:23:37.509245 IP 10.200.20.10.51448 > 192.168.10.50.80: Flags [S], seq 1377548883, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1813183128 ecr 0,sackOK,eol], length 0
+01:23:38.481610 IP 10.200.20.10.51448 > 192.168.10.50.80: Flags [S], seq 1377548883, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1813184129 ecr 0,sackOK,eol], length 0
+01:23:39.502007 IP 10.200.20.10.51448 > 192.168.10.50.80: Flags [S], seq 1377548883, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1813185134 ecr 0,sackOK,eol], length 0
+01:23:40.589147 IP 10.200.20.10.51448 > 192.168.10.50.80: Flags [S], seq 1377548883, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1813186135 ecr 0,sackOK,eol], length 0
+01:23:41.510288 IP 10.200.20.10.51448 > 192.168.10.50.80: Flags [S], seq 1377548883, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1813187140 ecr 0,sackOK,eol], length 0
+01:23:43.559319 IP 10.200.20.10.51448 > 192.168.10.50.80: Flags [S], seq 1377548883, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1813189141 ecr 0,sackOK,eol], length 0
+01:23:47.493475 IP 10.200.20.10.51448 > 192.168.10.50.80: Flags [S], seq 1377548883, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1813193141 ecr 0,sackOK,eol], length 0
+01:23:55.499158 IP 10.200.20.10.51448 > 192.168.10.50.80: Flags [S], seq 1377548883, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1813201146 ecr 0,sackOK,eol], length 0
+01:24:11.503036 IP 10.200.20.10.51448 > 192.168.10.50.80: Flags [S], seq 1377548883, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1813217150 ecr 0,sackOK,eol], length 0
+01:25:04.401257 IP 10.200.10.10.61747 > 192.168.10.50.80: Flags [SEW], seq 3698467808, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1152464218 ecr 0,sackOK,eol], length 0
+01:25:04.408346 IP 192.168.10.50.80 > 10.200.10.10.61747: Flags [R.], seq 0, ack 3698467809, win 0, length 0
+01:25:04.537544 IP 10.200.10.10.61748 > 192.168.10.50.80: Flags [SEW], seq 3609397510, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 3145687795 ecr 0,sackOK,eol], length 0
+01:25:04.545155 IP 192.168.10.50.80 > 10.200.10.10.61748: Flags [R.], seq 0, ack 3609397511, win 0, length 0
+01:25:22.557575 IP 10.200.20.10.51462 > 192.168.10.50.80: Flags [SEW], seq 3079949892, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 578501297 ecr 0,sackOK,eol], length 0
+01:25:23.541546 IP 10.200.20.10.51462 > 192.168.10.50.80: Flags [S], seq 3079949892, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 578502298 ecr 0,sackOK,eol], length 0
+01:25:24.617835 IP 10.200.20.10.51462 > 192.168.10.50.80: Flags [S], seq 3079949892, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 578503299 ecr 0,sackOK,eol], length 0
+01:25:25.540578 IP 10.200.20.10.51462 > 192.168.10.50.80: Flags [S], seq 3079949892, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 578504300 ecr 0,sackOK,eol], length 0
+01:25:26.540733 IP 10.200.20.10.51462 > 192.168.10.50.80: Flags [S], seq 3079949892, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 578505301 ecr 0,sackOK,eol], length 0
+01:25:27.545143 IP 10.200.20.10.51462 > 192.168.10.50.80: Flags [S], seq 3079949892, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 578506305 ecr 0,sackOK,eol], length 0
+01:25:29.556127 IP 10.200.20.10.51462 > 192.168.10.50.80: Flags [S], seq 3079949892, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 578508310 ecr 0,sackOK,eol], length 0
+01:25:32.665220 IP 10.200.20.10.51473 > 192.168.10.50.80: Flags [SEW], seq 809133923, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1420537370 ecr 0,sackOK,eol], length 0
+01:25:33.631025 IP 10.200.20.10.51473 > 192.168.10.50.80: Flags [S], seq 809133923, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1420538374 ecr 0,sackOK,eol], length 0
+01:25:34.566064 IP 10.200.20.10.51473 > 192.168.10.50.80: Flags [S], seq 809133923, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1420539375 ecr 0,sackOK,eol], length 0
+01:25:35.553354 IP 10.200.20.10.51473 > 192.168.10.50.80: Flags [S], seq 809133923, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1420540380 ecr 0,sackOK,eol], length 0
+01:25:36.600114 IP 10.200.20.10.51473 > 192.168.10.50.80: Flags [S], seq 809133923, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1420541386 ecr 0,sackOK,eol], length 0
+01:25:37.568993 IP 10.200.20.10.51473 > 192.168.10.50.80: Flags [S], seq 809133923, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1420542391 ecr 0,sackOK,eol], length 0
+01:25:39.569943 IP 10.200.20.10.51473 > 192.168.10.50.80: Flags [S], seq 809133923, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1420544396 ecr 0,sackOK,eol], length 0
+01:25:43.674680 IP 10.200.20.10.51473 > 192.168.10.50.80: Flags [S], seq 809133923, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1420548401 ecr 0,sackOK,eol], length 0
+01:25:51.652837 IP 10.200.20.10.51473 > 192.168.10.50.80: Flags [S], seq 809133923, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1420556407 ecr 0,sackOK,eol], length 0
+01:26:07.590004 IP 10.200.20.10.51473 > 192.168.10.50.80: Flags [S], seq 809133923, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1420572412 ecr 0,sackOK,eol], length 0
+01:29:24.155053 IP 10.200.20.10.51487 > 192.168.10.50.80: Flags [SEW], seq 953738875, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1118714259 ecr 0,sackOK,eol], length 0
+01:29:25.101864 IP 10.200.20.10.51487 > 192.168.10.50.80: Flags [S], seq 953738875, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1118715264 ecr 0,sackOK,eol], length 0
+01:29:26.103969 IP 10.200.20.10.51487 > 192.168.10.50.80: Flags [S], seq 953738875, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1118716264 ecr 0,sackOK,eol], length 0
+01:29:27.138450 IP 10.200.20.10.51487 > 192.168.10.50.80: Flags [S], seq 953738875, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1118717268 ecr 0,sackOK,eol], length 0
+01:29:28.111601 IP 10.200.20.10.51487 > 192.168.10.50.80: Flags [S], seq 953738875, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1118718272 ecr 0,sackOK,eol], length 0
+01:29:29.164534 IP 10.200.20.10.51487 > 192.168.10.50.80: Flags [S], seq 953738875, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1118719277 ecr 0,sackOK,eol], length 0
+01:29:31.115036 IP 10.200.20.10.51487 > 192.168.10.50.80: Flags [S], seq 953738875, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1118721281 ecr 0,sackOK,eol], length 0
+01:29:35.124921 IP 10.200.20.10.51487 > 192.168.10.50.80: Flags [S], seq 953738875, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1118725286 ecr 0,sackOK,eol], length 0
+01:29:43.129901 IP 10.200.20.10.51487 > 192.168.10.50.80: Flags [S], seq 953738875, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1118733291 ecr 0,sackOK,eol], length 0
+01:29:59.146542 IP 10.200.20.10.51487 > 192.168.10.50.80: Flags [S], seq 953738875, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 1118749296 ecr 0,sackOK,eol], length 0
+01:30:31.142304 IP 10.200.20.10.51487 > 192.168.10.50.80: Flags [S], seq 953738875, win 65535, options [mss 1240,sackOK,eol], length 0
+01:30:39.206994 IP 10.200.20.10.51488 > 192.168.10.50.80: Flags [SEW], seq 3270532441, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 4024520214 ecr 0,sackOK,eol], length 0
+01:30:40.128270 IP 10.200.20.10.51488 > 192.168.10.50.80: Flags [S], seq 3270532441, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 4024521214 ecr 0,sackOK,eol], length 0
+01:30:41.152967 IP 10.200.20.10.51488 > 192.168.10.50.80: Flags [S], seq 3270532441, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 4024522215 ecr 0,sackOK,eol], length 0
+01:30:42.176519 IP 10.200.20.10.51488 > 192.168.10.50.80: Flags [S], seq 3270532441, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 4024523220 ecr 0,sackOK,eol], length 0
+01:30:43.187583 IP 10.200.20.10.51488 > 192.168.10.50.80: Flags [S], seq 3270532441, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 4024524220 ecr 0,sackOK,eol], length 0
+01:30:44.207222 IP 10.200.20.10.51488 > 192.168.10.50.80: Flags [S], seq 3270532441, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 4024525221 ecr 0,sackOK,eol], length 0
+01:30:46.170274 IP 10.200.20.10.51488 > 192.168.10.50.80: Flags [S], seq 3270532441, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 4024527223 ecr 0,sackOK,eol], length 0
+01:30:50.117949 IP 10.200.20.10.51488 > 192.168.10.50.80: Flags [S], seq 3270532441, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 4024531227 ecr 0,sackOK,eol], length 0
+01:30:58.121959 IP 10.200.20.10.51488 > 192.168.10.50.80: Flags [S], seq 3270532441, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 4024539232 ecr 0,sackOK,eol], length 0
+01:31:14.125746 IP 10.200.20.10.51488 > 192.168.10.50.80: Flags [S], seq 3270532441, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 4024555235 ecr 0,sackOK,eol], length 0
+01:31:46.131159 IP 10.200.20.10.51488 > 192.168.10.50.80: Flags [S], seq 3270532441, win 65535, options [mss 1240,sackOK,eol], length 0
+01:31:54.153983 IP 10.200.20.10.51494 > 192.168.10.50.80: Flags [SEW], seq 3201581743, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 3745189306 ecr 0,sackOK,eol], length 0
+01:31:55.117602 IP 10.200.20.10.51494 > 192.168.10.50.80: Flags [S], seq 3201581743, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 3745190307 ecr 0,sackOK,eol], length 0
+01:31:56.120586 IP 10.200.20.10.51494 > 192.168.10.50.80: Flags [S], seq 3201581743, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 3745191310 ecr 0,sackOK,eol], length 0
+01:31:57.237250 IP 10.200.20.10.51494 > 192.168.10.50.80: Flags [S], seq 3201581743, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 3745192311 ecr 0,sackOK,eol], length 0
+01:31:58.158510 IP 10.200.20.10.51494 > 192.168.10.50.80: Flags [S], seq 3201581743, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 3745193316 ecr 0,sackOK,eol], length 0
+01:31:59.128145 IP 10.200.20.10.51494 > 192.168.10.50.80: Flags [S], seq 3201581743, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 3745194320 ecr 0,sackOK,eol], length 0
+01:32:01.230715 IP 10.200.20.10.51494 > 192.168.10.50.80: Flags [S], seq 3201581743, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 3745196326 ecr 0,sackOK,eol], length 0
+01:32:05.250324 IP 10.200.20.10.51494 > 192.168.10.50.80: Flags [S], seq 3201581743, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 3745200326 ecr 0,sackOK,eol], length 0
+01:32:13.210492 IP 10.200.20.10.51494 > 192.168.10.50.80: Flags [S], seq 3201581743, win 65535, options [mss 1240,nop,wscale 6,nop,nop,TS val 3745208327 ecr 0,sackOK,eol], length 0
+^C
+69 packets captured
+69 packets received by filter
+0 packets dropped by kernel
+45 packets dropped by interface

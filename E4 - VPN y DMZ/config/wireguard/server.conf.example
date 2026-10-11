@@ -1,0 +1,34 @@
+# /etc/wireguard/wg0.conf  (plantilla: reemplace el marcador <...>)
+# El archivo real vive solo en el equipo E4, con modo 600, y nunca se sube al repositorio.
+# scripts/gen_peers.sh --install-server conserva el [Interface] de ese archivo y
+# reescribe los bloques [Peer] de abajo a partir de las llaves públicas generadas.
+
+[Interface]
+PrivateKey = <LLAVE_PRIVADA_DEL_SERVIDOR>
+Address = 10.200.10.1/24, 10.200.20.1/24
+ListenPort = 51820
+
+# Peer: admin1 (VPN-ADMIN)
+[Peer]
+PublicKey = QBFPc/PxCHwvcT3QonmisYyCvrsnNjJPULTsBbf6ZSs=
+AllowedIPs = 10.200.10.10/32
+
+# Peer: admin2 (VPN-ADMIN)
+[Peer]
+PublicKey = YII3OjJEGbEzCHebpTx6dpYlxroBZGSNQOwEOcXrYR4=
+AllowedIPs = 10.200.10.11/32
+
+# Peer: user1 (VPN-USERS)
+[Peer]
+PublicKey = 0aPOe+nBPinfXuMcl5MSOtRrbDrRpta3jO/re72HuF8=
+AllowedIPs = 10.200.20.10/32
+
+# Peer: user2 (VPN-USERS)
+[Peer]
+PublicKey = k9t3b8bR/uGf2PInpQ+Z1rrsfrZZfMEKnfcEcde1/W0=
+AllowedIPs = 10.200.20.11/32
+
+# Peer: user3 (VPN-USERS)
+[Peer]
+PublicKey = xwCLF56OygM5isdmQGAziViEgc/ibbDtNfQfGu7ZvF8=
+AllowedIPs = 10.200.20.12/32

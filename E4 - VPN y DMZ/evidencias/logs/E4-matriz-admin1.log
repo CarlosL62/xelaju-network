@@ -1,0 +1,33 @@
+# Matriz de pruebas E4 - 2026-10-10 20:31:52 - objetivo: admin1 - host: debian
+# resultados guardados en: /home/julian/.local/share/xelaju-e4/results/20261010-203152-admin1.txt
+## admin1 (VPN-ADMIN, 10.200.10.10)
+-- Estado del tunel y salida
+PASS  I1   Handshake de admin1 visto en wg0 del servidor                  [E4 -> OK]
+PASS  I2   El cliente alcanza la direccion de wg0 del servidor (10.200.10.1) [E4 -> OK]
+PASS  I3   Full Tunnel: la ruta a Internet sale por el tunel              [E4 -> OK]
+PASS  I4   DNS por el tunel (8.8.8.8 del perfil)                          [E4 -> OK]
+PASS  I5   VPN -> WEB01 de la DMZ (no pasa por E5, se queda en E4)        [E4 -> 200]
+PASS  I6   Salida a Internet por el tunel hasta E5 y E3 (TCP/443)         [E5 -> OK]
+-- Politicas de acceso
+PASS  A1   VPN-ADMIN -> VLAN ADMIN (ping)                                 [E5 -> OK]
+PASS  A2   VPN-ADMIN -> VLAN USERS (SSH)                                  [E5 -> OK]
+PASS  A3   VPN-ADMIN -> Zabbix (ping)                                     [E5 -> OK]
+PASS  A4   VPN-ADMIN -> Intranet HTTP                                     [E5 -> 200]
+PASS  A5   VPN-ADMIN -> GESTION (SSH de SW-CORE01)                        [E5 -> OK]
+PASS  A6   VPN-ADMIN -> web de Zabbix: solo la VLAN ADMIN                 [R1 -> 000]
+
+RESULTADO: 12 PASS, 0 FAIL, 0 SKIP
+
+Pruebas que necesitan otros nodos (hacerlas a mano y guardar la captura):
+  D-a  Internet -> WEB01 directo. Desde E3: nc -zv -w4 172.16.10.10 8081   -> sin respuesta
+       Evidencia en E5: sudo journalctl -k | grep E5-DENY-INET2DMZ
+  D-b  LAN -> WEB01: curl -m6 -o /dev/null -w '%{http_code}\n' http://172.16.10.10:8081/ desde PC-ADMIN01 y PC-USER01 -> 200
+       PC-USER01: nc -zv -w4 172.16.10.10 22 -> sin respuesta; PC-MGMT01 -> sin respuesta (lo decide R1)
+  D-c  ngrok: abrir la URL publica desde un telefono con datos moviles -> pagina de WEB01
+  V-a  Primera pasada: desde E3, echo x | nc -u -w1 192.168.83.2 51821 -> no llega a enp1s0
+       (E5 solo abre UDP/51820). En E4: sudo tcpdump -ni enp1s0 udp port 51820
+  V-b  Cliente real (telefono) conectado a la red del ISP1: handshake y las paginas permitidas
+  V-c  Balanceo con la VPN (ISP2 activo): http://api.ipify.org desde admin1, varias veces -> alterna dos IPs
+  Logs que cierran la evidencia:
+       E5: sudo journalctl -k | grep -E 'E5-(DENY|ACCEPT)'
+       R1: sudo tail -20 /var/log/xelaju/acl-lan.log ; sudo nft list chain inet xelaju desde_perimetro

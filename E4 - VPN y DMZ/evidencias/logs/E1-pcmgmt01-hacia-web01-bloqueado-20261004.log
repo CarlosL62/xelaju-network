@@ -1,0 +1,12 @@
+# Fuente: E1 (LAN), pegado por E1 en el chat del equipo
+# Fecha: 2026-10-04
+# Comando: ./lab/lab.sh exec pc-mgmt01 curl -m 6 http://172.16.10.10:8081/
+# Qué muestra: PC-MGMT01 (VLAN de GESTIÓN) no alcanza WEB01: código 000 y tiempo de espera agotado.
+# Salida original pegada tal cual; solo se agregó este encabezado.
+#
+rocael@rocael-Y540:~/Documentos/Repo_Redes/xelaju-network-coordination/nodes/E1-lan$ ./lab/lab.sh exec pc-mgmt01 'curl -m 6 -o /dev/null -w "%{http_code}\n" http://172.16.10.10:8081/'
+000
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:--  0:00:06 --:--:--     0
+curl: (28) Connection timed out after 6002 milliseconds

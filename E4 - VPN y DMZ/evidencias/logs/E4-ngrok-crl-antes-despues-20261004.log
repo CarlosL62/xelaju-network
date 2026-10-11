@@ -1,0 +1,71 @@
+# Fuente: E4
+# Fecha: 2026-10-04, de 20:14 a 22:48 (hora local); la fecha del servidor de la CRL aparece en UTC
+# Qué muestra: el problema de la lista de revocación (CRL) de ngrok y su solución con la regla de E5 (TCP/80 solo desde 192.168.83.2): antes, ngrok no autentica; después, la CRL responde 200 y la URL pública entrega la página.
+# Nota: se reemplazaron los prompts decorativos del terminal por "[hora] $ comando"; la salida de los comandos está sin modificar.
+#
+## 1. ANTES: el agente de ngrok no autentica, la CRL no se descarga (20:14)
+[20:14:51] $ ./nodes/E4-vpn-dmz/scripts/run_ngrok.sh --check
+resolvers in the private namespace: 3 (file: /home/julian/RC2/xelaju-network-coordination/nodes/E4-vpn-dmz/config/resolv-ngrok.conf)
+connect.ngrok-agent.com -> 3.148.88.97     STREAM connect.ngrok-agent.com
+$ ./nodes/E4-vpn-dmz/scripts/run_ngrok.sh
+Session Status                reconnecting (failed to send authentication request: failed to fetch CRL. errors encountered: timed out fetching CRL)
+
+## 2. ANTES: la descarga de la CRL por HTTP/80 expira (21:16)
+[21:16:30] $ sudo ./nodes/E4-vpn-dmz/scripts/setup_e4.sh --uplink enp1s0 --apply
+Modo: apply | accion: setup | uplink: enp1s0
+== 1. IP forwarding
+ok    net.ipv4.ip_forward=1
+ok    persistente en /etc/sysctl.d/99-xelaju-e4.conf
+== 2. Uplink hacia E5 (enp1s0)
+ok    192.168.83.2/30 ya esta en enp1s0
++ ip link set enp1s0 up
+== 3. Ruta por defecto via E5 (192.168.83.1)
++ ip route replace default via 192.168.83.1 dev enp1s0
+== 4. DMZ en dmz0 (interfaz dummy, sin segunda NIC fisica)
+ok    dmz0 existe
++ ip link set dmz0 up
+ok    172.16.10.1/24 ya esta en dmz0
+ok    172.16.10.10/24 ya esta en dmz0
+== 5. WireGuard (wg0)
+WARN  wg0 no esta levantada. Levantela con: sudo wg-quick up wg0
+[21:16:32] $ ./nodes/E4-vpn-dmz/scripts/setup_e4.sh --uplink enp1s0 --status
+Accion: status | uplink: enp1s0
+PASS  ip_forward activo
+PASS  192.168.83.2/30 en enp1s0
+PASS  ruta por defecto via 192.168.83.1
+PASS  172.16.10.1/24 en dmz0
+PASS  172.16.10.10/24 en dmz0
+FAIL  10.200.10.1/24 en wg0
+FAIL  10.200.20.1/24 en wg0
+PASS  alcanza al gateway 192.168.83.1 (E5)
+PASS  Zabbix 192.168.30.10 sale via 192.168.83.1
+Fallos: 2
+[21:16:48] $ ip route get 1.1.1.1
+1.1.1.1 via 192.168.83.1 dev enp1s0 src 192.168.83.2 uid 1000
+    cache
+$ ./nodes/E4-vpn-dmz/scripts/with_dns.sh curl -sS -o /dev/null --max-time 10 -w 'http=%{http_code} t=%{time_total}s\n' http://crl.ngrok.com/ngrok.crl
+curl: (28) Connection timed out after 10000 milliseconds
+http=000 t=10.000675s
+
+## 3. DESPUÉS de que E5 permitió TCP/80 desde 192.168.83.2: CRL 200 y URL pública 200 (22:48)
+[22:48:54] $ ip route get 1.1.1.1
+1.1.1.1 via 192.168.83.1 dev enp1s0 src 192.168.83.2 uid 1000
+    cache
+$ ./nodes/E4-vpn-dmz/scripts/with_dns.sh curl --max-time 10 -I http://crl.ngrok.com/ngrok.crl
+HTTP/1.1 200 OK
+Content-Type: application/pkix-crl
+Content-Length: 743
+Connection: keep-alive
+Accept-Ranges: bytes
+Server: AmazonS3
+Last-Modified: Thu, 08 Sep 2022 15:33:20 GMT
+x-amz-server-side-encryption: AES256
+Date: Mon, 05 Oct 2026 04:23:13 GMT
+ETag: "372c5257a62dc1f8a40d561fcad71f72"
+X-Cache: Hit from cloudfront
+Via: 1.1 9612a0471e5e0cbb1cd1bed75c966038.cloudfront.net (CloudFront)
+X-Amz-Cf-Pop: MIA50-P8
+X-Amz-Cf-Id: L5vbgGWpV7qrlrRw8fHPHMcurI5UjRGwYXmUpfqMcGSHlzq2_L9xww==
+Age: 1561
+$ ./nodes/E4-vpn-dmz/scripts/with_dns.sh curl -sS -o /dev/null -w 'http=%{http_code}\n' --max-time 15 https://bennett-smartish-waterlessly.ngrok-free.dev
+http=200

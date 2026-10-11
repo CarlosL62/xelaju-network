@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#0b3d91">
+    <title>WEB01 · DMZ · XelajuNetwork</title>
+    <meta name="description" content="Servidor web de la DMZ de XelajuNetwork, publicado mediante un túnel de ngrok.">
+    <!-- Icono embebido: evita la petición a /favicon.ico (404 en el log de Apache) -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b3d91'/%3E%3Cpath d='M32 12 14 22v20l18 10 18-10V22z' fill='none' stroke='%23fff' stroke-width='4' stroke-linejoin='round'/%3E%3Ccircle cx='32' cy='32' r='6' fill='%2336d399'/%3E%3C/svg%3E">
+    <style>
+        /* Sin fuentes ni scripts externos: la página debe verse igual con o sin Internet. */
+        :root {
+            --bg: #f3f6fb;
+            --surface: #ffffff;
+            --surface-2: #eef3fb;
+            --text: #14213d;
+            --muted: #55627a;
+            --line: #d9e1ee;
+            --brand: #0b3d91;
+            --brand-2: #1d6fe0;
+            --ok: #0f9d6b;
+            --ok-bg: #dcf7ec;
+            --shadow: 0 1px 2px rgba(20, 33, 61, .06), 0 8px 24px rgba(20, 33, 61, .08);
+            --radius: 16px;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0b1220;
+                --surface: #131c30;
+                --surface-2: #19243c;
+                --text: #e8eefc;
+                --muted: #9aa8c7;
+                --line: #25324f;
+                --brand: #6ea8ff;
+                --brand-2: #4d8dff;
+                --ok: #36d399;
+                --ok-bg: #0f2f26;
+                --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .35);
+            }
+        }
+        * { box-sizing: border-box; }
+        html { -webkit-text-size-adjust: 100%; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: var(--bg);
+            color: var(--text);
+            font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+        }
+        .wrap { width: 100%; max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+
+        /* ---- cabecera ---- */
+        header.top {
+            background: linear-gradient(135deg, #0b3d91 0%, #1450b8 55%, #1a63d1 100%);
+            color: #fff;
+            padding: 28px 0 64px;
+        }
+        .brand { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; font-weight: 600; letter-spacing: .02em; opacity: .95; }
+        .brand svg { width: 34px; height: 34px; flex: none; }
+        .badge {
+            margin-left: auto;
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 6px 12px; border-radius: 999px;
+            background: rgba(255, 255, 255, .16);
+            font-size: .85rem; font-weight: 600; white-space: nowrap;
+        }
+        .dot { width: 9px; height: 9px; border-radius: 50%; background: #36d399; box-shadow: 0 0 0 0 rgba(54, 211, 153, .7); animation: pulse 2.2s infinite; }
+        @keyframes pulse { 70% { box-shadow: 0 0 0 9px rgba(54, 211, 153, 0); } 100% { box-shadow: 0 0 0 0 rgba(54, 211, 153, 0); } }
+        h1 { margin: 28px 0 8px; font-size: clamp(1.7rem, 5.2vw, 2.7rem); line-height: 1.15; letter-spacing: -.01em; }
+        .lead { margin: 0; max-width: 62ch; font-size: clamp(1rem, 2.6vw, 1.15rem); opacity: .92; }
+
+        /* ---- contenido ---- */
+        main { flex: 1; margin-top: -40px; padding-bottom: 32px; }
+        .grid { display: grid; gap: 14px; grid-template-columns: repeat(4, 1fr); }
+        .card {
+            background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+            padding: 18px; box-shadow: var(--shadow);
+        }
+        .card h2 { margin: 0 0 4px; font-size: .78rem; text-transform: uppercase; letter-spacing: .09em; color: var(--muted); font-weight: 600; }
+        .card .val { font-size: 1.15rem; font-weight: 650; word-break: break-word; }
+        .card .note { margin: 6px 0 0; font-size: .88rem; color: var(--muted); }
+        code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+        .val.mono { font-size: 1.02rem; }
+
+        section.panel {
+            margin-top: 14px; background: var(--surface); border: 1px solid var(--line);
+            border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow);
+        }
+        section.panel h2 { margin: 0 0 4px; font-size: 1.15rem; }
+        section.panel > p { margin: 0 0 16px; color: var(--muted); }
+
+        /* ---- flujos ---- */
+        .flow { margin: 0 0 18px; }
+        .flow:last-child { margin-bottom: 0; }
+        .flow h3 { margin: 0 0 10px; font-size: .95rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .tag { font-size: .72rem; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--brand); border: 1px solid var(--line); font-weight: 600; }
+        .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; }
+        .steps li {
+            position: relative; background: var(--surface-2); border: 1px solid var(--line);
+            border-radius: 12px; padding: 8px 12px; font-size: .9rem; font-weight: 600;
+        }
+        .steps li small { display: block; font-weight: 400; color: var(--muted); font-size: .76rem; }
+        .steps li + li::before { content: "→"; position: absolute; left: -15px; top: 50%; transform: translateY(-52%); color: var(--muted); font-weight: 400; }
+        .steps li { margin-left: 14px; }
+        .steps li:first-child { margin-left: 0; }
+        .steps li.end { border-color: var(--ok); background: var(--ok-bg); }
+
+        #via { display: none; margin-top: 14px; padding: 12px 14px; border-radius: 12px; border: 1px dashed var(--brand-2); background: var(--surface-2); font-size: .93rem; }
+        #via.show { display: block; }
+
+        footer { padding: 18px 0 28px; color: var(--muted); font-size: .85rem; text-align: center; border-top: 1px solid var(--line); }
+
+        /* ---- tableta: tarjetas 2 x 2 ---- */
+        @media (max-width: 900px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+
+        /* ---- pantallas pequeñas: una columna y los pasos en vertical ---- */
+        @media (max-width: 560px) {
+            header.top { padding: 20px 0 56px; }
+            .grid { grid-template-columns: 1fr; }
+            .brand span { font-size: .95rem; }
+            .badge { font-size: .78rem; padding: 5px 10px; }
+            .steps { flex-direction: column; gap: 14px; }
+            .steps li, .steps li:first-child { margin-left: 0; }
+            .steps li + li::before { content: "↓"; left: 16px; top: -17px; transform: none; }
+            section.panel { padding: 16px; }
+        }
+        @media (prefers-reduced-motion: reduce) { .dot { animation: none; } }
+    </style>
+</head>
+<body>
+    <header class="top">
+        <div class="wrap">
+            <div class="brand">
+                <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 6 8 19v26l24 13 24-13V19z" fill="none" stroke="#fff" stroke-width="4" stroke-linejoin="round"/><circle cx="32" cy="32" r="7" fill="#36d399"/></svg>
+                <span>XelajuNetwork</span>
+                <div class="badge" role="status"><i class="dot"></i> Servidor en línea</div>
+            </div>
+            <h1>WEB01, el servidor web de la DMZ</h1>
+            <p class="lead">Si estás leyendo esta página, el servicio web de la zona desmilitarizada responde y el tráfico llegó hasta él atravesando el firewall perimetral.</p>
+        </div>
+    </header>
+
+    <main>
+        <div class="wrap">
+            <div class="grid">
+                <div class="card"><h2>Servidor</h2><div class="val">WEB01</div><p class="note">Apache 2, host virtual dedicado</p></div>
+                <div class="card"><h2>Dirección en la DMZ</h2><div class="val mono">172.16.10.10:8081</div><p class="note">Red 172.16.10.0/24, puerta de enlace en E4</p></div>
+                <div class="card"><h2>Publicación</h2><div class="val">Túnel ngrok</div><p class="note">Sin IP pública asignada al servidor</p></div>
+                <div class="card"><h2>Responsable</h2><div class="val">Estudiante 4</div><p class="note">VPN (WireGuard) y DMZ</p></div>
+            </div>
+
+            <section class="panel" aria-labelledby="t-flujos">
+                <h2 id="t-flujos">¿Cómo llega el tráfico hasta aquí?</h2>
+                <p>Dos caminos distintos llevan a esta misma página; ninguno inicia conexiones desde la DMZ hacia la red interna.</p>
+
+                <div class="flow">
+                    <h3>Desde Internet <span class="tag">Flujo C</span></h3>
+                    <ol class="steps">
+                        <li>Visitante<small>navegador</small></li>
+                        <li>ngrok<small>HTTPS público</small></li>
+                        <li>E4<small>agente ngrok, saliente</small></li>
+                        <li class="end">WEB01<small>:8081</small></li>
+                    </ol>
+                </div>
+
+                <div class="flow">
+                    <h3>Desde la red interna <span class="tag">LAN → DMZ</span></h3>
+                    <ol class="steps">
+                        <li>Equipo de la LAN<small>VLAN 10, 20 o 30</small></li>
+                        <li>R1 y E2<small>enrutamiento</small></li>
+                        <li>E5<small>firewall: solo TCP/8081</small></li>
+                        <li class="end">WEB01<small>:8081</small></li>
+                    </ol>
+                </div>
+
+                <div id="via" role="note"></div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <div class="wrap">Proyecto final · Redes de Computadoras 2 · USAC CUNOC</div>
+    </footer>
+
+    <script>
+        // Mejora opcional: indica por dónde se está entrando. Sin JavaScript la página sigue completa.
+        // Se construye con nodos de texto (nunca con innerHTML) porque el nombre de host viene de la URL.
+        (function () {
+            var h = location.hostname, via = document.getElementById("via");
+            if (!h || !via) { return; }
+            var intro, tail;
+            if (/ngrok/i.test(h)) {
+                intro = "Estás entrando por el túnel de ngrok: "; tail = ". Internet → ngrok → E4 → WEB01.";
+            } else if (/^172\.16\.10\./.test(h)) {
+                intro = "Estás entrando por la dirección interna de la DMZ, desde la LAN o desde la VPN: "; tail = ".";
+            } else {
+                intro = "Estás entrando por "; tail = ".";
+            }
+            var code = document.createElement("span");
+            code.className = "mono";
+            code.textContent = h;
+            via.appendChild(document.createTextNode(intro));
+            via.appendChild(code);
+            via.appendChild(document.createTextNode(tail));
+            via.className = "show";
+        })();
+    </script>
+</body>
+</html>

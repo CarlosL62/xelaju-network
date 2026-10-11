@@ -1,0 +1,58 @@
+# Fuente: E4
+# Fecha: 2026-10-10, 16:52
+# Qué muestra: aplicación del plan de direccionamiento con setup_e4.sh (enlace a E5, ruta por defecto, dmz0 con 172.16.10.1 y 172.16.10.10), generación de los perfiles -isp2 con gen_peers.sh, wg0 arriba con 10.200.10.1 y 10.200.20.1, y setup_e4.sh --status con 0 fallos.
+# Nota: se reemplazaron los prompts decorativos por "[hora] $ comando"; la salida está sin modificar.
+#
+[16:52:19] $ git checkout e4-profile-suffix
+Ya en 'e4-profile-suffix'
+[16:52:21] $ nmcli radio wifi off
+[16:52:28] $ sudo ./nodes/E4-vpn-dmz/scripts/setup_e4.sh --apply
+[sudo] contraseña para julian:
+Modo: apply | accion: setup | uplink: enp1s0
+== 1. IP forwarding
+ok    net.ipv4.ip_forward=1
+ok    persistente en /etc/sysctl.d/99-xelaju-e4.conf
+== 2. Uplink hacia E5 (enp1s0)
++ ip addr replace 192.168.83.2/30 dev enp1s0
++ ip link set enp1s0 up
+== 3. Ruta por defecto via E5 (192.168.83.1)
++ ip route replace default via 192.168.83.1 dev enp1s0
+== 4. DMZ en dmz0 (interfaz dummy, sin segunda NIC fisica)
++ ip link add dmz0 type dummy
++ ip link set dmz0 up
++ ip addr replace 172.16.10.1/24 dev dmz0
++ ip addr replace 172.16.10.10/24 dev dmz0
+== 5. WireGuard (wg0)
+WARN  wg0 no esta levantada. Levantela con: sudo wg-quick up wg0
+[16:52:39] $ sudo systemctl start apache2
+$ ./nodes/E4-vpn-dmz/scripts/gen_peers.sh --endpoint 172.20.10.2:51820 --suffix isp2 --apply
+Keys dir: /home/julian/.local/share/xelaju-e4/wireguard
+ok    admin1: keys kept
++ admin1: client config -> /home/julian/.local/share/xelaju-e4/wireguard/admin1-isp2.conf (VPN-ADMIN, 10.200.10.10, endpoint 172.20.10.2:51820)
+ok    admin2: keys kept
++ admin2: client config -> /home/julian/.local/share/xelaju-e4/wireguard/admin2-isp2.conf (VPN-ADMIN, 10.200.10.11, endpoint 172.20.10.2:51820)
+ok    user1: keys kept
++ user1: client config -> /home/julian/.local/share/xelaju-e4/wireguard/user1-isp2.conf (VPN-USERS, 10.200.20.10, endpoint 172.20.10.2:51820)
+ok    user2: keys kept
++ user2: client config -> /home/julian/.local/share/xelaju-e4/wireguard/user2-isp2.conf (VPN-USERS, 10.200.20.11, endpoint 172.20.10.2:51820)
+ok    user3: keys kept
++ user3: client config -> /home/julian/.local/share/xelaju-e4/wireguard/user3-isp2.conf (VPN-USERS, 10.200.20.12, endpoint 172.20.10.2:51820)
+Next: sudo ./nodes/E4-vpn-dmz/scripts/gen_peers.sh --install-server --apply
+[16:52:52] $ sudo wg-quick up wg0
+[#] ip link add wg0 type wireguard
+[#] wg setconf wg0 /dev/fd/63
+[#] ip -4 address add 10.200.10.1/24 dev wg0
+[#] ip -4 address add 10.200.20.1/24 dev wg0
+[#] ip link set mtu 1420 up dev wg0
+[16:53:00] $ ./nodes/E4-vpn-dmz/scripts/setup_e4.sh --status
+Accion: status | uplink: enp1s0
+PASS  ip_forward activo
+PASS  192.168.83.2/30 en enp1s0
+PASS  ruta por defecto via 192.168.83.1
+PASS  172.16.10.1/24 en dmz0
+PASS  172.16.10.10/24 en dmz0
+PASS  10.200.10.1/24 en wg0
+PASS  10.200.20.1/24 en wg0
+PASS  alcanza al gateway 192.168.83.1 (E5)
+PASS  Zabbix 192.168.30.10 sale via 192.168.83.1
+Fallos: 0
