@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# e5-firewall - Operación del Firewall Perimetral E5
+# Proyecto: XelajuNetwork (Nodo E5)
+# ==============================================================================
+set -euo pipefail
+
+RULES_FILE="/etc/nftables.d/e5-firewall.nft"
+BACKUP_DIR="/var/backups/xelaju-e5/firewall"
+
+# Verificar root para comandos que lo requieran
+require_root() {
+    if [ "$EUID" -ne 0 ]; then
+        echo "Error: Este comando requiere privilegios de root (usa sudo)."
+        exit 1
+    fi
+}
+
+cmd_status() {
+    echo "=== ESTADO DE NFTABLES ==="
+    systemctl status nftables --no-pager | head -n 10 || true
+    echo ""
+    if [ "$EUID" -eq 0 ]; then
+        if nft list table inet xelaju_e5 >/dev/null 2>&1; then
+            echo "Table inet xelaju_e5: CARGADA"
+        else
+            echo "Table inet xelaju_e5: NO CARGADA"
+        fi
+    else
+        echo "Table inet xelaju_e5: NO VERIFICADA (requiere sudo)"
+    fi
+}
+
+cmd_check() {
+    require_root
+    echo "=== VALIDANDO SINTAXIS DEL FIREWALL ==="
+    if [ ! -f "$RULES_FILE" ]; then
+        echo "Error: El archivo $RULES_FILE no existe."
+        exit 1
+    fi
+    if nft -c -f "$RULES_FILE"; then
+        echo "Validación exitosa: La configuración es correcta."
+        return 0
+    else
+        echo "Error de validación: Sintaxis incorrecta."
+        return 1
+    fi
+}
+
+cmd_show() {
+    require_root
+    echo "=== REGLAS ACTIVAS DE E5 ==="
+    nft list table inet xelaju_e5
+}
+
+cmd_backup() {
+    require_root
+    echo "=== RESPALDO DE REGLAS ==="
+    if ! nft list table inet xelaju_e5 >/dev/null 2>&1; then
+        echo "Error: La tabla 'inet xelaju_e5' no existe o no está cargada."
+        echo "No hay nada que respaldar del componente E5."
+        exit 1
+    fi
+    mkdir -p "$BACKUP_DIR"
+    TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+    BACKUP_FILE="${BACKUP_DIR}/e5-firewall_${TIMESTAMP}.nft"
+    nft list table inet xelaju_e5 > "$BACKUP_FILE"
+    echo "Respaldo de la tabla xelaju_e5 creado en: $BACKUP_FILE"
+}
+
+cmd_apply() {
+    require_root
+    echo "=== APLICANDO FIREWALL ==="
+
+    # 1. Validar
+    if ! cmd_check >/dev/null 2>&1; then
+        echo "ABORTADO: La validación falló. Revisa la sintaxis de $RULES_FILE."
+        nft -c -f "$RULES_FILE"
+        exit 1
+    fi
+
+    # 2 y 3. Comprobar si la tabla existe para respaldar
+    if nft list table inet xelaju_e5 >/dev/null 2>&1; then
+        cmd_backup
+    else
+        echo "WARNING: No existe estado E5 previo para respaldar. Continuando..."
+    fi
+
+    # 4. Aplicar
+    echo "Aplicando configuración..."
+    if nft -f "$RULES_FILE"; then
+        echo "Reglas aplicadas correctamente."
+        # 5. Comprobar que el ruleset específico de E5 está activo
+        echo "Verificando tabla activa..."
+        if nft list table inet xelaju_e5 >/dev/null 2>&1; then
+            echo "El ruleset se ha cargado."
+            echo "ÉXITO."
+        else
+            echo "ERROR: La tabla 'inet xelaju_e5' no pudo ser verificada tras aplicar."
+            exit 1
+        fi
+    else
+        echo "ERROR al aplicar las reglas."
+        exit 1
+    fi
+}
+
+case "${1:-}" in
+    status) cmd_status ;;
+    check)  cmd_check ;;
+    show)   cmd_show ;;
+    backup) cmd_backup ;;
+    apply)  cmd_apply ;;
+    *)      echo "Uso: sudo e5-firewall {status|check|show|backup|apply}"; exit 1 ;;
+esac

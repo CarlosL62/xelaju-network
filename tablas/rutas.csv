@@ -1,0 +1,43 @@
+Dispositivo,Red destino,Mascara,Next Hop,Interfaz
+E1 (Router LAN),0.0.0.0/0,0.0.0.0,192.168.84.1,up-squid
+E1 (Router LAN),192.168.10.0/24,255.255.255.0,Conectada directamente,trunk0.10
+E1 (Router LAN),192.168.20.0/24,255.255.255.0,Conectada directamente,trunk0.20
+E1 (Router LAN),192.168.30.0/24,255.255.255.0,Conectada directamente,trunk0.30
+E1 (Router LAN),192.168.40.0/24,255.255.255.0,Conectada directamente,trunk0.40
+E1 (Router LAN),192.168.84.0/30,255.255.255.252,Conectada directamente,up-squid
+E2 (Proxy Squid),0.0.0.0/0,0.0.0.0,192.168.82.1,eth_perimetro
+E2 (Proxy Squid),192.168.10.0/24,255.255.255.0,192.168.84.2,eth_lan
+E2 (Proxy Squid),192.168.20.0/24,255.255.255.0,192.168.84.2,eth_lan
+E2 (Proxy Squid),192.168.30.0/24,255.255.255.0,192.168.84.2,eth_lan
+E2 (Proxy Squid),192.168.40.0/24,255.255.255.0,192.168.84.2,eth_lan
+E2 (Proxy Squid),192.168.82.0/30,255.255.255.252,Conectada directamente,eth_perimetro
+E2 (Proxy Squid),192.168.84.0/30,255.255.255.252,Conectada directamente,eth_lan
+E3 (Multi-WAN),0.0.0.0/0 (ISP1),0.0.0.0,Gateway ISP1,wan1
+E3 (Multi-WAN),0.0.0.0/0 (ISP2),0.0.0.0,Gateway ISP2,wan2
+E3 (Multi-WAN),192.168.10.0/24,255.255.255.0,192.168.81.2,lan
+E3 (Multi-WAN),192.168.20.0/24,255.255.255.0,192.168.81.2,lan
+E3 (Multi-WAN),192.168.30.0/24,255.255.255.0,192.168.81.2,lan
+E3 (Multi-WAN),192.168.40.0/24,255.255.255.0,192.168.81.2,lan
+E3 (Multi-WAN),192.168.82.0/30,255.255.255.252,192.168.81.2,lan
+E3 (Multi-WAN),192.168.83.0/30,255.255.255.252,192.168.81.2,lan
+E3 (Multi-WAN),192.168.84.0/30,255.255.255.252,192.168.81.2,lan
+E3 (Multi-WAN),10.200.10.0/24,255.255.255.0,192.168.81.2,lan
+E3 (Multi-WAN),10.200.20.0/24,255.255.255.0,192.168.81.2,lan
+E3 (Multi-WAN),172.16.10.0/24,255.255.255.0,192.168.81.2,lan
+E4 (VPN/DMZ),0.0.0.0/0,0.0.0.0,192.168.83.1,eth_e5
+E4 (VPN/DMZ),192.168.83.0/30,255.255.255.252,Conectada directamente,eth_e5
+E4 (VPN/DMZ),172.16.10.0/24,255.255.255.0,Conectada directamente,br_dmz
+E4 (VPN/DMZ),10.200.10.0/24,255.255.255.0,Conectada directamente,wg0
+E4 (VPN/DMZ),10.200.20.0/24,255.255.255.0,Conectada directamente,wg0
+E5 (Firewall/IDS),0.0.0.0/0,0.0.0.0,192.168.81.1,eno2
+E5 (Firewall/IDS),192.168.10.0/24,255.255.255.0,192.168.82.2,enxc0eac367f731
+E5 (Firewall/IDS),192.168.20.0/24,255.255.255.0,192.168.82.2,enxc0eac367f731
+E5 (Firewall/IDS),192.168.30.0/24,255.255.255.0,192.168.82.2,enxc0eac367f731
+E5 (Firewall/IDS),192.168.40.0/24,255.255.255.0,192.168.82.2,enxc0eac367f731
+E5 (Firewall/IDS),192.168.84.0/30,255.255.255.252,192.168.82.2,enxc0eac367f731
+E5 (Firewall/IDS),10.200.10.0/24,255.255.255.0,192.168.83.2,enxf8e43ba69459
+E5 (Firewall/IDS),10.200.20.0/24,255.255.255.0,192.168.83.2,enxf8e43ba69459
+E5 (Firewall/IDS),172.16.10.0/24,255.255.255.0,192.168.83.2,enxf8e43ba69459
+E5 (Firewall/IDS),192.168.81.0/30,255.255.255.252,Conectada directamente,eno2
+E5 (Firewall/IDS),192.168.82.0/30,255.255.255.252,Conectada directamente,enxc0eac367f731
+E5 (Firewall/IDS),192.168.83.0/30,255.255.255.252,Conectada directamente,enxf8e43ba69459

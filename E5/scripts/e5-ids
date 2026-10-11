@@ -1,0 +1,112 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# e5-ids - Operación del IDS Suricata E5
+# Proyecto: XelajuNetwork (Nodo E5)
+# ==============================================================================
+set -euo pipefail
+
+SURICATA_CONF="/etc/suricata/suricata.yaml"
+LOCAL_RULES="/etc/suricata/rules/local.rules"
+FAST_LOG="/var/log/suricata/fast.log"
+
+require_root() {
+    if [ "$EUID" -ne 0 ]; then
+        echo "Error: Este comando requiere privilegios de root (usa sudo)."
+        exit 1
+    fi
+}
+
+cmd_status() {
+    echo "=== ESTADO DE SURICATA ==="
+    systemctl status suricata --no-pager | head -n 10 || true
+    echo ""
+
+    if command -v suricata &>/dev/null; then
+        suricata -V
+    else
+        echo "Suricata no está instalado o no está en el PATH."
+    fi
+
+    echo -e "\nInterfaces AF_PACKET detectadas en configuración (esperadas: eno2, enxc0eac367f731, enxf8e43ba69459):"
+    if [ -f "$SURICATA_CONF" ]; then
+        grep -A 10 "af-packet:" "$SURICATA_CONF" | grep "interface:" || echo "(No se pudo extraer de $SURICATA_CONF)"
+    else
+        echo "(Archivo $SURICATA_CONF no encontrado)"
+    fi
+
+    echo -e "\nEstado de logs:"
+    if [ -f "$FAST_LOG" ]; then
+        echo "Archivo $FAST_LOG existe. Tamaño: $(du -sh "$FAST_LOG" | cut -f1)"
+    else
+        echo "Archivo $FAST_LOG no existe aún (probablemente no hay alertas)."
+    fi
+}
+
+cmd_check() {
+    require_root
+    echo "=== VALIDANDO CONFIGURACIÓN DE SURICATA ==="
+    if [ ! -f "$SURICATA_CONF" ]; then
+        echo "Error: $SURICATA_CONF no existe."
+        exit 1
+    fi
+    if suricata -T -c "$SURICATA_CONF"; then
+        echo "Validación exitosa."
+        return 0
+    else
+        echo "Error en la validación."
+        return 1
+    fi
+}
+
+cmd_rules() {
+    echo "=== REGLAS LOCALES (local.rules) ==="
+    if [ -f "$LOCAL_RULES" ]; then
+        cat "$LOCAL_RULES"
+    else
+        echo "Archivo $LOCAL_RULES no existe."
+    fi
+}
+
+cmd_alerts() {
+    echo "=== ÚLTIMAS ALERTAS ==="
+    if [ -f "$FAST_LOG" ]; then
+        tail -n 20 "$FAST_LOG"
+    else
+        echo "No se encontró el archivo $FAST_LOG"
+    fi
+}
+
+cmd_restart() {
+    require_root
+    echo "=== REINICIO SEGURO DE SURICATA ==="
+
+    # 1. Ejecutar check
+    if ! cmd_check >/dev/null 2>&1; then
+        echo "ABORTADO: La validación falló. Revisa la sintaxis de $SURICATA_CONF y $LOCAL_RULES."
+        suricata -T -c "$SURICATA_CONF"
+        exit 1
+    fi
+
+    # 3. Si es válida, reiniciar
+    echo "Configuración válida. Reiniciando el servicio suricata..."
+    if systemctl restart suricata; then
+        # 4. Comprobar estado
+        if systemctl is-active --quiet suricata; then
+            echo "ÉXITO: Suricata reiniciado y activo."
+        else
+            echo "ADVERTENCIA: El servicio se reinició pero no reporta estar activo."
+        fi
+    else
+        echo "ERROR al intentar reiniciar el servicio."
+        exit 1
+    fi
+}
+
+case "${1:-}" in
+    status)  cmd_status ;;
+    check)   cmd_check ;;
+    rules)   cmd_rules ;;
+    alerts)  cmd_alerts ;;
+    restart) cmd_restart ;;
+    *)       echo "Uso: sudo e5-ids {status|check|rules|alerts|restart}"; exit 1 ;;
+esac

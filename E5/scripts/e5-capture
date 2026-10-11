@@ -1,0 +1,173 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# e5-capture - Herramienta de captura y diagnóstico de tráfico en E5
+# Proyecto: XelajuNetwork (Nodo E5)
+# ==============================================================================
+set -euo pipefail
+
+CAPTURE_DIR="/var/log/xelaju-e5/captures"
+
+require_root() {
+    if [ "$EUID" -ne 0 ]; then
+        echo "Error: Este comando requiere privilegios de root (usa sudo)."
+        exit 1
+    fi
+}
+
+get_interfaces() {
+    local zone="$1"
+    case "$zone" in
+        e3)  echo "-i eno2" ;;
+        e2)  echo "-i enxc0eac367f731" ;;
+        e4)  echo "-i enxf8e43ba69459" ;;
+        all) echo "-i eno2 -i enxc0eac367f731 -i enxf8e43ba69459" ;;
+        *)   echo "ERROR_ZONE"; exit 1 ;;
+    esac
+}
+
+parse_args() {
+    DURATION=""
+    FILTER=""
+    if [ $# -ge 1 ]; then
+        if [[ "$1" =~ ^[0-9]+$ ]]; then
+            DURATION="$1"
+            shift
+        fi
+        if [ $# -ge 1 ]; then
+            FILTER="$*"
+        fi
+    fi
+}
+
+cmd_list() {
+    echo "=== CAPTURAS DISPONIBLES ==="
+    if [ -d "$CAPTURE_DIR" ]; then
+        ls -lh "$CAPTURE_DIR" | awk '{print $5, $9}' | grep -v "^ " || echo "Directorio vacío o sin archivos pcap."
+    else
+        echo "El directorio $CAPTURE_DIR no existe aún."
+    fi
+}
+
+cmd_live() {
+    require_root
+    local zone="$1"
+    shift
+    local ifaces
+    ifaces=$(get_interfaces "$zone")
+    if [ "$ifaces" == "ERROR_ZONE" ]; then
+        echo "Zona inválida. Usa e2, e3, e4 o all."
+        exit 1
+    fi
+
+    parse_args "$@"
+
+    local tshark_args=()
+
+    if [ -n "$FILTER" ]; then
+        tshark_args+=( "-f" "$FILTER" )
+    fi
+
+    tshark_args+=( $ifaces )
+
+    if [ -n "$DURATION" ]; then
+        tshark_args+=( "-a" "duration:$DURATION" )
+    fi
+
+    tshark_args+=( "-o" "gui.column.format:\"Time\",\"%Yt\",\"Interface\",\"%Cus:frame.interface_name:0:U\",\"Src\",\"%s\",\"Dst\",\"%d\",\"Proto\",\"%p\",\"Info\",\"%i\"" )
+
+    echo "=== CAPTURA EN VIVO ($zone) ==="
+    echo "Filtro BPF: ${FILTER:-Ninguno}"
+    echo "Duración  : ${DURATION:-Hasta presionar Ctrl+C}"
+    echo "----------------------------------------------------------------------"
+
+    set +e
+    tshark "${tshark_args[@]}"
+    EXIT_CODE=$?
+    set -e
+    if [ $EXIT_CODE -ne 0 ] && [ $EXIT_CODE -ne 130 ]; then
+        echo "ERROR: TShark falló con código de salida $EXIT_CODE."
+        exit $EXIT_CODE
+    fi
+}
+
+cmd_save() {
+    require_root
+    local zone="$1"
+    shift
+    local ifaces
+    ifaces=$(get_interfaces "$zone")
+    if [ "$ifaces" == "ERROR_ZONE" ]; then
+        echo "Zona inválida. Usa e2, e3, e4 o all."
+        exit 1
+    fi
+
+    parse_args "$@"
+
+    mkdir -p "$CAPTURE_DIR"
+    TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+    PCAP_FILE="${CAPTURE_DIR}/capture_${zone}_${TIMESTAMP}.pcap"
+
+    local tshark_args=()
+
+    if [ -n "$FILTER" ]; then
+        tshark_args+=( "-f" "$FILTER" )
+    fi
+
+    tshark_args+=( $ifaces )
+
+    if [ -n "$DURATION" ]; then
+        tshark_args+=( "-a" "duration:$DURATION" )
+    fi
+
+    tshark_args+=( "-w" "$PCAP_FILE" )
+    # Tshark en modo silencioso al archivo, pero contando paquetes
+    tshark_args+=( "-q" "-z" "io,stat,0" )
+
+    echo "=== GUARDANDO CAPTURA ($zone) ==="
+    echo "Archivo   : $PCAP_FILE"
+    echo "Filtro BPF: ${FILTER:-Ninguno}"
+    echo "Duración  : ${DURATION:-Hasta presionar Ctrl+C}"
+    echo "Capturando... (Presiona Ctrl+C para detener si no hay duración)"
+
+    set +e
+    tshark "${tshark_args[@]}"
+    EXIT_CODE=$?
+    set -e
+
+    if [ $EXIT_CODE -ne 0 ] && [ $EXIT_CODE -ne 130 ]; then
+        echo "ERROR: TShark falló con código de salida $EXIT_CODE. La captura falló."
+        exit $EXIT_CODE
+    fi
+
+    echo "----------------------------------------------------------------------"
+    echo "Captura finalizada y guardada en: $PCAP_FILE"
+}
+
+if [ $# -lt 1 ]; then
+    echo "Uso: "
+    echo "  sudo e5-capture live <e2|e3|e4|all> [duration] [capture-filter]"
+    echo "  sudo e5-capture save <e2|e3|e4|all> [duration] [capture-filter]"
+    echo "  e5-capture list"
+    exit 1
+fi
+
+ACTION="$1"
+shift
+
+case "$ACTION" in
+    list)
+        cmd_list
+        ;;
+    live)
+        if [ $# -lt 1 ]; then echo "Falta la zona."; exit 1; fi
+        cmd_live "$@"
+        ;;
+    save)
+        if [ $# -lt 1 ]; then echo "Falta la zona."; exit 1; fi
+        cmd_save "$@"
+        ;;
+    *)
+        echo "Acción inválida. Usa live, save o list."
+        exit 1
+        ;;
+esac

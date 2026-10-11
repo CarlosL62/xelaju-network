@@ -1,0 +1,114 @@
+#!/usr/sbin/nft -f
+# ==============================================================================
+# XelajuNetwork - Firewall Perimetral E5 (nftables)
+# ==============================================================================
+
+# Limpiar SOLO la tabla del proyecto para coexistencia segura con el host
+table inet xelaju_e5
+delete table inet xelaju_e5
+
+table inet xelaju_e5 {
+    chain input {
+        type filter hook input priority filter; policy drop;
+
+        # 1. Higiene y Estado (Conntrack)
+        iifname "lo" accept
+        ct state established,related accept
+        ct state invalid drop
+
+        # 2. Administración temporal (fuera de la arquitectura final)
+        iifname "wlo1" tcp dport 22 accept
+
+        # 3. ICMP diagnóstico limitado desde peers directos del proyecto
+        ip saddr { 192.168.81.1, 192.168.82.2, 192.168.83.2 } icmp type echo-request limit rate 5/second accept
+    }
+
+    chain forward {
+        type filter hook forward priority filter; policy drop;
+
+        # 1. Conntrack
+        ct state established,related accept
+        ct state invalid drop
+
+
+        # ==========================================
+        # FLUJO B: VPN WIREGUARD (DOBLE PASADA)
+        # ==========================================
+
+        # Pasada 1 (Cifrada): Internet -> E3 -> E5 -> E4
+        iifname "eno2" oifname "enxf8e43ba69459" ip daddr 192.168.83.2 udp dport 51820 accept
+
+        # Pasada 2 (Descifrada): VPN -> LAN
+        # Log representativo para accesos VPN-ADMIN permitidos
+        iifname "enxf8e43ba69459" oifname "enxc0eac367f731" ip saddr 10.200.10.0/24 ct state new limit rate 5/minute log prefix "[E5-ACCEPT-VPNADMIN] "
+        # VPN-ADMIN a VLANs 10, 20, 30, 40 (Acceso total autorizado)
+        iifname "enxf8e43ba69459" oifname "enxc0eac367f731" ip saddr 10.200.10.0/24 ip daddr { 192.168.10.0/24, 192.168.20.0/24, 192.168.30.0/24, 192.168.40.0/24 } accept
+
+        # VPN-USERS a VLAN 20 (USERS - Permitido)
+        iifname "enxf8e43ba69459" oifname "enxc0eac367f731" ip saddr 10.200.20.0/24 ip daddr 192.168.20.0/24 accept
+        # VPN-USERS a VLAN 30 (SERVERS - Permitido solo a SRV-INTRA01 HTTP/HTTPS)
+        iifname "enxf8e43ba69459" oifname "enxc0eac367f731" ip saddr 10.200.20.0/24 ip daddr 192.168.30.20 tcp dport { 80, 443 } accept
+
+        # Full Tunnel VPN hacia Internet (Salida VPN hacia Multi-WAN)
+        iifname "enxf8e43ba69459" oifname "eno2" ip saddr { 10.200.10.0/24, 10.200.20.0/24 } accept
+
+        # ==========================================
+        # ZABBIX MONITORING (AGENTES HACIA E1-ZBX)
+        # ==========================================
+
+        # E3 -> Zabbix
+        iifname "eno2" oifname "enxc0eac367f731" ip saddr 192.168.81.1 ip daddr 192.168.30.10 tcp dport 10051 accept
+
+        # E4 -> Zabbix
+        iifname "enxf8e43ba69459" oifname "enxc0eac367f731" ip saddr 192.168.83.2 ip daddr 192.168.30.10 tcp dport 10051 accept
+
+        # ==========================================
+        # FLUJO C: DMZ Y NGROK
+        # ==========================================
+
+        # DMZ/E4 hacia Internet (Túnel ngrok y dependencias DNS)
+        iifname "enxf8e43ba69459" oifname "eno2" ip saddr { 192.168.83.2, 172.16.10.0/24 } tcp dport 443 accept
+        iifname "enxf8e43ba69459" oifname "eno2" ip saddr { 192.168.83.2, 172.16.10.0/24 } udp dport 53 accept
+        iifname "enxf8e43ba69459" oifname "eno2" ip saddr { 192.168.83.2, 172.16.10.0/24 } tcp dport 53 accept
+
+        # CRL de ngrok (HTTP): solo el host E4
+        iifname "enxf8e43ba69459" oifname "eno2" ip saddr 192.168.83.2 tcp dport 80 accept
+
+        # LAN hacia DMZ (WEB01)
+        iifname "enxc0eac367f731" oifname "enxf8e43ba69459" ip saddr { 192.168.10.0/24, 192.168.20.0/24, 192.168.30.0/24, 192.168.40.0/24 } ip daddr 172.16.10.10 tcp dport 8081 accept
+
+        # ==========================================
+        # FLUJO A: SALIDA LAN Y SQUID HACIA INTERNET
+        # ==========================================
+
+        # Salida del proxy Squid (E2 host) hacia Internet
+        iifname "enxc0eac367f731" oifname "eno2" ip saddr 192.168.82.2 tcp dport 80 accept
+        iifname "enxc0eac367f731" oifname "eno2" ip saddr 192.168.82.2 udp dport 53 accept
+        iifname "enxc0eac367f731" oifname "eno2" ip saddr 192.168.82.2 tcp dport 53 accept
+
+        # Salida directa LAN hacia Internet (Tráfico bypass de Squid)
+        iifname "enxc0eac367f731" oifname "eno2" ip saddr { 192.168.10.0/24, 192.168.20.0/24, 192.168.30.0/24, 192.168.40.0/24 } tcp dport 443 accept
+        iifname "enxc0eac367f731" oifname "eno2" ip saddr { 192.168.10.0/24, 192.168.20.0/24, 192.168.30.0/24, 192.168.40.0/24 } udp dport { 53, 123 } accept
+        iifname "enxc0eac367f731" oifname "eno2" ip saddr { 192.168.10.0/24, 192.168.20.0/24, 192.168.30.0/24, 192.168.40.0/24 } tcp dport 53 accept
+
+        # ====================================================
+        # LOGGING Y BLOQUEOS EXPLÍCITOS DE ZONAS
+        # ====================================================
+
+        # VPN-USERS -> ADMIN (Bloqueado con log explícito)
+        iifname "enxf8e43ba69459" oifname "enxc0eac367f731" ip saddr 10.200.20.0/24 ip daddr 192.168.10.0/24 log prefix "[E5-DENY-VPNUSERS2ADMIN] " limit rate 5/minute drop
+
+        # DMZ -> LAN (Bloqueado con log)
+        iifname "enxf8e43ba69459" oifname "enxc0eac367f731" ip saddr 172.16.10.0/24 log prefix "[E5-DENY-DMZ2LAN] " limit rate 5/minute drop
+
+        # Internet -> DMZ (Bloqueado con log)
+        iifname "eno2" oifname "enxf8e43ba69459" ip daddr 172.16.10.0/24 log prefix "[E5-DENY-INET2DMZ] " limit rate 5/minute drop
+
+        # Internet -> LAN (Bloqueado con log)
+        iifname "eno2" oifname "enxc0eac367f731" log prefix "[E5-DENY-INET2LAN] " limit rate 5/minute drop
+    }
+
+    chain output {
+        type filter hook output priority filter; policy accept;
+    }
+}

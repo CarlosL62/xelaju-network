@@ -1,0 +1,11 @@
+# Muestra real de detecciones registradas por Suricata 7.0.10 en E5
+# Archivo de origen: /var/log/suricata/fast.log
+# Regla activada: local.rules -> SID 1000001 (ICMP Echo Request detectado)
+# Tráfico capturado desde el enlace de E4 (enxf8e43ba69459) saliendo hacia el perímetro externo:
+
+10/03/2026-22:10:20.981367  [**] [1:1000001:1] ICMP Echo Request detectado [**] [Classification: (null)] [Priority: 3] {ICMP} 192.168.83.2:8 -> 68.183.90.120:0
+10/03/2026-22:10:20.981384  [**] [1:1000001:1] ICMP Echo Request detectado [**] [Classification: (null)] [Priority: 3] {ICMP} 192.168.83.2:8 -> 176.58.88.183:0
+10/03/2026-22:10:20.981397  [**] [1:1000001:1] ICMP Echo Request detectado [**] [Classification: (null)] [Priority: 3] {ICMP} 192.168.83.2:8 -> 102.67.167.37:0
+10/03/2026-22:10:20.981365  [**] [1:1000001:1] ICMP Echo Request detectado [**] [Classification: (null)] [Priority: 3] {ICMP} 192.168.83.2:8 -> 192.73.240.121:0
+10/03/2026-22:10:20.981394  [**] [1:1000001:1] ICMP Echo Request detectado [**] [Classification: (null)] [Priority: 3] {ICMP} 192.168.83.2:8 -> 192.73.243.229:0
+10/03/2026-22:10:20.981380  [**] [1:1000001:1] ICMP Echo Request detectado [**] [Classification: (null)] [Priority: 3] {ICMP} 192.168.83.2:8 -> 95.217.2.165:0

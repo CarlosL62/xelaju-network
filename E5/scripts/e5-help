@@ -1,0 +1,169 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# e5-help - Referencia rápida para operación y defensa académica de E5
+# Proyecto: XelajuNetwork (Nodo E5)
+# ==============================================================================
+set -euo pipefail
+
+show_general() {
+    cat << 'END'
+======================================================================
+    ARQUITECTURA E5 - VISTA GENERAL
+======================================================================
+E3 / Internet:
+- interfaz E5: eno2
+- E5: 192.168.81.2/30
+- peer E3: 192.168.81.1
+
+E2 / LAN:
+- interfaz E5: enxc0eac367f731
+- E5: 192.168.82.1/30
+- peer E2: 192.168.82.2
+
+E4 / VPN-DMZ:
+- interfaz E5: enxf8e43ba69459
+- E5: 192.168.83.1/30
+- peer E4: 192.168.83.2
+
+Default:
+192.168.81.1 vía E3.
+
+* Nota: Wi-Fi wlo1 es exclusivamente administración temporal/local y
+  NO forma parte de la arquitectura final ni debe ser default.
+
+ARCHIVOS IMPORTANTES:
+Network:    /etc/network/interfaces
+Forwarding: /etc/sysctl.d/99-e5-forwarding.conf
+Firewall:   /etc/nftables.conf, /etc/nftables.d/e5-firewall.nft
+Suricata:   /etc/suricata/suricata.yaml, /etc/suricata/rules/local.rules
+Alertas:    /var/log/suricata/fast.log
+Capturas:   /var/log/xelaju-e5/captures/
+Backups:    /var/backups/xelaju-e5/
+
+RESPONSABILIDADES E5:
+[+] firewall perimetral
+[+] nftables
+[+] Suricata IDS
+[+] inspección/captura perimetral
+
+NO E5 (Delegado):
+[-] NAT (E3)
+[-] Multi-WAN (E3)
+[-] routing inter-VLAN (E1)
+[-] Squid (E2)
+[-] WireGuard/DMZ (E4)
+
+Para más ayuda, ejecuta:
+  e5-help network
+  e5-help firewall
+  e5-help ids
+  e5-help capture
+======================================================================
+END
+}
+
+show_network() {
+    cat << 'END'
+======================================================================
+    AYUDA: RED (Network)
+======================================================================
+La configuración de red de E5 es estática y reside en:
+  /etc/network/interfaces
+
+El reenvío de paquetes (ip_forward) está habilitado por:
+  /etc/sysctl.d/99-e5-forwarding.conf
+
+Comandos Linux nativos recomendados:
+  ip -br -c link show      # Ver interfaces
+  ip -br -c addr show      # Ver IPs
+  ip -c route show         # Ver tabla de rutas (la default debe ser via 192.168.81.1 dev eno2)
+  ip -c neigh show         # Ver caché ARP (vecinos)
+======================================================================
+END
+}
+
+show_firewall() {
+    cat << 'END'
+======================================================================
+    AYUDA: FIREWALL (nftables)
+======================================================================
+La configuración principal y operativa del firewall está en:
+  /etc/nftables.d/e5-firewall.nft
+
+Flujo de trabajo para aplicar cambios:
+  1. editar:    sudo nano /etc/nftables.d/e5-firewall.nft
+  2. validar:   sudo nft -c -f /etc/nftables.d/e5-firewall.nft
+  3. backup:    Generar un volcado de la tabla 'inet xelaju_e5' activa hacia /var/backups/xelaju-e5/firewall/
+  4. aplicar:   sudo nft -f /etc/nftables.d/e5-firewall.nft
+  5. chequear:  sudo nft list table inet xelaju_e5
+
+La herramienta envolvente (wrapper) 'e5-firewall' automatiza este flujo
+para tu comodidad (status, check, show, backup, apply).
+
+Comandos Linux nativos debajo del wrapper:
+  nft -c -f <file>         # Revisa sintaxis sin aplicar
+  nft list ruleset         # Muestra las reglas cargadas activamente
+  systemctl status nftables # Verifica si el servicio arrancó bien
+======================================================================
+END
+}
+
+show_ids() {
+    cat << 'END'
+======================================================================
+    AYUDA: IDS (Suricata)
+======================================================================
+Archivos principales:
+  /etc/suricata/suricata.yaml    # Configuración global y AF_PACKET interfaces
+  /etc/suricata/rules/local.rules # Reglas locales personalizadas
+  /var/log/suricata/fast.log     # Alertas rápidas generadas
+
+Flujo de trabajo para aplicar reglas:
+  1. editar:    sudo nano /etc/suricata/rules/local.rules
+  2. check:     sudo suricata -T -c /etc/suricata/suricata.yaml
+  3. restart:   sudo systemctl restart suricata
+  4. test:      Generar tráfico que dispare la regla.
+  5. alerts:    tail -f /var/log/suricata/fast.log
+
+La herramienta 'e5-ids' (status, check, rules, alerts, restart)
+facilita el proceso de validar sintaxis antes de reiniciar.
+======================================================================
+END
+}
+
+show_capture() {
+    cat << 'END'
+======================================================================
+    AYUDA: CAPTURA (TShark)
+======================================================================
+Archivos de evidencia y capturas guardadas en:
+  /var/log/xelaju-e5/captures/
+
+La herramienta 'e5-capture' abstrae la selección de interfaz.
+Zonas disponibles para interceptar:
+  e3  (eno2)
+  e2  (enxc0eac367f731)
+  e4  (enxf8e43ba69459)
+  all (las tres interfaces)
+
+Comandos Linux nativos detrás del wrapper:
+  tshark -i <interface> -f "<capture_filter>"
+
+Diferencia clave al depurar y analizar:
+  Capture filter (-f en tshark, BPF): Filtra los paquetes ANTES de grabarlos.
+    Ej: "tcp port 80" o "host 192.168.10.10"
+  Display filter (-Y en tshark): Filtra paquetes para visualizar o procesar,
+    usando la sintaxis potente de Wireshark.
+    Ej: "http.request" o "tcp.flags.syn==1"
+======================================================================
+END
+}
+
+case "${1:-}" in
+    network)  show_network ;;
+    firewall) show_firewall ;;
+    ids)      show_ids ;;
+    capture)  show_capture ;;
+    "")       show_general ;;
+    *)        echo "Uso: e5-help [network|firewall|ids|capture]"; exit 1 ;;
+esac

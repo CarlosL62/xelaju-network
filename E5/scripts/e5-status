@@ -1,0 +1,185 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# e5-status - Dashboard operativo compacto para E5
+# Proyecto: XelajuNetwork (Nodo E5)
+# ==============================================================================
+set -euo pipefail
+
+# Definición de colores
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+echo -e "${CYAN}======================================================================${NC}"
+echo -e "${CYAN}    ESTADO OPERATIVO - E5 (FIREWALL + IDS)                            ${NC}"
+echo -e "${CYAN}======================================================================${NC}"
+
+GENERAL_STATUS="OK"
+LIMITED_CHECKS=false
+
+# 1. HOST Y SISTEMA
+echo -e "\n${YELLOW}[1] HOST Y SISTEMA${NC}"
+HOSTNAME=$(hostname 2>/dev/null || echo "N/A")
+UPTIME=$(uptime -p 2>/dev/null || echo "N/A")
+DATE_TIME=$(date "+%Y-%m-%d %H:%M:%S" 2>/dev/null || echo "N/A")
+LOAD_AVG=$(cat /proc/loadavg 2>/dev/null | awk '{print $1", "$2", "$3}' || echo "N/A")
+RAM_INFO=$(free -m 2>/dev/null | awk '/Mem:/ {print $3"MB / "$2"MB"}' || echo "N/A")
+DISK_INFO=$(df -h / 2>/dev/null | awk 'NR==2 {print $3" / "$2" ("$5")"}' || echo "N/A")
+
+TEMP="N/A"
+if [ -f /sys/class/thermal/thermal_zone0/temp ]; then
+    TEMP_RAW=$(cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null || echo "0")
+    if [ "$TEMP_RAW" -gt 0 ]; then
+        TEMP=$(echo "scale=1; $TEMP_RAW / 1000" | bc 2>/dev/null || echo "N/A")
+        TEMP="${TEMP}°C"
+    fi
+fi
+
+echo "  Hostname      : $HOSTNAME"
+echo "  Fecha y Hora  : $DATE_TIME"
+echo "  Uptime        : $UPTIME"
+echo "  Carga (Load)  : $LOAD_AVG"
+echo "  Memoria RAM   : $RAM_INFO"
+echo "  Disco Raíz    : $DISK_INFO"
+echo "  Temperatura   : $TEMP"
+
+# 2. ENERGÍA
+echo -e "\n${YELLOW}[2] ENERGÍA${NC}"
+BAT_PERCENT="N/A"
+BAT_STATUS="N/A"
+AC_STATUS="N/A"
+
+BAT_DIR=$(ls -d /sys/class/power_supply/BAT* 2>/dev/null | head -n 1 || true)
+if [ -n "$BAT_DIR" ] && [ -d "$BAT_DIR" ]; then
+    BAT_PERCENT=$(cat "$BAT_DIR/capacity" 2>/dev/null || echo "N/A")
+    if [ "$BAT_PERCENT" != "N/A" ]; then BAT_PERCENT="${BAT_PERCENT}%"; fi
+    BAT_STATUS=$(cat "$BAT_DIR/status" 2>/dev/null || echo "N/A")
+fi
+
+AC_DIR=$(ls -d /sys/class/power_supply/AC* 2>/dev/null | head -n 1 || true)
+if [ -n "$AC_DIR" ] && [ -d "$AC_DIR" ]; then
+    AC_ONLINE=$(cat "$AC_DIR/online" 2>/dev/null || echo "N/A")
+    if [ "$AC_ONLINE" == "1" ]; then
+        AC_STATUS="Conectado"
+    elif [ "$AC_ONLINE" == "0" ]; then
+        AC_STATUS="Desconectado"
+    fi
+fi
+
+echo "  Batería       : $BAT_PERCENT"
+echo "  Estado Bat.   : $BAT_STATUS"
+echo "  Aliment. CA   : $AC_STATUS"
+
+# 3. INTERFACES E IP
+echo -e "\n${YELLOW}[3] INTERFACES E IP${NC}"
+INTERFACES=("eno2" "enxc0eac367f731" "enxf8e43ba69459")
+EXPECTED_IPS=("192.168.81.2" "192.168.82.1" "192.168.83.1")
+LABELS=("E3 (Internet)" "E2 (LAN)     " "E4 (VPN-DMZ) ")
+
+for i in "${!INTERFACES[@]}"; do
+    IFACE="${INTERFACES[$i]}"
+    EXPECTED_IP="${EXPECTED_IPS[$i]}"
+    LABEL="${LABELS[$i]}"
+
+    if ip link show "$IFACE" &>/dev/null; then
+        OPERSTATE=$(cat /sys/class/net/"$IFACE"/operstate 2>/dev/null || echo "UNKNOWN")
+        IP_ADDR=$(ip -4 -br addr show "$IFACE" 2>/dev/null | awk '{print $3}' | cut -d/ -f1 || true)
+
+        if [ "$OPERSTATE" == "up" ]; then
+            STATE_COLOR="${GREEN}"
+        else
+            STATE_COLOR="${RED}"
+            GENERAL_STATUS="DEGRADED"
+        fi
+
+        if [ "$IP_ADDR" == "$EXPECTED_IP" ]; then
+            IP_COLOR="${GREEN}"
+        else
+            IP_COLOR="${RED}"
+            GENERAL_STATUS="DEGRADED"
+        fi
+
+        printf "  %-13s | %-15s | Estado: ${STATE_COLOR}%-8s${NC} | IP: ${IP_COLOR}%-15s${NC} (Esperada: %s)\n" "$LABEL" "$IFACE" "$OPERSTATE" "${IP_ADDR:-NINGUNA}" "$EXPECTED_IP"
+    else
+        printf "  %-13s | %-15s | ${RED}NO EXISTE${NC}\n" "$LABEL" "$IFACE"
+        GENERAL_STATUS="DEGRADED"
+    fi
+done
+
+# 4. Enrutamiento y Forwarding
+echo -e "\n${YELLOW}[4] ENRUTAMIENTO Y FORWARDING${NC}"
+
+# Ruta por defecto
+DEFAULT_ROUTE=$(ip route show default 2>/dev/null || true)
+if echo "$DEFAULT_ROUTE" | grep -q "192.168.81.1 dev eno2"; then
+    echo -e "  Default Route : ${GREEN}OK${NC} ($DEFAULT_ROUTE)"
+else
+    echo -e "  Default Route : ${RED}FALTA O INCORRECTA${NC} (Debe ser via 192.168.81.1 dev eno2)"
+    GENERAL_STATUS="DEGRADED"
+fi
+
+# IP Forward
+IP_FORWARD=$(cat /proc/sys/net/ipv4/ip_forward 2>/dev/null || echo "UNKNOWN")
+if [ "$IP_FORWARD" == "1" ]; then
+    echo -e "  IP Forward    : ${GREEN}OK${NC} (1)"
+else
+    echo -e "  IP Forward    : ${RED}DESHABILITADO${NC} ($IP_FORWARD)"
+    GENERAL_STATUS="DEGRADED"
+fi
+
+# 5. Servicios y Seguridad
+echo -e "\n${YELLOW}[5] SERVICIOS Y SEGURIDAD${NC}"
+
+check_service() {
+    local srv=$1
+    if systemctl is-active --quiet "$srv"; then
+        echo -e "  $srv \t: ${GREEN}ACTIVE${NC}"
+    else
+        echo -e "  $srv \t: ${RED}INACTIVE/FAILED${NC}"
+        GENERAL_STATUS="DEGRADED"
+    fi
+}
+
+check_service "nftables"
+check_service "suricata"
+
+if [ "$EUID" -eq 0 ]; then
+    if nft list table inet xelaju_e5 >/dev/null 2>&1; then
+        echo -e "  Tabla xelaju_e5 : ${GREEN}CARGADA${NC}"
+    else
+        echo -e "  Tabla xelaju_e5 : ${RED}NO CARGADA${NC}"
+        GENERAL_STATUS="DEGRADED"
+    fi
+else
+    echo -e "  Tabla xelaju_e5 : ${YELLOW}NO VERIFICADA (requiere sudo)${NC}"
+    LIMITED_CHECKS=true
+fi
+
+
+# Verificamos TShark (si está instalado)
+if command -v tshark &>/dev/null; then
+    TSHARK_VER=$(tshark --version 2>/dev/null | head -n1 | awk '{print $3}' | sed 's/\.$//')
+    echo -e "  tshark \t: ${GREEN}INSTALADO${NC} (v$TSHARK_VER)"
+else
+    echo -e "  tshark \t: ${RED}NO INSTALADO${NC}"
+fi
+
+# 6. Caché de Vecinos
+echo -e "\n${YELLOW}[6] CACHÉ DE VECINOS (Solo Información)${NC}"
+ip -4 neigh show | grep -E "(eno2|enxc0eac367f731|enxf8e43ba69459)" | while read -r line; do
+    echo "  $line"
+done || echo "  (Sin registros relevantes)"
+
+echo -e "\n${CYAN}======================================================================${NC}"
+if [ "$GENERAL_STATUS" == "OK" ]; then
+    if [ "$LIMITED_CHECKS" == "true" ]; then
+        echo -e "ESTADO GLOBAL: ${GREEN}OK - VERIFICACIÓN PARCIAL (usa sudo e5-status)${NC}"
+    else
+        echo -e "ESTADO GLOBAL: ${GREEN}OK - LISTO PARA OPERAR${NC}"
+    fi
+else
+    echo -e "ESTADO GLOBAL: ${RED}DEGRADED - REVISAR ADVERTENCIAS${NC}"
+fi
+echo -e "${CYAN}======================================================================${NC}"
