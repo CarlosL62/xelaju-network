@@ -153,18 +153,19 @@ Los scripts funcionales de E5 están ubicados en [`scripts/`](./scripts/) (insta
 ## 9. Resultados Realmente Verificados
 
 - **Persistencia en Reinicio:** Configuración de interfaces fijas, rutas estáticas, forwarding en kernel (`sysctl`), servicio `nftables` y servicio `suricata` verificados y persistentes tras reinicio físico del host Debian.
+- **Conectividad e Inspección E2 ↔ E5:** Enlace L2/L3 verificado en sesión del 11/10/2026 con resolución ARP mutua, 8 paquetes ICMP (0% pérdida) y 8 alertas en Suricata `SID 1000001` sobre `enxc0eac367f731`. Este resultado corresponde a dicha sesión empírica.
 - **Tránsito Perimetral E4 ↔ Internet:** Tránsito verificado retornando respuestas HTTP 301 con simetría hacia Internet a través de E5 y E3.
 - **Túnel ngrok Operativo:** Establecimiento exitoso del túnel ngrok desde E4 a través de E5 tras la habilitación de la regla de excepción CRL (TCP 80).
-- **Detección en Motor IDS:** Detección de paquetes ICMP generados desde E4 verificada en motor Suricata con registro de alerta `SID 1000001` en `/var/log/suricata/fast.log`.
+- **Detección en Motor IDS:** Detección de paquetes ICMP verificada en motor Suricata con registro de alerta `SID 1000001` en `/var/log/suricata/fast.log` para las interfaces perimetrales.
 
 ---
 
 ## 10. Evidencias Disponibles y Pendientes
 
 - **Disponibles:**
+  - Lote oficial de evidencias técnicas en [`evidencias/`](./evidencias/) (6 registros de log formateados y 7 capturas PCAP auténticas, verificados con SHA-256).
   - Registros de alertas en `/var/log/suricata/fast.log` (muestra representativa en [`evidencias/logs/suricata-alert-sample.log`](./evidencias/logs/suricata-alert-sample.log)).
-  - Capturas perimetrales PCAP almacenadas en `/var/log/xelaju-e5/captures/capture_all_20261010_204538.pcap`.
+  - Capturas perimetrales PCAP almacenadas localmente en `/var/log/xelaju-e5/captures/`.
 - **Pendientes:**
-  - **Comprobación presencial del enlace E2 ↔ E5:** Resolver la falta de respuesta ARP/ICMP en el enlace `192.168.82.0/30` verificando físicamente el puerto de switch o cruzamiento de cable.
   - **Prueba integral simultánea:** Ejecución concurrente de los flujos A, B y C con todos los 5 nodos interconectados y encendidos simultáneamente en el laboratorio.
-  - **Capturas visuales:** Capturas de pantalla gráficas de Wireshark GUI y terminales de alertas para el informe final impreso.
+  - **Capturas visuales:** Capturas de pantalla gráficas de Wireshark GUI y terminales de alertas a partir de los PCAP para el informe académico impreso.

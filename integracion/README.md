@@ -57,14 +57,14 @@ Para validar el sistema completo, se establecen tres flujos de tráfico de extre
 | **E3 ↔ E1 (Monitoreo)** | E3 -> E5 -> E2 -> E1 | **Verificado bilateralmente** | Script `setup_zabbix.sh` en E3 enviando métricas de ISPs hacia el servidor Zabbix en E1 (`192.168.30.10:10051`). |
 | **E4 ↔ E5/E3 (Salida DMZ)** | E4 -> E5 -> E3 | **Verificado bilateralmente** | Tránsito saliente de E4 hacia Internet y establecimiento exitoso de túnel ngrok verificado con respuesta simétrica. |
 | **E1 ↔ E2 (LAN / Proxy)** | E1 -> E2 | **Verificado bilateralmente** | Redirección de tráfico HTTP y aplicación de listas de bloqueo de Squid según VLAN. |
-| **E2 ↔ E5 (Enlace Perimetral)** | E2 <-> E5 | **Pendiente de Comprobación** | Enlace `192.168.82.0/30` con falta de respuesta ARP/ICMP entre equipos físicos. Hipótesis técnica de cruce de cable o puerto de switch pendiente de verificar en laboratorio. |
+| **E2 ↔ E5 (Enlace Perimetral)** | E2 <-> E5 | **Verificado bilateralmente (Sesión 11/10)** | Enlace `192.168.82.0/30` verificado en sesión del 11 de octubre de 2026 con resolución ARP mutua, 8 paquetes ICMP (0% pérdida) y alertas IDS Suricata en `enxc0eac367f731`. Se precisa que este resultado corresponde a dicha sesión empírica y no presupone persistencia con interfaces físicas desconectadas. |
 | **Prueba Integral Simultánea** | E1 + E2 + E3 + E4 + E5 | **Pendiente** | Prueba concurrente de los Flujos A, B y C con todos los 5 equipos encendidos e interconectados al mismo tiempo en el laboratorio. |
 
 ---
 
 ## 4. Guía de Ejecución de Pruebas Integrales
 
-Una vez solventada la comprobación física del enlace E2 ↔ E5:
+Para la verificación integral conjunta entre los cinco componentes:
 
 1. **Verificación de Enrutamiento Base:**
    - Realizar pings de extremo a extremo entre interfaces de tránsito consecutivas (`192.168.81.x`, `192.168.82.x`, `192.168.83.x`, `192.168.84.x`).
