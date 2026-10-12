@@ -14,7 +14,7 @@ if [[ -f "${ENV_FILE}" ]]; then
 fi
 
 WAN1_IFACE="${WAN1_IFACE:-wlp3s0}"
-WAN2_IFACE="${WAN2_IFACE:-usb0}"
+WAN2_IFACE="${WAN2_IFACE:-wlxc006c3bf886a}"
 
 TABLE_ISP1="${TABLE_ISP1:-100}"
 TABLE_ISP2="${TABLE_ISP2:-200}"
@@ -52,11 +52,11 @@ cleanup() {
 trap cleanup SIGINT SIGTERM
 
 # buscando la antena wifi usb con IP asignada
-detect_active_usb() {
+detect_active_wifi_usb() {
     local iface
-    iface=$(ip -br addr | awk '$1 ~ /^(usb|enx|wlx)/ && $3 ~ /\./ {print $1}' | head -n1)
+    iface=$(ip -br addr | awk '$1 ~ /^wlx/ && $3 ~ /\./ {print $1}' | head -n1)
     if [[ -z "${iface}" ]]; then
-        iface=$(ip -br link | awk '$1 ~ /^(usb|enx|wlx)/ && $2 ~ /(UP|UNKNOWN)/ {print $1}' | head -n1)
+        iface=$(ip -br link | awk '$1 ~ /^wlx/ && $2 ~ /(UP|UNKNOWN)/ {print $1}' | head -n1)
     fi
     echo "${iface}"
 }
@@ -156,8 +156,8 @@ while true; do
         CURRENT_ISP1="DOWN"
     fi
 
-    # validacion de si se desconecto o cambio la interfaz USB se detecta dinamicamente
-    DYNAMIC_USB=$(detect_active_usb)
+    # validacion de si la antena wifi usb cambio de nombre se detecta dinamicamente
+    DYNAMIC_USB=$(detect_active_wifi_usb)
     if [[ -n "${DYNAMIC_USB}" ]]; then
         WAN2_IFACE="${DYNAMIC_USB}"
     fi

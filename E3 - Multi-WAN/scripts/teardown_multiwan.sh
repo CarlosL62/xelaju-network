@@ -49,9 +49,4 @@ ip route del 10.200.10.0/24 2>/dev/null || true
 ip route del 10.200.20.0/24 2>/dev/null || true
 ip route del 172.16.10.0/24 2>/dev/null || true
 
-# si se levanto una interfaz virtual veth se elimina
-if ip link show "${LAN_IFACE}" &>/dev/null && [[ "${LAN_IFACE}" == veth* ]]; then
-    ip link del "${LAN_IFACE}" 2>/dev/null || true
-fi
-
 echo "[OK] Configuracion eliminada"

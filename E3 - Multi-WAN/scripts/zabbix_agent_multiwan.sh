@@ -14,7 +14,7 @@ if [[ -f "${ENV_FILE}" ]]; then
 fi
 
 WAN1_IFACE="${WAN1_IFACE:-wlp3s0}"
-WAN2_IFACE="${WAN2_IFACE:-usb0}"
+WAN2_IFACE="${WAN2_IFACE:-wlxc006c3bf886a}"
 ZABBIX_SERVER_IP="192.168.30.10"
 
 ZABBIX_CONF_OUT="${CONFIG_DIR}/zabbix_multiwan.conf"

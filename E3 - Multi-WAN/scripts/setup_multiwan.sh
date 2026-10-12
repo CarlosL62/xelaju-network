@@ -17,16 +17,16 @@ fi
 
 # Valores por defecto por si no se definieron en el .env
 WAN1_IFACE="${WAN1_IFACE:-wlp3s0}"
-WAN2_IFACE="${WAN2_IFACE:-usb0}"
-LAN_IFACE="${LAN_IFACE:-veth-e3-e5}"
+WAN2_IFACE="${WAN2_IFACE:-wlxc006c3bf886a}"
+LAN_IFACE="${LAN_IFACE:-eno1}"
 LAN_IP="${LAN_IP:-192.168.81.1/30}"
 E5_GATEWAY="${E5_GATEWAY:-192.168.81.2}"
 
 # buscando si hay alguna antena wifi usb
 if ! ip link show "${WAN2_IFACE}" &>/dev/null; then
-    DETECTED_USB=$(ip -br link | awk '$1 ~ /^(usb|enx|wlx)/ {print $1}' | head -n1)
+    DETECTED_USB=$(ip -br link | awk '$1 ~ /^wlx/ {print $1}' | head -n1)
     if [[ -n "${DETECTED_USB}" ]]; then
-        echo "[INFO] Auto-detecte interfaz USB activa: ${DETECTED_USB}"
+        echo "[INFO] Auto-detecte antena WiFi USB activa: ${DETECTED_USB}"
         WAN2_IFACE="${DETECTED_USB}"
     fi
 fi
@@ -102,13 +102,6 @@ if ip link show "${LAN_IFACE}" &>/dev/null; then
     if ! ip -4 addr show dev "${LAN_IFACE}" | grep -q "${LAN_IP%/*}"; then
         ip addr add "${LAN_IP}" dev "${LAN_IFACE}" || true
     fi
-elif [[ "${LAN_IFACE}" == veth* ]]; then
-    echo "[INFO] Creando enlace virtual de prueba ${LAN_IFACE}..."
-    ip link add "${LAN_IFACE}" type veth peer name veth-client || true
-    ip addr add "${LAN_IP}" dev "${LAN_IFACE}" || true
-    ip link set "${LAN_IFACE}" up || true
-    ip addr add "${E5_GATEWAY}/30" dev veth-client || true
-    ip link set veth-client up || true
 fi
 
 # - configurando las tablas 100 y 200 con su respectivo default gateway y ruta local conectada
@@ -158,8 +151,8 @@ ip rule add fwmark "${FWMARK_ISP2}" table "${TABLE_ISP2}" pref "${IP_RULE_PRIO_I
 
 # configurando la estructura de nftables: marcado de paquetes, balanceo con conntrack y NAT perimetral
 echo "[5/7] Configurando nftables (marcado PBR, balanceo y NAT)..."
-if [[ "${WAN2_IFACE}" == enx* || "${WAN2_IFACE}" == usb* || "${WAN2_IFACE}" == wlx* ]]; then
-    WAN2_NFT_MATCH="{ \"enx*\", \"usb*\", \"wlx*\" }"
+if [[ "${WAN2_IFACE}" == wlx* ]]; then
+    WAN2_NFT_MATCH="\"wlx*\""
 else
     WAN2_NFT_MATCH="\"${WAN2_IFACE}\""
 fi
@@ -214,8 +207,8 @@ EOF
 if ip link show "${WAN1_IFACE}" &>/dev/null; then
     nft add rule inet xelaju_multiwan postrouting_nat oifname "${WAN1_IFACE}" masquerade
 fi
-if [[ "${WAN2_IFACE}" == enx* || "${WAN2_IFACE}" == usb* || "${WAN2_IFACE}" == wlx* ]]; then
-    nft add rule inet xelaju_multiwan postrouting_nat oifname { "enx*", "usb*", "wlx*" } masquerade
+if [[ "${WAN2_IFACE}" == wlx* ]]; then
+    nft add rule inet xelaju_multiwan postrouting_nat oifname "wlx*" masquerade
 elif ip link show "${WAN2_IFACE}" &>/dev/null; then
     nft add rule inet xelaju_multiwan postrouting_nat oifname "${WAN2_IFACE}" masquerade
 fi

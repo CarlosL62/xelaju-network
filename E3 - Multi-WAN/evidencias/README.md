@@ -35,7 +35,7 @@ E3 - Multi-WAN/evidencias/
 | **E4** | Tablas de enrutamiento 100 y 200 | `ip route show table 100`<br>`ip route show table 200` | Tabla 100: `default via 192.168.1.1` + `scope link src`<br>Tabla 200: `default via 172.20.10.1` + `scope link src` | ✅ Tablas 100 y 200 aisladas |
 | **E5** | Retorno simétrico hacia subredes internas | `ip route show table main \| grep onlink` | Rutas `onlink` hacia VLANs 10, 20, 30, 40, DMZ y VPNs vía `192.168.81.2` | ✅ Retorno por firewall E5 |
 | **E6** | Mangle, balanceo y DNAT en `nftables` | `sudo nft list table inet xelaju_multiwan` | DNAT UDP 51820 hacia E4, persistencia `ct mark`, balanceo 50/50 `numgen random mod 2` | ✅ Estado de conexiones preservado |
-| **E7** | Masquerade perimetral centralizado | `sudo nft list chain inet xelaju_multiwan postrouting_nat` | Reglas SNAT / Masquerade en `wlp3s0` y `{ "enx*", "usb*", "wlx*" }` | ✅ Único punto de NAT del sistema |
+| **E7** | Masquerade perimetral centralizado | `sudo nft list chain inet xelaju_multiwan postrouting_nat` | Reglas SNAT / Masquerade en `wlp3s0` y `wlx*` | ✅ Único punto de NAT del sistema |
 | **E8** | Conmutación por falla del Demonio de Failover | [`logs/failover.log`](./logs/failover.log) | Conmutación atómica de reglas `ip rule` ante caída en $\le 2$ s y recuperación automática | ✅ Tolerancia a fallos demostrada |
 | **E9** | Conectividad punto a punto con Firewall E5 | `ping -c 3 192.168.81.2` | 3 paquetes transmitidos, 3 recibidos, 0% packet loss, RTT avg = 0.31 ms | ✅ Enlace físico /30 verificado |
 | **E10** | Traza extremo a extremo cruzando los 5 nodos | `traceroute -T -p 443 -s 192.168.20.1 1.1.1.1` | R1 (`192.168.84.1`) → E2 → E5 (`192.168.82.1`) → E3 (`192.168.81.1`) → ISP → Cloudflare | ✅ Cadena de 5 nodos operativa |

@@ -13,7 +13,7 @@
 El nodo **E3** opera como el **Router de Borde (Edge Router)** y la única pasarela física hacia Internet de toda la arquitectura empresarial de XelajuNetwork. Sus responsabilidades primarias son:
 1. **Conectividad Multi-WAN Redundante:** Proporcionar dos salidas independientes a Internet:
    - **ISP 1:** Interfaz Wi-Fi de alta velocidad (`wlp3s0`).
-   - **ISP 2:** Adaptador Wi-Fi USB de 2.4 GHz (`wlxc006c3bf886a` - TP-Link TL-WN722N) o celular Android conectado por cable USB (`enx*` / `usb*`) con auto-detección dinámica.
+   - **ISP 2:** Adaptador Wi-Fi USB de 2.4 GHz (`wlxc006c3bf886a` - TP-Link TL-WN722N) con auto-detección dinámica.
 2. **Enrutamiento Basado en Políticas (PBR):** Dirigir flujos de tráfico específicos hacia un ISP determinado según la IP de origen, puerto y protocolo, configurado mediante un archivo externo legible (`config/policies.txt`).
 3. **Balanceo de Carga con Persistencia (`ct mark`):** Distribuir equitativamente (50% / 50%) el tráfico no sujeto a políticas especiales mediante `nftables` y connection tracking para garantizar que conexiones TCP persistentes (como HTTPS o túneles ngrok) no se rompan por asimetría.
 4. **Alta Disponibilidad y Failover Automático:** Monitoreo activo de salud de cada enlace mediante sondas ICMP continuas cada 2 segundos. En caso de caída de un ISP, el tráfico se conmuta automáticamente hacia el enlace sobreviviente mediante reasignación atómica de reglas `ip rule`, retornando al estado original (failback) de forma transparente al recuperarse.
@@ -151,7 +151,7 @@ table inet xelaju_multiwan {
 
         # Conexiones entrantes por WAN (DNAT WireGuard desde Internet hacia E4):
         iifname "wlp3s0" ct mark set 0x100 accept
-        iifname { "enx*", "usb*", "wlx*" } ct mark set 0x200 accept
+        iifname "wlx*" ct mark set 0x200 accept
 
         # Evaluar politicas PBR de policies.txt (solo para paquetes originados en LAN)
         iifname "eno1" jump pbr_mangle
@@ -183,7 +183,7 @@ table inet xelaju_multiwan {
     chain postrouting_nat {
         type nat hook postrouting priority srcnat; policy accept;
         oifname "wlp3s0" masquerade
-        oifname { "enx*", "usb*", "wlx*" } masquerade
+        oifname "wlx*" masquerade
     }
 }
 ```

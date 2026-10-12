@@ -45,7 +45,7 @@ E3 - Multi-WAN/
 | Dispositivo / Interfaz | Zona / Enlace | Dirección IP | Prefijo | Gateway / Peer | Rol Operativo |
 |---|---|:---:|:---:|:---:|---|
 | `wlp3s0` | WAN 1 (ISP 1) | `192.168.1.10` | `/24` | `192.168.1.1` | Proveedor Principal (Fibra / Wi-Fi alta velocidad) |
-| `wlxc006c3bf886a` | WAN 2 (ISP 2) | `172.20.10.2` | `/28` | `172.20.10.1` | Proveedor Secundario (Wi-Fi USB / Móvil) |
+| `wlxc006c3bf886a` | WAN 2 (ISP 2) | `172.20.10.2` | `/28` | `172.20.10.1` | Proveedor Secundario (Adaptador Wi-Fi USB) |
 | `eno1` | Enlace E3–E5 | `192.168.81.1` | `/30` | `192.168.81.2` (E5) | Tránsito perimetral hacia Firewall E5 |
 | `lo` | Localhost | `127.0.0.1` | `/8` | N/A | Interfaz Loopback |
 
@@ -121,7 +121,7 @@ Configuración administrada atómicamente en la tabla `inet xelaju_multiwan`:
 4. **SNAT / Masquerade Perimetral Único:**  
    E3 es el único punto donde se realiza traducción de direcciones hacia Internet mediante reglas dinámicas en `postrouting_nat`:
    - `oifname "wlp3s0" masquerade`
-   - `oifname { "enx*", "usb*", "wlx*" } masquerade`
+   - `oifname "wlx*" masquerade`
 
 ---
 
