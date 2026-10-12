@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Demonio de monitoreo continuo y conmutacion automatica (failover y failback)
+# demonio de monitoreo continuo y conmutacion automatica (failover y failback)
 
 set -e
 
@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_DIR="${SCRIPT_DIR}/../config"
 ENV_FILE="${CONFIG_DIR}/multiwan.env"
 
-# Leemos las variables del entorno
+# leyendo las variables del env
 if [[ -f "${ENV_FILE}" ]]; then
     # shellcheck source=/dev/null
     source "${ENV_FILE}"
@@ -30,14 +30,14 @@ CHECK_TARGET_2="${CHECK_TARGET_2:-1.1.1.1}"
 
 LOG_FILE="${LOG_FILE:-${SCRIPT_DIR}/../failover.log}"
 
-# Funcion auxiliar para escribir en pantalla y al log al mismo tiempo
+# funcion para escribir en pantalla y al log
 log() {
     local msg="[$(date '+%Y-%m-%d %H:%M:%S')] $1"
     echo "$msg"
     echo "$msg" >> "${LOG_FILE}"
 }
 
-# Si detenemos el script con Ctrl+C dejamos las reglas originales en su lugar
+# Si se detiene el script inesperadamente se deja las reglas originales en su lugar
 cleanup() {
     log "[INFO] Deteniendo demonio de failover... Restaurando reglas por defecto."
     ip rule del fwmark "${FWMARK_ISP1}" table "${TABLE_ISP2}" pref "${IP_RULE_PRIO_ISP1}" 2>/dev/null || true
@@ -51,7 +51,7 @@ cleanup() {
 
 trap cleanup SIGINT SIGTERM
 
-# Busca cualquier interfaz de antena wifi usb o tethering usb que tenga IP asignada
+# buscando la antena wifi usb con IP asignada
 detect_active_usb() {
     local iface
     iface=$(ip -br addr | awk '$1 ~ /^(usb|enx|wlx)/ && $3 ~ /\./ {print $1}' | head -n1)
@@ -61,7 +61,7 @@ detect_active_usb() {
     echo "${iface}"
 }
 
-# Se asegura de que la tabla de rutas tenga el gateway y la ruta conectada con scope link src
+# asegurando que la tabla de rutas tenga el gateway y la ruta conectada con scope link src
 ensure_table_route() {
     local iface="$1"
     local table="$2"
@@ -77,7 +77,7 @@ ensure_table_route() {
     fi
 
     if [[ -n "${gw}" ]]; then
-        # Aseguramos la ruta por defecto en la tabla asignada
+        # asegurando la ruta por defecto en la tabla asignada
         ip route replace default via "${gw}" dev "${iface}" table "${table}" 2>/dev/null || true
         # Aseguramos la ruta de la red conectada local para que responda directo por L2
         local link_route
@@ -91,14 +91,14 @@ ensure_table_route() {
                 ip route replace "${net_prefix}" dev "${iface}" scope link src "${src_ip}" table "${table}" 2>/dev/null || true
             fi
         fi
-        # Nos aseguramos de que nftables tenga la regla de masquerade para esta interfaz
+        # verificando de que nftables tenga la regla de masquerade para esta interfaz
         if ! nft list chain inet xelaju_multiwan postrouting_nat 2>/dev/null | grep -q "oifname \"${iface}\" masquerade"; then
             nft add rule inet xelaju_multiwan postrouting_nat oifname "${iface}" masquerade 2>/dev/null || true
         fi
     fi
 }
 
-# Mantiene activas las rutas de retorno hacia las subredes internas detras de E5
+# funcion que mantiene activas las rutas de retorno hacia las subredes internas detras de E5
 ensure_internal_routes() {
     local lan_iface="${LAN_IFACE:-eno1}"
     local e5_gw="${E5_GATEWAY:-192.168.81.2}"
@@ -119,36 +119,36 @@ ensure_internal_routes() {
     fi
 }
 
-# Envia un ping rapido con timeout de 1s para verificar si el enlace tiene salida
+# metodo que envia un ping con timeout de 1s para verificar si el enlace tiene salida
 check_link() {
     local iface="$1"
     if [[ -z "${iface}" ]] || ! ip link show "${iface}" 2>/dev/null | grep -q "UP"; then
         return 1
     fi
 
-    # Probamos con el primer objetivo DNS
+    # probando con el primero (8.8.8.8) DNS
     if ping -I "${iface}" -c 1 -W "${FAILOVER_TIMEOUT_SEC}" "${CHECK_TARGET_1}" >/dev/null 2>&1; then
         return 0
     fi
-    # Si falla probamos con el segundo objetivo de respaldo
+    # si falla el primero se prueba con el segundo (1.1.1.1)
     if ping -I "${iface}" -c 1 -W "${FAILOVER_TIMEOUT_SEC}" "${CHECK_TARGET_2}" >/dev/null 2>&1; then
         return 0
     fi
     return 1
 }
 
-# Estados iniciales antes del bucle
+# definieendo estados iniciales antes del bucle
 ISP1_STATUS="UNKNOWN"
 ISP2_STATUS="UNKNOWN"
 
 log "[INICIO] Demonio de failover activo monitoreando ISP1 (${WAN1_IFACE}) y ISP2 (${WAN2_IFACE}) cada ${FAILOVER_INTERVAL_SEC}s"
 
-# Bucle principal que corre indefinidamente
+# while principal que corre 
 while true; do
-    # Aseguramos que las rutas de retorno a la red interna sigan vivas
+    # asegurando que las rutas de retorno a la red interna sigan vivas
     ensure_internal_routes
 
-    # Chequeamos la salud de ISP1
+    # chequeando la salud de ISP1
     if check_link "${WAN1_IFACE}"; then
         CURRENT_ISP1="UP"
         ensure_table_route "${WAN1_IFACE}" "${TABLE_ISP1}"
@@ -156,13 +156,13 @@ while true; do
         CURRENT_ISP1="DOWN"
     fi
 
-    # Por si se desconecto o cambio la interfaz USB detectamos dinamicamente
+    # validacion de si se desconecto o cambio la interfaz USB se detecta dinamicamente
     DYNAMIC_USB=$(detect_active_usb)
     if [[ -n "${DYNAMIC_USB}" ]]; then
         WAN2_IFACE="${DYNAMIC_USB}"
     fi
 
-    # Chequeamos la salud de ISP2
+    # Chequechequeandoamos la salud de ISP2
     if check_link "${WAN2_IFACE}"; then
         CURRENT_ISP2="UP"
         ensure_table_route "${WAN2_IFACE}" "${TABLE_ISP2}"
@@ -170,7 +170,7 @@ while true; do
         CURRENT_ISP2="DOWN"
     fi
 
-    # Si cambio el estado de ISP1 ejecutamos conmutacion o recuperacion
+    # si cambio el estado (UP o DOWN) de ISP1 se conmuta o recupera
     if [[ "${CURRENT_ISP1}" != "${ISP1_STATUS}" ]]; then
         if [[ "${CURRENT_ISP1}" == "DOWN" ]]; then
             log "[ALERTA] ISP1 (${WAN1_IFACE}) HA CAIDO! Ejecutando failover hacia ISP2 (Tabla ${TABLE_ISP2})..."
@@ -184,7 +184,7 @@ while true; do
         ISP1_STATUS="${CURRENT_ISP1}"
     fi
 
-    # Si cambio el estado de ISP2 ejecutamos conmutacion o recuperacion
+    # Si cambio el estado (UP o DOWN) de ISP2 se conmuta o recupera
     if [[ "${CURRENT_ISP2}" != "${ISP2_STATUS}" ]]; then
         if [[ "${CURRENT_ISP2}" == "DOWN" ]]; then
             log "[ALERTA] ISP2 (${WAN2_IFACE}) HA CAIDO! Ejecutando failover hacia ISP1 (Tabla ${TABLE_ISP1})..."

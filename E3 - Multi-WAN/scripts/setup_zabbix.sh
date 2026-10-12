@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Script para instalar y dejar corriendo el agente de Zabbix en E3
+# Script para instalar y dejar corriendo el agente de Zabbix en e3
 
 set -e
 
@@ -9,7 +9,7 @@ SRC_CONF="${CONFIG_DIR}/zabbix_multiwan.conf"
 ZABBIX_MAIN_CONF="/etc/zabbix/zabbix_agentd.conf"
 ZABBIX_DROPIN_DIR="/etc/zabbix/zabbix_agentd.conf.d"
 
-# Ocupamos permisos de root para editar la configuracion de zabbix
+# varificandp permisos de root para editar la configuracion de zabbix
 if [[ $EUID -ne 0 ]]; then
     echo "[ERROR] Este script debe ejecutarse con sudo: sudo ./scripts/setup_zabbix.sh" >&2
     exit 1

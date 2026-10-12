@@ -19,7 +19,7 @@ DEFAULT_LOG_FILE = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "../policies_applied.log")
 )
 
-# Marcas fijas definidas para cada proveedor
+# maracs fijas definidas para cada proveedor
 MARK_ISP1 = "0x100"
 MARK_ISP2 = "0x200"
 
@@ -28,7 +28,7 @@ FAMILY = "inet"
 MANGLE_CHAIN = "pbr_mangle"
 
 def log_message(logfile, msg):
-    # Escribe el mensaje con marca de tiempo en consola y en el archivo de log
+    # escribe el mensaje con marca de tiempo en consola y en el archivo de log
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     formatted = f"[{timestamp}] {msg}"
     print(formatted)
@@ -39,7 +39,7 @@ def log_message(logfile, msg):
         print(f"Advertencia: no se pudo escribir en log: {e}", file=sys.stderr)
 
 def parse_policies_file(filepath):
-    # Parsea lineas con formato: <ip_origen>, [<puertos>], <protocolo>, <ISP_salida>
+    # parsea las lineas con formato: <ip_origen>, [<puertos>], <protocolo>, <ISP_salida>
     if not os.path.isfile(filepath):
         raise FileNotFoundError(f"Archivo de politicas no encontrado: {filepath}")
 
@@ -51,7 +51,7 @@ def parse_policies_file(filepath):
             if not line or line.startswith("#"):
                 continue
 
-            # Extraemos los campos mediante expresion regular
+            # extratendo los campos con una expresion regular
             match = re.match(
                 r"^([^,]+),\s*\[([^\]]+)\],\s*([A-Za-z]+),\s*([A-Za-z0-9_]+)$",
                 line
@@ -65,14 +65,14 @@ def parse_policies_file(filepath):
             proto_str = match.group(3).strip().upper()
             isp_str = match.group(4).strip().upper()
 
-            # Validamos que la IP o mascara sea valida
+            # validando que la IP o mascara sea valida
             try:
                 ip_net = ipaddress.ip_network(src_str, strict=False)
             except ValueError:
                 print(f"[WARN] Linea {line_no} IP/red invalida: '{src_str}'", file=sys.stderr)
                 continue
 
-            # Validamos que los puertos esten en rango de 1 a 65535
+            # validando que los puertos esten en rango de 1 a 65535
             ports = []
             for p in ports_str.split(","):
                 p_clean = p.strip()
@@ -89,16 +89,17 @@ def parse_policies_file(filepath):
                 print(f"[WARN] Linea {line_no} sin puertos validos, ignorando.", file=sys.stderr)
                 continue
 
-            # Validamos protocolo
+            # validando protocolo
             if proto_str not in ["TCP", "UDP", "ANY"]:
                 print(f"[WARN] Linea {line_no} protocolo desconocido: {proto_str}", file=sys.stderr)
                 continue
 
-            # Validamos ISP
+            # validando ISP
             if isp_str not in ["ISP1", "ISP2"]:
                 print(f"[WARN] Linea {line_no} ISP desconocido: {isp_str} (esperado ISP1 o ISP2)", file=sys.stderr)
                 continue
 
+            # agregando la politica parseada a la lista
             policies.append({
                 "line": line_no,
                 "src": str(ip_net),
@@ -112,9 +113,9 @@ def parse_policies_file(filepath):
     return policies
 
 def generate_nft_commands(policies):
-    # Genera la lista de comandos para poblar la cadena pbr_mangle en nftables
+    # metodo que genera la lista de comandos para poblar la cadena pbr_mangle en nftables
     cmds = []
-    # Vaciamos la cadena pbr_mangle antes de inyectar las reglas nuevas
+    # vaciando la cadena pbr_mangle antes de poner las reglas nuevas
     cmds.append(f"flush chain {FAMILY} {TABLE_NAME} {MANGLE_CHAIN}")
 
     for pol in policies:
@@ -134,7 +135,7 @@ def generate_nft_commands(policies):
             )
             cmds.append(rule)
         elif proto == "any":
-            # Si el protocolo es ANY generamos una regla para TCP y otra para UDP
+            # si el protocolo es ANY generamos una regla para TCP y otra para UDP
             for p in ["tcp", "udp"]:
                 rule = (
                     f"add rule {FAMILY} {TABLE_NAME} {MANGLE_CHAIN} "
@@ -146,7 +147,7 @@ def generate_nft_commands(policies):
     return cmds
 
 def apply_nft_commands(cmds, logfile):
-    # Ejecuta el lote de comandos de nftables de un solo viaje mediante stdin
+    # ejecuta los comandos generados de nftables
     batch = "\n".join(cmds) + "\n"
     res = subprocess.run(["nft", "-f", "-"], input=batch, text=True, capture_output=True)
     if res.returncode != 0:
@@ -180,7 +181,7 @@ def main():
         print("---------------------------------------------\n")
         return
 
-    # Verificamos si la tabla y cadena existen antes de insertar las reglas
+    # verificando si la tabla y cadena existen antes de insertar las reglas
     check_table = subprocess.run(["nft", "list", "chain", FAMILY, TABLE_NAME, MANGLE_CHAIN],
                                  capture_output=True, text=True)
     if check_table.returncode != 0:

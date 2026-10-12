@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_DIR="${SCRIPT_DIR}/../config"
 ENV_FILE="${CONFIG_DIR}/multiwan.env"
 
-# Cargamos las variables del .env si existe el archivo
+# cargando las variables del .env si existe el archivo
 if [[ -f "${ENV_FILE}" ]]; then
     # shellcheck source=/dev/null
     source "${ENV_FILE}"
@@ -22,7 +22,7 @@ LAN_IFACE="${LAN_IFACE:-veth-e3-e5}"
 LAN_IP="${LAN_IP:-192.168.81.1/30}"
 E5_GATEWAY="${E5_GATEWAY:-192.168.81.2}"
 
-# Buscamos si hay alguna antena wifi usb o celular conectado si no esta la fija
+# buscando si hay alguna antena wifi usb
 if ! ip link show "${WAN2_IFACE}" &>/dev/null; then
     DETECTED_USB=$(ip -br link | awk '$1 ~ /^(usb|enx|wlx)/ {print $1}' | head -n1)
     if [[ -n "${DETECTED_USB}" ]]; then
@@ -37,19 +37,19 @@ TABLE_ISP2="${TABLE_ISP2:-200}"
 FWMARK_ISP1="${FWMARK_ISP1:-0x100}"
 FWMARK_ISP2="${FWMARK_ISP2:-0x200}"
 
-# Prioridades de ip rule para que queden arriba de tailscale pero antes de main
+# Prioridades de ip rule para que queden antes de main
 IP_RULE_PRIO_ISP1="${IP_RULE_PRIO_ISP1:-10100}"
 IP_RULE_PRIO_ISP2="${IP_RULE_PRIO_ISP2:-10200}"
 
 echo "--- Inicializando Router Multi-WAN (E3) ---"
 
-# 1. Necesitamos permisos de root para tocar rutas y nftables
+# - Validando permisos de root para tocar rutas y nftables
 if [[ $EUID -ne 0 ]]; then
    echo "[ERROR] Este script debe ejecutarse con sudo." >&2
    exit 1
 fi
 
-# 2. Activamos el reenvio de paquetes y ponemos rp_filter en modo laxo para no botar paquetes asimetricos
+# - Activando el reenvio de paquetes y poniendo rp_filter en modo laxo para no botar paquetes asimetricos
 echo "[1/7] Habilitando reenvio IPv4 y rp_filter laxo..."
 sysctl -w net.ipv4.ip_forward=1 >/dev/null
 sysctl -w net.ipv4.conf.all.rp_filter=2 >/dev/null
@@ -62,7 +62,8 @@ if ip link show "${WAN2_IFACE}" &>/dev/null; then
     sysctl -w "net.ipv4.conf.${WAN2_IFACE}.rp_filter=2" >/dev/null
 fi
 
-# 3. Buscamos el gateway de cada proveedor para armar las rutas default
+# - buscando el gateway de cada proveedor para armar las rutas default
+# -> gw ISP1
 echo "[2/7] Detectando gateways de los proveedores..."
 WAN1_GW=$(ip route show dev "${WAN1_IFACE}" 2>/dev/null | grep default | awk '{print $3}' | head -n1)
 if [[ -z "${WAN1_GW}" ]]; then
@@ -72,6 +73,7 @@ if [[ -z "${WAN1_GW}" ]]; then
     fi
 fi
 
+# -> gw ISP2
 WAN2_GW=$(ip route show dev "${WAN2_IFACE}" 2>/dev/null | grep default | awk '{print $3}' | head -n1)
 if [[ -z "${WAN2_GW}" ]]; then
     WAN2_IP=$(ip -4 addr show dev "${WAN2_IFACE}" 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | head -n1)
@@ -83,7 +85,7 @@ fi
 echo "  -> ISP1 (${WAN1_IFACE}): Gateway=${WAN1_GW:-No detectado aun}"
 echo "  -> ISP2 (${WAN2_IFACE}): Gateway=${WAN2_GW:-No detectado aun}"
 
-# Aseguramos que la interfaz hacia E5 tenga su IP configurada
+# verificando que la interfaz hacia E5 tenga su IP configurada
 if ip link show "${LAN_IFACE}" &>/dev/null; then
     echo "[INFO] Verificando IP ${LAN_IP} en interfaz LAN ${LAN_IFACE}..."
     if command -v nmcli &>/dev/null; then
@@ -109,7 +111,7 @@ elif [[ "${LAN_IFACE}" == veth* ]]; then
     ip link set veth-client up || true
 fi
 
-# 4. Configuramos las tablas 100 y 200 con su respectivo default gateway y ruta local conectada
+# - configurando las tablas 100 y 200 con su respectivo default gateway y ruta local conectada
 echo "[3/7] Configurando tablas de rutas ${TABLE_ISP1} (ISP1) y ${TABLE_ISP2} (ISP2)..."
 if [[ -n "${WAN1_GW}" ]]; then
     ip route flush table "${TABLE_ISP1}" || true
@@ -145,16 +147,16 @@ if [[ -n "${WAN2_GW}" ]]; then
     fi
 fi
 
-# 5. Creamos las reglas de ip rule para que los paquetes marcados busquen su tabla asignada
+# - Creando las reglas de ip rule para que los paquetes marcados busquen su tabla asignada
 echo "[4/7] Configurando reglas de enrutamiento ip rule..."
-# Borramos reglas previas para que el script sea idempotente y no duplique nada
+# borrando reglas previas para que el script sea idempotente y no duplique nada
 while ip rule del fwmark "${FWMARK_ISP1}" 2>/dev/null; do :; done
 while ip rule del fwmark "${FWMARK_ISP2}" 2>/dev/null; do :; done
 
 ip rule add fwmark "${FWMARK_ISP1}" table "${TABLE_ISP1}" pref "${IP_RULE_PRIO_ISP1}"
 ip rule add fwmark "${FWMARK_ISP2}" table "${TABLE_ISP2}" pref "${IP_RULE_PRIO_ISP2}"
 
-# 6. Estructura de nftables: marcado de paquetes, balanceo con conntrack y NAT perimetral
+# configurando la estructura de nftables: marcado de paquetes, balanceo con conntrack y NAT perimetral
 echo "[5/7] Configurando nftables (marcado PBR, balanceo y NAT)..."
 if [[ "${WAN2_IFACE}" == enx* || "${WAN2_IFACE}" == usb* || "${WAN2_IFACE}" == wlx* ]]; then
     WAN2_NFT_MATCH="{ \"enx*\", \"usb*\", \"wlx*\" }"
@@ -162,6 +164,7 @@ else
     WAN2_NFT_MATCH="\"${WAN2_IFACE}\""
 fi
 
+# definiendo la tabla de nftables para PBR y NAT
 cat << EOF | nft -f -
 table inet xelaju_multiwan {
     chain pbr_mangle {
@@ -207,7 +210,7 @@ table inet xelaju_multiwan {
 }
 EOF
 
-# Reglas de masquerade para salir a internet (somos el unico nodo con NAT hacia afuera)
+# Reglas de masquerade para salir a internet
 if ip link show "${WAN1_IFACE}" &>/dev/null; then
     nft add rule inet xelaju_multiwan postrouting_nat oifname "${WAN1_IFACE}" masquerade
 fi
@@ -217,30 +220,30 @@ elif ip link show "${WAN2_IFACE}" &>/dev/null; then
     nft add rule inet xelaju_multiwan postrouting_nat oifname "${WAN2_IFACE}" masquerade
 fi
 
-# 7. Rutas de retorno hacia todas las subredes internas detras de E5 (onlink para que el kernel las acepte directo)
+# 7- definiendo rutas de retorno hacia todas las subredes internas
 echo "[6/7] Agregando rutas de retorno hacia redes internas (via ${E5_GATEWAY})..."
 if ip link show "${LAN_IFACE}" &>/dev/null; then
     for tbl in "main" "${TABLE_ISP1}" "${TABLE_ISP2}"; do
-        # Enlace punto a punto local con E5
+        # ennlace con e5
         ip route replace 192.168.81.0/30 dev "${LAN_IFACE}" table "${tbl}" || true
-        # Subredes LAN de usuarios y administracion (E1)
+        # subredes LAN de usuarios y administracion de e1
         ip route replace 192.168.10.0/24 via "${E5_GATEWAY}" dev "${LAN_IFACE}" onlink table "${tbl}" || true
         ip route replace 192.168.20.0/24 via "${E5_GATEWAY}" dev "${LAN_IFACE}" onlink table "${tbl}" || true
         ip route replace 192.168.30.0/24 via "${E5_GATEWAY}" dev "${LAN_IFACE}" onlink table "${tbl}" || true
         ip route replace 192.168.40.0/24 via "${E5_GATEWAY}" dev "${LAN_IFACE}" onlink table "${tbl}" || true
-        # Enlaces de transito entre routers
+        # enlaces de transito entre "routers"
         ip route replace 192.168.82.0/30 via "${E5_GATEWAY}" dev "${LAN_IFACE}" onlink table "${tbl}" || true
         ip route replace 192.168.83.0/30 via "${E5_GATEWAY}" dev "${LAN_IFACE}" onlink table "${tbl}" || true
         ip route replace 192.168.84.0/30 via "${E5_GATEWAY}" dev "${LAN_IFACE}" onlink table "${tbl}" || true
-        # Redes de WireGuard VPN y DMZ (E4)
+        # redes de wireguard VPN y DMZ de E4
         ip route replace 10.200.10.0/24 via "${E5_GATEWAY}" dev "${LAN_IFACE}" onlink table "${tbl}" || true
         ip route replace 10.200.20.0/24 via "${E5_GATEWAY}" dev "${LAN_IFACE}" onlink table "${tbl}" || true
         ip route replace 172.16.10.0/24 via "${E5_GATEWAY}" dev "${LAN_IFACE}" onlink table "${tbl}" || true
     done
 fi
 
-# 8. Ejecutamos el compilador en Python para cargar las reglas de policies.txt
+# - ejecuntando el compilador en python para cargar las reglas de policies.txt
 echo "[7/7] Aplicando politicas desde policies.txt..."
 python3 "${SCRIPT_DIR}/apply_policies.py" --config "${POLICIES_FILE}"
 
-echo "[OK] Router Multi-WAN configurado y listo."
+echo "[OK] Router e3 configurado"

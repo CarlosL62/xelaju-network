@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_DIR="${SCRIPT_DIR}/../config"
 ENV_FILE="${CONFIG_DIR}/multiwan.env"
 
-# Leemos las variables del entorno
+# leyendo las variables del env
 if [[ -f "${ENV_FILE}" ]]; then
     # shellcheck source=/dev/null
     source "${ENV_FILE}"
@@ -19,7 +19,7 @@ ZABBIX_SERVER_IP="192.168.30.10"
 
 ZABBIX_CONF_OUT="${CONFIG_DIR}/zabbix_multiwan.conf"
 
-# Muestra en consola los bytes y paquetes actuales de cada interfaz leyendo /sys/class/net
+# metodo que muestra en consola los bytes y paquetes actuales de cada interfaz leyendo /sys/class/net
 print_metrics() {
     echo "--- Metricas de Trafico Multi-WAN (kernel /sys/class/net) ---"
     
@@ -48,7 +48,7 @@ print_metrics() {
     fi
 }
 
-# Genera el archivo zabbix_multiwan.conf con las interfaces y la IP del servidor de E1
+# generando el archivo zabbix_multiwan.conf con las interfaces y la IP del servidor de E1
 generate_zabbix_config() {
     cat << EOF > "${ZABBIX_CONF_OUT}"
 # Configuracion para que el agente de Zabbix reporte las metricas de E3 al servidor en E1

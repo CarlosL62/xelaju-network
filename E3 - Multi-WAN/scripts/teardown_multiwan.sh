@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Script para limpiar y desmontar todas las reglas de Multi-WAN en E3
+# Script para limpiar y desmontar todas las reglas de Multi-WAN en e3
 
 set -e
 
@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_DIR="${SCRIPT_DIR}/../config"
 ENV_FILE="${CONFIG_DIR}/multiwan.env"
 
-# Leemos las variables si existe el archivo de entorno
+# leyendo las variables si existe el archivo env
 if [[ -f "${ENV_FILE}" ]]; then
     # shellcheck source=/dev/null
     source "${ENV_FILE}"
@@ -18,7 +18,7 @@ TABLE_ISP2="${TABLE_ISP2:-200}"
 FWMARK_ISP1="${FWMARK_ISP1:-0x100}"
 FWMARK_ISP2="${FWMARK_ISP2:-0x200}"
 
-# Ocupamos permisos de root para desarmar rutas y tablas
+# verficando permisos de root para desarmar rutas y tablas
 if [[ $EUID -ne 0 ]]; then
    echo "[ERROR] Este script debe ejecutarse con sudo." >&2
    exit 1
@@ -26,18 +26,18 @@ fi
 
 echo "Limpiando configuracion de Multi-WAN..."
 
-# 1. Eliminamos las reglas de ip rule asociadas a nuestras marcas
+# eliminando las reglas de ip rule asociadas a las marcas
 while ip rule del fwmark "${FWMARK_ISP1}" 2>/dev/null; do :; done
 while ip rule del fwmark "${FWMARK_ISP2}" 2>/dev/null; do :; done
 
-# 2. Vaciamos las tablas de enrutamiento 100 y 200
+# vaciando las tablas de enrutamiento 100 y 200
 ip route flush table "${TABLE_ISP1}" 2>/dev/null || true
 ip route flush table "${TABLE_ISP2}" 2>/dev/null || true
 
-# 3. Borramos la tabla de nftables para quitar marcas y NAT
+# borrandola tabla de nftables para quitar marcas y NAT
 nft delete table inet xelaju_multiwan 2>/dev/null || true
 
-# 4. Quitamos las rutas hacia las subredes internas detras de E5
+# quitando las rutas hacia las subredes internas
 ip route del 192.168.10.0/24 2>/dev/null || true
 ip route del 192.168.20.0/24 2>/dev/null || true
 ip route del 192.168.30.0/24 2>/dev/null || true
@@ -49,9 +49,9 @@ ip route del 10.200.10.0/24 2>/dev/null || true
 ip route del 10.200.20.0/24 2>/dev/null || true
 ip route del 172.16.10.0/24 2>/dev/null || true
 
-# 5. Si habiamos levantado una interfaz virtual veth la eliminamos
+# si se levanto una interfaz virtual veth se elimina
 if ip link show "${LAN_IFACE}" &>/dev/null && [[ "${LAN_IFACE}" == veth* ]]; then
     ip link del "${LAN_IFACE}" 2>/dev/null || true
 fi
 
-echo "[OK] Configuracion de Multi-WAN eliminada limpiamente."
+echo "[OK] Configuracion eliminada"
