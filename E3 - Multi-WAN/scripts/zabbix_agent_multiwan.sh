@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
-# ==============================================================================
-# XelajuNetwork - Estudiante 3: Multi-WAN, Balanceo y Failover
-# Script de integracion de metricas de trafico WAN con Zabbix (Estudiante 1)
-# ==============================================================================
+# Script auxiliar para consultar y generar metricas de trafico WAN para Zabbix
 
 set -e
 
@@ -10,6 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_DIR="${SCRIPT_DIR}/../config"
 ENV_FILE="${CONFIG_DIR}/multiwan.env"
 
+# Leemos las variables del entorno
 if [[ -f "${ENV_FILE}" ]]; then
     # shellcheck source=/dev/null
     source "${ENV_FILE}"
@@ -21,10 +19,9 @@ ZABBIX_SERVER_IP="192.168.30.10"
 
 ZABBIX_CONF_OUT="${CONFIG_DIR}/zabbix_multiwan.conf"
 
+# Muestra en consola los bytes y paquetes actuales de cada interfaz leyendo /sys/class/net
 print_metrics() {
-    echo "=============================================================================="
-    echo "    Metricas de Trafico Multi-WAN (Lectura en tiempo real de /sys/class/net) "
-    echo "=============================================================================="
+    echo "--- Metricas de Trafico Multi-WAN (kernel /sys/class/net) ---"
     
     echo "ISP 1 (${WAN1_IFACE}):"
     if [[ -d "/sys/class/net/${WAN1_IFACE}/statistics" ]]; then
@@ -47,29 +44,25 @@ print_metrics() {
         echo "  - Inbound (Entrada) : ${RX_B} bytes (${RX_P} paquetes)"
         echo "  - Outbound (Salida) : ${TX_B} bytes (${TX_P} paquetes)"
     else
-        echo "  - Interfaz ${WAN2_IFACE} no presente o inactiva (se activara al conectar Android)."
+        echo "  - Interfaz ${WAN2_IFACE} no presente o inactiva."
     fi
-    echo "=============================================================================="
 }
 
+# Genera el archivo zabbix_multiwan.conf con las interfaces y la IP del servidor de E1
 generate_zabbix_config() {
     cat << EOF > "${ZABBIX_CONF_OUT}"
-# ==============================================================================
-# XelajuNetwork - Zabbix Agent UserParameter para Multi-WAN (Estudiante 3)
-# Servidor Zabbix destino: ${ZABBIX_SERVER_IP} (VLAN 30 - Servidores)
-# ==============================================================================
-
+# Configuracion para que el agente de Zabbix reporte las metricas de E3 al servidor en E1
 Server=${ZABBIX_SERVER_IP}
 ServerActive=${ZABBIX_SERVER_IP}
 Hostname=Router-MultiWAN-E3
 
-# Metricas ISP 1 (${WAN1_IFACE})
+# Metricas del enlace principal ISP1 leidas directamente desde el kernel
 UserParameter=multiwan.isp1.rx_bytes,cat /sys/class/net/${WAN1_IFACE}/statistics/rx_bytes 2>/dev/null || echo 0
 UserParameter=multiwan.isp1.tx_bytes,cat /sys/class/net/${WAN1_IFACE}/statistics/tx_bytes 2>/dev/null || echo 0
 UserParameter=multiwan.isp1.rx_packets,cat /sys/class/net/${WAN1_IFACE}/statistics/rx_packets 2>/dev/null || echo 0
 UserParameter=multiwan.isp1.tx_packets,cat /sys/class/net/${WAN1_IFACE}/statistics/tx_packets 2>/dev/null || echo 0
 
-# Metricas ISP 2 (${WAN2_IFACE})
+# Metricas del enlace secundario ISP2
 UserParameter=multiwan.isp2.rx_bytes,cat /sys/class/net/${WAN2_IFACE}/statistics/rx_bytes 2>/dev/null || echo 0
 UserParameter=multiwan.isp2.tx_bytes,cat /sys/class/net/${WAN2_IFACE}/statistics/tx_bytes 2>/dev/null || echo 0
 UserParameter=multiwan.isp2.rx_packets,cat /sys/class/net/${WAN2_IFACE}/statistics/rx_packets 2>/dev/null || echo 0
@@ -77,9 +70,6 @@ UserParameter=multiwan.isp2.tx_packets,cat /sys/class/net/${WAN2_IFACE}/statisti
 EOF
 
     echo "[INFO] Archivo de configuracion para Zabbix generado en: ${ZABBIX_CONF_OUT}"
-    echo "Para activarlo en el sistema cuando Zabbix este listo:"
-    echo "  sudo cp \"${ZABBIX_CONF_OUT}\" /etc/zabbix/zabbix_agentd.d/multiwan.conf"
-    echo "  sudo systemctl restart zabbix-agent"
 }
 
 case "$1" in

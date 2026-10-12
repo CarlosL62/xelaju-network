@@ -1,39 +1,28 @@
-# ==============================================================================
-# XelajuNetwork - Politicas de Salida Multi-WAN (Estudiante 3)
-# ==============================================================================
-# Formato:
-# <ip_origen_o_subred>, [<puertos>], <protocolo>, <ISP_salida>
-#
-# Comentarios inician con '#'
-# Espacios en blanco alrededor de campos son ignorados
-# Protocolos soportados: TCP, UDP, ANY
-# ISP_salida soportados: ISP1, ISP2
-# ==============================================================================
+# Politicas de enrutamiento PBR para dirigir trafico por ISP1 o ISP2
+# Formato: <origen>, [<puertos>], <protocolo>, <ISP>
 
-# Politicas especificas para equipos de usuarios (VLAN 20)
-# PC-USER01 (192.168.20.10) y PC-USER02 (192.168.20.11)
+# Equipos de usuarios en VLAN 20 (web por ISP1 y consultas DNS por ISP2)
 192.168.20.10, [80, 443], TCP, ISP1
 192.168.20.10, [53], UDP, ISP2
 192.168.20.11, [80, 443], TCP, ISP1
 192.168.20.11, [53], UDP, ISP2
 
-# Politicas para rangos de VLAN
-# USERS (VLAN 20: 192.168.20.0/24)
+# Politica general para todo el segmento de usuarios de la VLAN 20
 192.168.20.0/24, [80, 443], TCP, ISP1
 192.168.20.0/24, [53], UDP, ISP2
 
-# ADMIN (VLAN 10: 192.168.10.0/24)
+# Trafico seguro de administracion de la VLAN 10 por el enlace principal
 192.168.10.0/24, [443], TCP, ISP1
 
-# SERVERS (VLAN 30: 192.168.30.0/24)
+# Trafico seguro de servidores de la VLAN 30 por el enlace secundario
 192.168.30.0/24, [443], TCP, ISP2
 
-# VPN Clientes (Full Tunnel hacia Internet)
+# Clientes que entran por VPN WireGuard y quieren salir a internet
 10.200.10.0/24, [443], TCP, ISP1
 10.200.20.0/24, [80, 443], TCP, ISP1
 10.200.20.0/24, [53], UDP, ISP2
 
-# DMZ y Tunel ngrok (Host E4: 192.168.83.2 y WEB01: 172.16.10.0/24)
+# Servidor DMZ y tunel de ngrok en E4 (forzados por ISP1 para mantener viva la sesion)
 192.168.83.2, [443], TCP, ISP1
 192.168.83.2, [53], UDP, ISP1
 192.168.83.2, [53], TCP, ISP1
