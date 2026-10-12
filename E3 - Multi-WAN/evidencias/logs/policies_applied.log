@@ -1,0 +1,210 @@
+[2026-10-02 22:42:57] Iniciando lectura de politicas desde /home/ronyr304/ProyectoFinalRC2/xelaju-network-coordination/nodes/E3-multiwan/config/policies.txt...
+[2026-10-02 22:42:57] Se cargaron 11 politicas validas.
+[2026-10-03 16:21:28] Iniciando lectura de politicas desde /home/ronyr304/ProyectoFinalRC2/xelaju-network-coordination/nodes/E3-multiwan/config/policies.txt...
+[2026-10-03 16:21:28] Se cargaron 11 politicas validas.
+[2026-10-03 16:21:28] [SUCCESS] Se aplicaron exitosamente 11 politicas en nftables.
+[2026-10-03 16:21:28]   -> Politica: Origen=192.168.20.10/32 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-03 16:21:28]   -> Politica: Origen=192.168.20.10/32 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-03 16:21:28]   -> Politica: Origen=192.168.20.11/32 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-03 16:21:28]   -> Politica: Origen=192.168.20.12/32 Puertos=[22] Proto=TCP ==> ISP2 (Mark 0x200)
+[2026-10-03 16:21:28]   -> Politica: Origen=192.168.20.0/24 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-03 16:21:28]   -> Politica: Origen=192.168.20.0/24 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-03 16:21:28]   -> Politica: Origen=192.168.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-03 16:21:28]   -> Politica: Origen=192.168.30.0/24 Puertos=[443] Proto=TCP ==> ISP2 (Mark 0x200)
+[2026-10-03 16:21:28]   -> Politica: Origen=10.200.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-03 16:21:28]   -> Politica: Origen=10.200.20.0/24 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-03 16:21:28]   -> Politica: Origen=10.200.20.0/24 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-03 17:44:47] Iniciando lectura de politicas desde /home/ronyr304/ProyectoFinalRC2/xelaju-network-coordination/nodes/E3-multiwan/config/policies.txt...
+[2026-10-03 17:44:47] Se cargaron 12 politicas validas.
+[2026-10-03 18:08:44] Iniciando lectura de politicas desde /home/ronyr304/ProyectoFinalRC2/xelaju-network-coordination/nodes/E3-multiwan/config/policies.txt...
+[2026-10-03 18:08:44] Se cargaron 13 politicas validas.
+[2026-10-03 18:19:46] Iniciando lectura de politicas desde /home/ronyr304/ProyectoFinalRC2/xelaju-network-coordination/nodes/E3-multiwan/config/policies.txt...
+[2026-10-03 18:19:46] Se cargaron 13 politicas validas.
+[2026-10-03 18:19:46] [SUCCESS] Se aplicaron exitosamente 13 politicas en nftables.
+[2026-10-03 18:19:46]   -> Politica: Origen=192.168.20.10/32 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-03 18:19:46]   -> Politica: Origen=192.168.20.10/32 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-03 18:19:46]   -> Politica: Origen=192.168.20.11/32 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-03 18:19:46]   -> Politica: Origen=192.168.20.12/32 Puertos=[22] Proto=TCP ==> ISP2 (Mark 0x200)
+[2026-10-03 18:19:46]   -> Politica: Origen=192.168.20.0/24 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-03 18:19:46]   -> Politica: Origen=192.168.20.0/24 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-03 18:19:46]   -> Politica: Origen=192.168.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-03 18:19:46]   -> Politica: Origen=192.168.30.0/24 Puertos=[443] Proto=TCP ==> ISP2 (Mark 0x200)
+[2026-10-03 18:19:46]   -> Politica: Origen=10.200.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-03 18:19:46]   -> Politica: Origen=10.200.20.0/24 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-03 18:19:46]   -> Politica: Origen=10.200.20.0/24 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-03 18:19:46]   -> Politica: Origen=192.168.83.2/32 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-03 18:19:46]   -> Politica: Origen=172.16.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-03 18:19:56] Iniciando lectura de politicas desde /home/ronyr304/ProyectoFinalRC2/xelaju-network-coordination/nodes/E3-multiwan/config/policies.txt...
+[2026-10-03 18:19:56] Se cargaron 13 politicas validas.
+[2026-10-03 18:19:56] [SUCCESS] Se aplicaron exitosamente 13 politicas en nftables.
+[2026-10-03 18:19:56]   -> Politica: Origen=192.168.20.10/32 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-03 18:19:56]   -> Politica: Origen=192.168.20.10/32 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-03 18:19:56]   -> Politica: Origen=192.168.20.11/32 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-03 18:19:56]   -> Politica: Origen=192.168.20.12/32 Puertos=[22] Proto=TCP ==> ISP2 (Mark 0x200)
+[2026-10-03 18:19:56]   -> Politica: Origen=192.168.20.0/24 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-03 18:19:56]   -> Politica: Origen=192.168.20.0/24 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-03 18:19:56]   -> Politica: Origen=192.168.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-03 18:19:56]   -> Politica: Origen=192.168.30.0/24 Puertos=[443] Proto=TCP ==> ISP2 (Mark 0x200)
+[2026-10-03 18:19:56]   -> Politica: Origen=10.200.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-03 18:19:56]   -> Politica: Origen=10.200.20.0/24 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-03 18:19:56]   -> Politica: Origen=10.200.20.0/24 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-03 18:19:56]   -> Politica: Origen=192.168.83.2/32 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-03 18:19:56]   -> Politica: Origen=172.16.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-03 22:15:12] Iniciando lectura de politicas desde /home/ronyr304/ProyectoFinalRC2/xelaju-network-coordination/nodes/E3-multiwan/config/policies.txt...
+[2026-10-03 22:15:12] Se cargaron 13 politicas validas.
+[2026-10-03 22:15:12] [SUCCESS] Se aplicaron exitosamente 13 politicas en nftables.
+[2026-10-03 22:15:12]   -> Politica: Origen=192.168.20.10/32 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-03 22:15:12]   -> Politica: Origen=192.168.20.10/32 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-03 22:15:12]   -> Politica: Origen=192.168.20.11/32 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-03 22:15:12]   -> Politica: Origen=192.168.20.12/32 Puertos=[22] Proto=TCP ==> ISP2 (Mark 0x200)
+[2026-10-03 22:15:12]   -> Politica: Origen=192.168.20.0/24 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-03 22:15:12]   -> Politica: Origen=192.168.20.0/24 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-03 22:15:12]   -> Politica: Origen=192.168.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-03 22:15:12]   -> Politica: Origen=192.168.30.0/24 Puertos=[443] Proto=TCP ==> ISP2 (Mark 0x200)
+[2026-10-03 22:15:12]   -> Politica: Origen=10.200.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-03 22:15:12]   -> Politica: Origen=10.200.20.0/24 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-03 22:15:12]   -> Politica: Origen=10.200.20.0/24 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-03 22:15:12]   -> Politica: Origen=192.168.83.2/32 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-03 22:15:12]   -> Politica: Origen=172.16.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 16:14:15] Iniciando lectura de politicas desde /home/ronyr304/ProyectoFinalRC2/xelaju-network-coordination/nodes/E3-multiwan/config/policies.txt...
+[2026-10-04 16:14:15] Se cargaron 13 politicas validas.
+[2026-10-04 16:14:15] [SUCCESS] Se aplicaron exitosamente 13 politicas en nftables.
+[2026-10-04 16:14:15]   -> Politica: Origen=192.168.20.10/32 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 16:14:15]   -> Politica: Origen=192.168.20.10/32 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-04 16:14:15]   -> Politica: Origen=192.168.20.11/32 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 16:14:15]   -> Politica: Origen=192.168.20.12/32 Puertos=[22] Proto=TCP ==> ISP2 (Mark 0x200)
+[2026-10-04 16:14:15]   -> Politica: Origen=192.168.20.0/24 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 16:14:15]   -> Politica: Origen=192.168.20.0/24 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-04 16:14:15]   -> Politica: Origen=192.168.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 16:14:15]   -> Politica: Origen=192.168.30.0/24 Puertos=[443] Proto=TCP ==> ISP2 (Mark 0x200)
+[2026-10-04 16:14:15]   -> Politica: Origen=10.200.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 16:14:15]   -> Politica: Origen=10.200.20.0/24 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 16:14:15]   -> Politica: Origen=10.200.20.0/24 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-04 16:14:15]   -> Politica: Origen=192.168.83.2/32 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 16:14:15]   -> Politica: Origen=172.16.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 16:23:03] Iniciando lectura de politicas desde /home/ronyr304/ProyectoFinalRC2/xelaju-network-coordination/nodes/E3-multiwan/config/policies.txt...
+[2026-10-04 16:23:03] Se cargaron 13 politicas validas.
+[2026-10-04 16:23:03] [SUCCESS] Se aplicaron exitosamente 13 politicas en nftables.
+[2026-10-04 16:23:03]   -> Politica: Origen=192.168.20.10/32 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 16:23:03]   -> Politica: Origen=192.168.20.10/32 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-04 16:23:03]   -> Politica: Origen=192.168.20.11/32 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 16:23:03]   -> Politica: Origen=192.168.20.12/32 Puertos=[22] Proto=TCP ==> ISP2 (Mark 0x200)
+[2026-10-04 16:23:03]   -> Politica: Origen=192.168.20.0/24 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 16:23:03]   -> Politica: Origen=192.168.20.0/24 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-04 16:23:03]   -> Politica: Origen=192.168.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 16:23:03]   -> Politica: Origen=192.168.30.0/24 Puertos=[443] Proto=TCP ==> ISP2 (Mark 0x200)
+[2026-10-04 16:23:03]   -> Politica: Origen=10.200.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 16:23:03]   -> Politica: Origen=10.200.20.0/24 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 16:23:03]   -> Politica: Origen=10.200.20.0/24 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-04 16:23:03]   -> Politica: Origen=192.168.83.2/32 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 16:23:03]   -> Politica: Origen=172.16.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 16:27:06] Iniciando lectura de politicas desde /home/ronyr304/ProyectoFinalRC2/xelaju-network-coordination/nodes/E3-multiwan/config/policies.txt...
+[2026-10-04 16:27:06] Se cargaron 13 politicas validas.
+[2026-10-04 16:27:07] [SUCCESS] Se aplicaron exitosamente 13 politicas en nftables.
+[2026-10-04 16:27:07]   -> Politica: Origen=192.168.20.10/32 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 16:27:07]   -> Politica: Origen=192.168.20.10/32 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-04 16:27:07]   -> Politica: Origen=192.168.20.11/32 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 16:27:07]   -> Politica: Origen=192.168.20.12/32 Puertos=[22] Proto=TCP ==> ISP2 (Mark 0x200)
+[2026-10-04 16:27:07]   -> Politica: Origen=192.168.20.0/24 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 16:27:07]   -> Politica: Origen=192.168.20.0/24 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-04 16:27:07]   -> Politica: Origen=192.168.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 16:27:07]   -> Politica: Origen=192.168.30.0/24 Puertos=[443] Proto=TCP ==> ISP2 (Mark 0x200)
+[2026-10-04 16:27:07]   -> Politica: Origen=10.200.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 16:27:07]   -> Politica: Origen=10.200.20.0/24 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 16:27:07]   -> Politica: Origen=10.200.20.0/24 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-04 16:27:07]   -> Politica: Origen=192.168.83.2/32 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 16:27:07]   -> Politica: Origen=172.16.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 17:00:59] Iniciando lectura de politicas desde /home/ronyr304/ProyectoFinalRC2/xelaju-network-coordination/nodes/E3-multiwan/config/policies.txt...
+[2026-10-04 17:00:59] Se cargaron 13 politicas validas.
+[2026-10-04 17:00:59] [SUCCESS] Se aplicaron exitosamente 13 politicas en nftables.
+[2026-10-04 17:00:59]   -> Politica: Origen=192.168.20.10/32 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 17:00:59]   -> Politica: Origen=192.168.20.10/32 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-04 17:00:59]   -> Politica: Origen=192.168.20.11/32 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 17:00:59]   -> Politica: Origen=192.168.20.12/32 Puertos=[22] Proto=TCP ==> ISP2 (Mark 0x200)
+[2026-10-04 17:00:59]   -> Politica: Origen=192.168.20.0/24 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 17:00:59]   -> Politica: Origen=192.168.20.0/24 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-04 17:00:59]   -> Politica: Origen=192.168.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 17:00:59]   -> Politica: Origen=192.168.30.0/24 Puertos=[443] Proto=TCP ==> ISP2 (Mark 0x200)
+[2026-10-04 17:00:59]   -> Politica: Origen=10.200.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 17:00:59]   -> Politica: Origen=10.200.20.0/24 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 17:00:59]   -> Politica: Origen=10.200.20.0/24 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-04 17:00:59]   -> Politica: Origen=192.168.83.2/32 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 17:00:59]   -> Politica: Origen=172.16.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-04 19:30:19] Iniciando lectura de politicas desde /home/ronyr304/ProyectoFinalRC2/xelaju-network-coordination/nodes/E3-multiwan/config/policies.txt...
+[2026-10-04 19:30:19] Se cargaron 15 politicas validas.
+[2026-10-10 16:10:06] Iniciando lectura de politicas desde /home/ronyr304/ProyectoFinalRC2/xelaju-network-coordination/nodes/E3-multiwan/config/policies.txt...
+[2026-10-10 16:10:06] Se cargaron 15 politicas validas.
+[2026-10-10 16:10:06] [SUCCESS] Se aplicaron exitosamente 15 politicas en nftables.
+[2026-10-10 16:10:06]   -> Politica: Origen=192.168.20.10/32 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-10 16:10:06]   -> Politica: Origen=192.168.20.10/32 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-10 16:10:06]   -> Politica: Origen=192.168.20.11/32 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-10 16:10:06]   -> Politica: Origen=192.168.20.12/32 Puertos=[22] Proto=TCP ==> ISP2 (Mark 0x200)
+[2026-10-10 16:10:06]   -> Politica: Origen=192.168.20.0/24 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-10 16:10:06]   -> Politica: Origen=192.168.20.0/24 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-10 16:10:06]   -> Politica: Origen=192.168.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-10 16:10:06]   -> Politica: Origen=192.168.30.0/24 Puertos=[443] Proto=TCP ==> ISP2 (Mark 0x200)
+[2026-10-10 16:10:06]   -> Politica: Origen=10.200.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-10 16:10:06]   -> Politica: Origen=10.200.20.0/24 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-10 16:10:06]   -> Politica: Origen=10.200.20.0/24 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-10 16:10:06]   -> Politica: Origen=192.168.83.2/32 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-10 16:10:06]   -> Politica: Origen=192.168.83.2/32 Puertos=[53] Proto=UDP ==> ISP1 (Mark 0x100)
+[2026-10-10 16:10:06]   -> Politica: Origen=192.168.83.2/32 Puertos=[53] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-10 16:10:06]   -> Politica: Origen=172.16.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-10 16:24:34] Iniciando lectura de politicas desde /home/ronyr304/ProyectoFinalRC2/xelaju-network-coordination/nodes/E3-multiwan/config/policies.txt...
+[2026-10-10 16:24:34] Se cargaron 15 politicas validas.
+[2026-10-10 16:24:34] [SUCCESS] Se aplicaron exitosamente 15 politicas en nftables.
+[2026-10-10 16:24:34]   -> Politica: Origen=192.168.20.10/32 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-10 16:24:34]   -> Politica: Origen=192.168.20.10/32 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-10 16:24:34]   -> Politica: Origen=192.168.20.11/32 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-10 16:24:34]   -> Politica: Origen=192.168.20.12/32 Puertos=[22] Proto=TCP ==> ISP2 (Mark 0x200)
+[2026-10-10 16:24:34]   -> Politica: Origen=192.168.20.0/24 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-10 16:24:34]   -> Politica: Origen=192.168.20.0/24 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-10 16:24:34]   -> Politica: Origen=192.168.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-10 16:24:34]   -> Politica: Origen=192.168.30.0/24 Puertos=[443] Proto=TCP ==> ISP2 (Mark 0x200)
+[2026-10-10 16:24:34]   -> Politica: Origen=10.200.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-10 16:24:34]   -> Politica: Origen=10.200.20.0/24 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-10 16:24:34]   -> Politica: Origen=10.200.20.0/24 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-10 16:24:34]   -> Politica: Origen=192.168.83.2/32 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-10 16:24:34]   -> Politica: Origen=192.168.83.2/32 Puertos=[53] Proto=UDP ==> ISP1 (Mark 0x100)
+[2026-10-10 16:24:34]   -> Politica: Origen=192.168.83.2/32 Puertos=[53] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-10 16:24:34]   -> Politica: Origen=172.16.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-10 23:47:31] Iniciando lectura de politicas desde /home/ronyr304/ProyectoFinalRC2/xelaju-network-coordination/nodes/E3-multiwan/config/policies.txt...
+[2026-10-10 23:47:31] Se cargaron 15 politicas validas.
+[2026-10-10 23:47:31] [SUCCESS] Se aplicaron exitosamente 15 politicas en nftables.
+[2026-10-10 23:47:31]   -> Politica: Origen=192.168.20.10/32 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-10 23:47:31]   -> Politica: Origen=192.168.20.10/32 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-10 23:47:31]   -> Politica: Origen=192.168.20.11/32 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-10 23:47:31]   -> Politica: Origen=192.168.20.12/32 Puertos=[22] Proto=TCP ==> ISP2 (Mark 0x200)
+[2026-10-10 23:47:31]   -> Politica: Origen=192.168.20.0/24 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-10 23:47:31]   -> Politica: Origen=192.168.20.0/24 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-10 23:47:31]   -> Politica: Origen=192.168.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-10 23:47:31]   -> Politica: Origen=192.168.30.0/24 Puertos=[443] Proto=TCP ==> ISP2 (Mark 0x200)
+[2026-10-10 23:47:31]   -> Politica: Origen=10.200.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-10 23:47:31]   -> Politica: Origen=10.200.20.0/24 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-10 23:47:31]   -> Politica: Origen=10.200.20.0/24 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-10 23:47:31]   -> Politica: Origen=192.168.83.2/32 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-10 23:47:31]   -> Politica: Origen=192.168.83.2/32 Puertos=[53] Proto=UDP ==> ISP1 (Mark 0x100)
+[2026-10-10 23:47:31]   -> Politica: Origen=192.168.83.2/32 Puertos=[53] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-10 23:47:31]   -> Politica: Origen=172.16.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-11 00:00:57] Iniciando lectura de politicas desde /home/ronyr304/ProyectoFinalRC2/xelaju-network-coordination/nodes/E3-multiwan/config/policies.txt...
+[2026-10-11 00:00:57] Se cargaron 15 politicas validas.
+[2026-10-11 00:00:57] [SUCCESS] Se aplicaron exitosamente 15 politicas en nftables.
+[2026-10-11 00:00:57]   -> Politica: Origen=192.168.20.10/32 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-11 00:00:57]   -> Politica: Origen=192.168.20.10/32 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-11 00:00:57]   -> Politica: Origen=192.168.20.11/32 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-11 00:00:57]   -> Politica: Origen=192.168.20.12/32 Puertos=[22] Proto=TCP ==> ISP2 (Mark 0x200)
+[2026-10-11 00:00:57]   -> Politica: Origen=192.168.20.0/24 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-11 00:00:57]   -> Politica: Origen=192.168.20.0/24 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-11 00:00:57]   -> Politica: Origen=192.168.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-11 00:00:57]   -> Politica: Origen=192.168.30.0/24 Puertos=[443] Proto=TCP ==> ISP2 (Mark 0x200)
+[2026-10-11 00:00:57]   -> Politica: Origen=10.200.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-11 00:00:57]   -> Politica: Origen=10.200.20.0/24 Puertos=[80, 443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-11 00:00:57]   -> Politica: Origen=10.200.20.0/24 Puertos=[53] Proto=UDP ==> ISP2 (Mark 0x200)
+[2026-10-11 00:00:57]   -> Politica: Origen=192.168.83.2/32 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-11 00:00:57]   -> Politica: Origen=192.168.83.2/32 Puertos=[53] Proto=UDP ==> ISP1 (Mark 0x100)
+[2026-10-11 00:00:57]   -> Politica: Origen=192.168.83.2/32 Puertos=[53] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-11 00:00:57]   -> Politica: Origen=172.16.10.0/24 Puertos=[443] Proto=TCP ==> ISP1 (Mark 0x100)
+[2026-10-11 15:57:08] Iniciando lectura de politicas desde /home/ronyr304/ProyectoFinalRC2/xelaju-network-coordination/nodes/E3-multiwan/config/policies.txt...
+[2026-10-11 15:57:08] Se cargaron 15 politicas validas.
+[2026-10-11 16:03:00] Iniciando lectura de politicas desde /home/ronyr304/ProyectoFinalRC2/xelaju-network-coordination/nodes/E3-multiwan/config/policies.txt...
+[2026-10-11 16:03:00] Se cargaron 15 politicas validas.
