@@ -1,0 +1,32 @@
+# This file describes the network interfaces available on your system
+# and how to activate them.
+
+source /etc/network/interfaces.d/*
+
+# Loopback
+auto lo
+iface lo inet loopback
+
+# E5 <-> E3 Multi-WAN
+auto eno2
+iface eno2 inet static
+    address 192.168.81.2/30
+    up ip route replace default via 192.168.81.1 dev eno2
+
+# E5 <-> E2 Squid / Internal LAN
+auto enxc0eac367f731
+iface enxc0eac367f731 inet static
+    address 192.168.82.1/30
+    up ip route replace 192.168.10.0/24 via 192.168.82.2 dev enxc0eac367f731
+    up ip route replace 192.168.20.0/24 via 192.168.82.2 dev enxc0eac367f731
+    up ip route replace 192.168.30.0/24 via 192.168.82.2 dev enxc0eac367f731
+    up ip route replace 192.168.40.0/24 via 192.168.82.2 dev enxc0eac367f731
+    up ip route replace 192.168.84.0/30 via 192.168.82.2 dev enxc0eac367f731
+
+# E5 <-> E4 VPN / DMZ
+auto enxf8e43ba69459
+iface enxf8e43ba69459 inet static
+    address 192.168.83.1/30
+    up ip route replace 10.200.10.0/24 via 192.168.83.2 dev enxf8e43ba69459
+    up ip route replace 10.200.20.0/24 via 192.168.83.2 dev enxf8e43ba69459
+    up ip route replace 172.16.10.0/24 via 192.168.83.2 dev enxf8e43ba69459

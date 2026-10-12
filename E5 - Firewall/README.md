@@ -14,12 +14,13 @@ Este directorio contiene los anexos técnicos oficiales del componente E5 para l
 ```text
 E5 - Firewall/
 ├── README.md                      # Este índice del componente
-├── config/                        # Archivos de configuración de Debian
-│   ├── e5-firewall.nft            # Reglas nftables activas (tabla inet xelaju_e5, policy drop)
-│   ├── interfaces.example         # Configuración persistente /etc/network/interfaces
-│   ├── local.rules                # Regla local de detección Suricata (SID 1000001)
-│   ├── suricata.yaml.example      # Configuración de captura af-packet y HOME_NET
-│   └── sysctl-e5.conf             # Parámetro kernel net.ipv4.ip_forward = 1
+├── config/                        # Archivos reales de configuración de Debian
+│   ├── 99-e5-forwarding.conf      # Parámetro kernel net.ipv4.ip_forward = 1
+│   ├── e5-firewall.nft            # Reglas nftables activas (/etc/nftables.d/e5-firewall.nft)
+│   ├── interfaces                 # Configuración de interfaces y rutas (/etc/network/interfaces)
+│   ├── local.rules                # Reglas locales de Suricata (/etc/suricata/rules/local.rules)
+│   ├── nftables.conf              # Configuración del servicio (/etc/nftables.conf)
+│   └── suricata.yaml              # Configuración del motor IDS (/etc/suricata/suricata.yaml)
 ├── scripts/                       # Toolkit de administración (/usr/local/sbin/)
 │   ├── e5-help                    # Guía rápida de referencia en consola
 │   ├── e5-status                  # Dashboard integral de hardware, red y servicios
