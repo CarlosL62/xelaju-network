@@ -34,6 +34,19 @@ Todo corre en un laboratorio de 10 máquinas virtuales QEMU sobre un host Debian
 
 Enlace con el resto del grupo: `192.168.84.2/30` en R1 hacia el proxy E2 (`192.168.84.1`). La dirección de cada equipo, sus servicios y quién llega a cada uno están en [`grupal/EQUIPOS-LAN.md`](grupal/EQUIPOS-LAN.md); el diseño completo, en [`docs/01-diseno-red.md`](docs/01-diseno-red.md).
 
+### Estructura de la carpeta
+
+| Carpeta de E1 | En los demás componentes | Contenido |
+|---|---|---|
+| `nodos/` | `config/` | Configuración de cada equipo (`rootfs/` refleja la raíz del sistema) y el `aplicar.sh` que la instala |
+| `lab/` | `scripts/` | Laboratorio en QEMU: `lab.sh`, `qemuctl.py`, `topologia.conf`, instalación desatendida y enlace con E2 |
+| `pruebas/` | `test/` | Matriz de pruebas, su ejecutor, la validación estática y el ensayo sin VM |
+| `grupal/` | `scripts/`, `test/` y `docs/` de la integración | Guías, matriz y scripts de la parte grupal |
+| `docs/` | `docs/` | Documentación del componente |
+| `evidencias/` | `evidencias/` | Capturas, registros (`consola/`, que equivale a `logs/`), capturas de tráfico y resultados |
+
+E1 no es una sola máquina sino diez equipos y el laboratorio que los crea. Los scripts se llaman entre sí por estas rutas, también dentro de las VM (`/mnt/proyecto/nodos/<equipo>/aplicar.sh`), y son las que aparecen en las capturas y en los registros; por eso se conservan los nombres.
+
 ---
 
 ## 2. Requisitos del Enunciado Oficial
