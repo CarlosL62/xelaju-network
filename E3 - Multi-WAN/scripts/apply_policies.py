@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Compilador de politicas PBR para nftables (E3).
+Compilador de politicas PBR para nftables
 Lee policies.txt y aplica las reglas de marcado para dirigir trafico por ISP1 o ISP2.
 """
 
@@ -135,7 +135,7 @@ def generate_nft_commands(policies):
             )
             cmds.append(rule)
         elif proto == "any":
-            # si el protocolo es ANY generamos una regla para TCP y otra para UDP
+            # si el protocolo es ANY se genera una regla para TCP y otra para UDP
             for p in ["tcp", "udp"]:
                 rule = (
                     f"add rule {FAMILY} {TABLE_NAME} {MANGLE_CHAIN} "

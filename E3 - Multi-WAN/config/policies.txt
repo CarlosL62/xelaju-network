@@ -1,5 +1,5 @@
 # Politicas de enrutamiento PBR para dirigir trafico por ISP1 o ISP2
-# Formato: <origen>, [<puertos>], <protocolo>, <ISP>
+# Formato: <ip_origen>, <puertos>, <protocolo>, <ISP_salida>
 
 # Equipos de usuarios en VLAN 20 (web por ISP1 y consultas DNS por ISP2)
 192.168.20.10, [80, 443], TCP, ISP1
@@ -22,7 +22,7 @@
 10.200.20.0/24, [80, 443], TCP, ISP1
 10.200.20.0/24, [53], UDP, ISP2
 
-# Servidor DMZ y tunel de ngrok en E4 (forzados por ISP1 para mantener viva la sesion)
+# Servidor DMZ y tunel de ngrok en E4
 192.168.83.2, [443], TCP, ISP1
 192.168.83.2, [53], UDP, ISP1
 192.168.83.2, [53], TCP, ISP1

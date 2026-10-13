@@ -126,7 +126,7 @@ check_link() {
         return 1
     fi
 
-    # probando con el primero (8.8.8.8) DNS
+    # probando con el primero (8.8.8.8)
     if ping -I "${iface}" -c 1 -W "${FAILOVER_TIMEOUT_SEC}" "${CHECK_TARGET_1}" >/dev/null 2>&1; then
         return 0
     fi
@@ -141,7 +141,7 @@ check_link() {
 ISP1_STATUS="UNKNOWN"
 ISP2_STATUS="UNKNOWN"
 
-log "[INICIO] Demonio de failover activo monitoreando ISP1 (${WAN1_IFACE}) y ISP2 (${WAN2_IFACE}) cada ${FAILOVER_INTERVAL_SEC}s"
+log "[INICIO] Demonio de failover activo monitoreando ISP1 (${WAN1_IFACE}) y ISP2 (${WAN2_IFACE}) cada 2s"
 
 # while principal que corre 
 while true; do
@@ -162,7 +162,7 @@ while true; do
         WAN2_IFACE="${DYNAMIC_USB}"
     fi
 
-    # Chequechequeandoamos la salud de ISP2
+    # chequeando la salud de ISP2
     if check_link "${WAN2_IFACE}"; then
         CURRENT_ISP2="UP"
         ensure_table_route "${WAN2_IFACE}" "${TABLE_ISP2}"

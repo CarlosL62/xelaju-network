@@ -104,7 +104,7 @@ if ip link show "${LAN_IFACE}" &>/dev/null; then
     fi
 fi
 
-# - configurando las tablas 100 y 200 con su respectivo default gateway y ruta local conectada
+# - configurando las tablas 100 y 200 con su default gateway y ruta local conectada
 echo "[3/7] Configurando tablas de rutas ${TABLE_ISP1} (ISP1) y ${TABLE_ISP2} (ISP2)..."
 if [[ -n "${WAN1_GW}" ]]; then
     ip route flush table "${TABLE_ISP1}" || true
@@ -149,7 +149,7 @@ while ip rule del fwmark "${FWMARK_ISP2}" 2>/dev/null; do :; done
 ip rule add fwmark "${FWMARK_ISP1}" table "${TABLE_ISP1}" pref "${IP_RULE_PRIO_ISP1}"
 ip rule add fwmark "${FWMARK_ISP2}" table "${TABLE_ISP2}" pref "${IP_RULE_PRIO_ISP2}"
 
-# configurando la estructura de nftables: marcado de paquetes, balanceo con conntrack y NAT perimetral
+# configurando la estructura de nftables: marcado de paquetes, balanceo y NAT
 echo "[5/7] Configurando nftables (marcado PBR, balanceo y NAT)..."
 if [[ "${WAN2_IFACE}" == wlx* ]]; then
     WAN2_NFT_MATCH="\"wlx*\""
@@ -163,7 +163,7 @@ table inet xelaju_multiwan {
     chain pbr_mangle {
     }
 
-    # Cadena para balancear 50/50 el trafico que no tenga politica especifica
+    # ccadena para balancear 50 50 el trafico que no tenga politica especifica
     chain balance_fallback {
         meta mark 0 numgen random mod 2 0 meta mark set 0x100 counter comment "balance_50_isp1"
         meta mark 0 numgen random mod 2 1 meta mark set 0x200 counter comment "balance_50_isp2"
@@ -172,28 +172,30 @@ table inet xelaju_multiwan {
     chain prerouting_mangle {
         type filter hook prerouting priority mangle; policy accept;
 
-        # 1. Si el paquete viene de LAN y ya pertenece a una conexion previa recuperamos su marca desde conntrack
+        # si el paquete viene de LAN y ya pertenece a una conexion previa se recupera su marca desde conntrack
         iifname "${LAN_IFACE}" meta mark set ct mark
+        
+        #si el paquete viene de lan y ya tiene una marca !=0 se acepta
         iifname "${LAN_IFACE}" meta mark != 0 accept
 
-        # 2. Conexiones que entran por las WAN (por ejemplo WireGuard hacia E4):
-        # Guardamos la marca en conntrack para que el trafico de vuelta salga por esa misma interfaz WAN
+        # conexiones que entran por las WAN:
+        # se guarda la marca en conntrack para que el trafico de vuelta salga por la misma interfaz WAN
         iifname "${WAN1_IFACE}" ct mark set 0x100 accept
         iifname ${WAN2_NFT_MATCH} ct mark set 0x200 accept
 
-        # 3. Evaluamos las politicas de policies.txt para el trafico saliente
+        # se evalua las politicas del txt para el trafico saliente
         iifname "${LAN_IFACE}" jump pbr_mangle
 
-        # 4. Si es una conexion nueva sin politica aplicamos el balanceo 50/50
+        # si es una conexion nueva sin politica se aplica el balanceo 50 50
         iifname "${LAN_IFACE}" meta mark 0 jump balance_fallback
 
-        # 5. Guardamos la marca asignada en la sesion de conntrack para que los proximos paquetes no cambien de ruta
+        # se guarda la marca asignada en la sesion de conntrack para que los proximos paquetes no cambien de ruta
         iifname "${LAN_IFACE}" ct mark set meta mark
     }
 
     chain prerouting_nat {
         type nat hook prerouting priority dstnat; policy accept;
-        # Redireccion del puerto UDP 51820 para que las conexiones VPN lleguen directo a E4
+        # redireccion del puerto UDP 51820 para que las conexiones VPN lleguen a e4
         ip protocol udp udp dport 51820 dnat ip to 192.168.83.2:51820 comment "DNAT_WIREGUARD_E4"
     }
 
@@ -207,6 +209,7 @@ EOF
 if ip link show "${WAN1_IFACE}" &>/dev/null; then
     nft add rule inet xelaju_multiwan postrouting_nat oifname "${WAN1_IFACE}" masquerade
 fi
+
 if [[ "${WAN2_IFACE}" == wlx* ]]; then
     nft add rule inet xelaju_multiwan postrouting_nat oifname "wlx*" masquerade
 elif ip link show "${WAN2_IFACE}" &>/dev/null; then
@@ -228,14 +231,14 @@ if ip link show "${LAN_IFACE}" &>/dev/null; then
         ip route replace 192.168.82.0/30 via "${E5_GATEWAY}" dev "${LAN_IFACE}" onlink table "${tbl}" || true
         ip route replace 192.168.83.0/30 via "${E5_GATEWAY}" dev "${LAN_IFACE}" onlink table "${tbl}" || true
         ip route replace 192.168.84.0/30 via "${E5_GATEWAY}" dev "${LAN_IFACE}" onlink table "${tbl}" || true
-        # redes de wireguard VPN y DMZ de E4
+        # redes de wireguard VPN y DMZ de e4
         ip route replace 10.200.10.0/24 via "${E5_GATEWAY}" dev "${LAN_IFACE}" onlink table "${tbl}" || true
         ip route replace 10.200.20.0/24 via "${E5_GATEWAY}" dev "${LAN_IFACE}" onlink table "${tbl}" || true
         ip route replace 172.16.10.0/24 via "${E5_GATEWAY}" dev "${LAN_IFACE}" onlink table "${tbl}" || true
     done
 fi
 
-# - ejecuntando el compilador en python para cargar las reglas de policies.txt
+# - ejecuntando el programa python para cargar las reglas de policies.txt
 echo "[7/7] Aplicando politicas desde policies.txt..."
 python3 "${SCRIPT_DIR}/apply_policies.py" --config "${POLICIES_FILE}"
 
